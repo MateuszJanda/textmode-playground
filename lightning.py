@@ -6,24 +6,20 @@ from curses.textpad import Textbox, rectangle
 import random
 from time import sleep
 
-# def main(stdscr):
-#     stdscr.addstr(0, 0, "Enter IM message: (hit Ctrl-G to send)")
 
-#     # editwin = curses.newwin(5,30, 2,1)
-#     # rectangle(stdscr, 1,0, 1+5+1, 1+30+1)
-#     stdscr.refresh()
+def blink(lightning, attribute):
+    for l in lightning:
+        y, x, symbol = l
+        stdscr.addstr(y, x, symbol, attribute)
 
-#     # box = Textbox(editwin)
+    sleep(0.1)
+    stdscr.refresh()
 
-#     # # Let the user edit until Ctrl-G is struck.
-#     # box.edit()
-
-#     # # Get resulting contents
-#     # message = box.gather()
 
 stdscr = curses.initscr()
 curses.halfdelay(5)           # How many tenths of a second are waited, from 1 to 255
 curses.noecho()               # Wont print the input
+curses.curs_set(0)
 
 # stdscr.addstr(0, 0, "Enter IM message: (hit Ctrl-G to send)")
 
@@ -51,16 +47,16 @@ while True:
         if len(lightning) > 0:
             _, _, lsymbol = lightning[-1]
             if lsymbol == '|':
-                lightning.append((y, x, random.choice('/|\\')))
+                lightning.append((y, x, random.choice('//|\\\\')))
             elif lsymbol == '/':
                 # x -= 1
-                s = random.choice('/|\\')
-                if s == '/' or s == '|':
+                s = random.choice('//|\\\\')
+                if s == '/':
                     x -= 1
                 lightning.append((y, x, s))
             elif lsymbol == '\\':
-                s = random.choice('/|\\')
-                if s == '\\' or s == '|':
+                s = random.choice('//|\\\\')
+                if s == '\\':
                     x += 1
                 lightning.append((y, x, s))
             # if lsymbol = '_':
@@ -72,8 +68,12 @@ while True:
         ly, lx, lsymbol = lightning[-1]
         stdscr.addstr(ly, lx, lsymbol)
 
-        sleep(0.05)
+        sleep(0.01)
         stdscr.refresh()
 
+    blink(lightning, curses.A_BOLD)
+    blink(lightning, curses.A_NORMAL)
+    blink(lightning, curses.A_BOLD)
+    blink(lightning, curses.A_NORMAL)
 
 curses.endwin()
