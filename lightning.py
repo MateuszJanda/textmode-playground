@@ -7,13 +7,28 @@ import random
 from time import sleep
 
 
-def blink(lightning, attribute):
+def blink(lightning, attr1, attr2):
     for l in lightning:
         y, x, symbol = l
-        stdscr.addstr(y, x, symbol, attribute)
+        stdscr.addstr(y, x, symbol, attr1)
 
     sleep(0.1)
     stdscr.refresh()
+
+    for l in lightning:
+        y, x, symbol = l
+        stdscr.addstr(y, x, symbol, attr2)
+
+    sleep(0.1)
+    stdscr.refresh()
+
+
+def createNewSymbol(prev):
+    if prev == '|':
+        return random.choice('/|\\')
+    if prev == '_':
+        return random.choice('/\\_')
+    return random.choice('/|\\_')
 
 
 stdscr = curses.initscr()
@@ -21,59 +36,63 @@ curses.halfdelay(5)           # How many tenths of a second are waited, from 1 t
 curses.noecho()               # Wont print the input
 curses.curs_set(0)
 
-# stdscr.addstr(0, 0, "Enter IM message: (hit Ctrl-G to send)")
-
-# editwin = curses.newwin(5,30, 2,1)
-# rectangle(stdscr, 1,0, 1+5+1, 1+30+1)
 stdscr.refresh()
 
 
 while True:
-    char = stdscr.getch()        # This blocks (waits) until the time has elapsed,
-                              # or there is input to be handled
-    stdscr.clear()               # Clears the screen
-    # if char != curses.ERR:    # This is true if the user pressed something
-    #     stdscr.addstr(0, 0, chr(char))
+    # This blocks (waits) until the time has elapsed, or there is input to be handled
+    char = stdscr.getch()
+    stdscr.clear()
+
     if char == ord('q'):
-        break  # Exit the while loop
-    elif char == curses.KEY_LEFT:
         break
-    # else:
-        # stdscr.addstr(0, 0, "Waiting")
 
     lightning = []
-    x = curses.COLS / 2
-    for y in range(0, curses.LINES):
-        if len(lightning) > 0:
-            _, _, lsymbol = lightning[-1]
-            if lsymbol == '|':
-                lightning.append((y, x, random.choice('//|\\\\')))
-            elif lsymbol == '/':
-                # x -= 1
-                s = random.choice('//|\\\\')
-                if s == '/':
-                    x -= 1
-                lightning.append((y, x, s))
-            elif lsymbol == '\\':
-                s = random.choice('//|\\\\')
-                if s == '\\':
-                    x += 1
-                lightning.append((y, x, s))
-            # if lsymbol = '_':
-                # lightning.append((y, x+1, random.choice('/|\\_')))
-            # pass
-        else:
+    x = curses.COLS / 2 + random.randint(-10, 10)
+    y = 0
+    while y < curses.LINES - 1:
+        if not lightning:
             lightning.append((y, x, random.choice('/|\\')))
+        else:
+            _, _, prev_symbol = lightning[-1]
+            if prev_symbol == '|':
+                y += 1
+                lightning.append((y, x, createNewSymbol(prev_symbol)))
+            elif prev_symbol == '/':
+                symbol = createNewSymbol(prev_symbol)
+                if symbol == '/' or symbol == '_':
+                    x -= 1
+                if symbol != '_':
+                    y += 1
+                lightning.append((y, x, symbol))
+            elif prev_symbol == '\\':
+                symbol = createNewSymbol(prev_symbol)
+                if symbol == '\\' or symbol == '_':
+                    x += 1
+                if symbol != '_':
+                    y += 1
+                lightning.append((y, x, symbol))
+            elif prev_symbol == '_':
+                if lightning[-1][1] < lightning[-2][1]:
+                    symbol = random.choice('/_')
+                    x -= 1
+                else:
+                    symbol = random.choice('\\_')
+                    x += 1
+                if symbol != '_':
+                    y += 1
+                lightning.append((y, x, symbol))
 
         ly, lx, lsymbol = lightning[-1]
-        stdscr.addstr(ly, lx, lsymbol)
+        try:
+            stdscr.addstr(ly, lx, lsymbol)
+        except:
+            print ly, lx, curses.LINES, lsymbol
 
-        sleep(0.01)
+        # sleep(0.01)
         stdscr.refresh()
 
-    blink(lightning, curses.A_BOLD)
-    blink(lightning, curses.A_NORMAL)
-    blink(lightning, curses.A_BOLD)
-    blink(lightning, curses.A_NORMAL)
+    blink(lightning, curses.A_BOLD, curses.A_NORMAL)
+    blink(lightning, curses.A_BOLD, curses.A_NORMAL)
 
 curses.endwin()
