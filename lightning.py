@@ -8,6 +8,13 @@ from time import sleep
 import collections
 
 Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
+# LightningIndex = collections.namedtuple('LightningIndex', ['index', 'branch'])
+
+
+class LightningIndex:
+    def __init__(self, index, branch):
+        self.index = index
+        self.branch = branch
 
 
 def createLightning():
@@ -42,7 +49,7 @@ def createLightning():
             if symbol != '_':
                 y += 1
 
-        if random.randint(0, 10) == 1:
+        if random.randint(0, 30) == 1:
             branches.append(createBranch(lightning[-1], Light(y, x, symbol)))
 
         lightning.append(Light(y, x, symbol))
@@ -60,23 +67,23 @@ def createBranch(prev, root):
             y += 1
             symbol = random.choice('/\\')
         elif prev_symbol == '/':
-            symbol = random.choice('/\\_')
+            symbol = random.choice('/___')
             if symbol == '/' or symbol == '_':
                 x -= 1
             if symbol != '_':
                 y += 1
         elif prev_symbol == '\\':
-            symbol = random.choice('/\\_')
+            symbol = random.choice('\\___')
             if symbol == '\\' or symbol == '_':
                 x += 1
             if symbol != '_':
                 y += 1
         elif prev_symbol == '_':
             if branch[-1].x < branch[-2].x:
-                symbol = random.choice('/_')
+                symbol = random.choice('/___')
                 x -= 1
             else:
-                symbol = random.choice('\\_')
+                symbol = random.choice('\\___')
                 x += 1
             if symbol != '_':
                 y += 1
@@ -102,11 +109,20 @@ def blink(lightning, attr1, attr2):
     sleep(0.1)
     scr.refresh()
 
+def indexer(light, branches):
+    res = []
+    for bs in branches:
+        if light.x == bs[0].x and light.y == bs[0].y:
+            res.append(LightningIndex(0, bs))
+
+    return res
+
 
 scr = curses.initscr()
 curses.halfdelay(5)       # How many tenths of a second are waited, from 1 to 255
 curses.noecho()           # Wont print the input
 curses.curs_set(False)
+random.seed(4876)
 
 
 while True:
@@ -119,14 +135,26 @@ while True:
 
     lightning, branches = createLightning()
 
-    for bs in branches:
-        for b in bs:
-            scr.addstr(b.y, b.x, b.symbol)
+    # for bs in branches:
+    #     for b in bs:
+    #         scr.addstr(b.y, b.x, b.symbol)
+
+    indexed = [LightningIndex(0, lightning)]
 
     for l in lightning:
-        scr.addstr(l.y, l.x, l.symbol)
+        indexed += indexer(l, branches)
+
+        for i in indexed:
+            if i.index >= len(i.branch):
+                continue
+
+            scr.addstr(i.branch[i.index].y, i.branch[i.index].x, i.branch[i.index].symbol)
+            i.index += 1
+
         sleep(0.01)
         scr.refresh()
+
+
 
     scr.refresh()
 
