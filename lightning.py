@@ -127,10 +127,10 @@ random.seed(4876)
 
 GRAY = 2
 curses.init_color(1, 600, 600, 600)
-curses.init_pair(2, 1, -1)
+curses.init_pair(GRAY, 1, -1)
 
 WHITE = 3
-curses.init_pair(3, curses.COLOR_WHITE, -1)
+curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
 
 while True:
