@@ -8,7 +8,6 @@ from time import sleep
 import collections
 
 Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
-# LightningIndex = collections.namedtuple('LightningIndex', ['index', 'branch'])
 
 
 class LightningIndex:
@@ -119,10 +118,19 @@ def indexer(light, branches):
 
 
 scr = curses.initscr()
+curses.start_color()
+curses.use_default_colors()
 curses.halfdelay(5)       # How many tenths of a second are waited, from 1 to 255
 curses.noecho()           # Wont print the input
 curses.curs_set(False)
 random.seed(4876)
+
+GRAY = 2
+curses.init_color(1, 600, 600, 600)
+curses.init_pair(2, 1, -1)
+
+WHITE = 3
+curses.init_pair(3, curses.COLOR_WHITE, -1)
 
 
 while True:
@@ -134,11 +142,6 @@ while True:
         break
 
     lightning, branches = createLightning()
-
-    # for bs in branches:
-    #     for b in bs:
-    #         scr.addstr(b.y, b.x, b.symbol)
-
     indexed = [LightningIndex(0, lightning)]
 
     for l in lightning:
@@ -148,17 +151,18 @@ while True:
             if i.index >= len(i.branch):
                 continue
 
-            scr.addstr(i.branch[i.index].y, i.branch[i.index].x, i.branch[i.index].symbol)
+            light = i.branch[i.index]
+            scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
             i.index += 1
 
         sleep(0.01)
         scr.refresh()
 
-
-
     scr.refresh()
 
-    blink(lightning, curses.A_BOLD, curses.A_NORMAL)
-    blink(lightning, curses.A_BOLD, curses.A_NORMAL)
+    blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+        curses.A_NORMAL | curses.color_pair(WHITE))
+    blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+        curses.A_NORMAL | curses.color_pair(WHITE))
 
 curses.endwin()
