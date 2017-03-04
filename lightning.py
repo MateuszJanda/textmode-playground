@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import curses
-from curses.textpad import Textbox, rectangle
 import random
 from time import sleep
+import os
+import subprocess
 import collections
+from threading import Thread
+
 
 Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
 
@@ -108,6 +111,7 @@ def blink(lightning, attr1, attr2):
     sleep(0.1)
     scr.refresh()
 
+
 def indexer(light, branches):
     res = []
     for bs in branches:
@@ -117,11 +121,18 @@ def indexer(light, branches):
     return res
 
 
+def sound():
+    FNULL = open(os.devnull, 'w')
+    subprocess.call(['ffplay', '-nodisp', '-autoexit', 'thunder.mp3'],
+        stdout=FNULL, stderr=subprocess.STDOUT)
+
+
+
 scr = curses.initscr()
 curses.start_color()
 curses.use_default_colors()
-curses.halfdelay(5)       # How many tenths of a second are waited, from 1 to 255
-curses.noecho()           # Wont print the input
+curses.halfdelay(5)       # Ile częśći sekundy czekamy na klawisz, od 1 do 255
+curses.noecho()           # Nie drukuje znaków na wejściu
 curses.curs_set(False)
 random.seed(4876)
 
@@ -133,8 +144,11 @@ WHITE = 3
 curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
 
+th = Thread(target=sound)
+
+
 while True:
-    # This blocks (waits) until the time has elapsed, or there is input to be handled
+    # Oczekiwanie aż upłynie czas, lub albo zostanie naciśnięty klawisz
     char = scr.getch()
     scr.clear()
 
@@ -158,6 +172,7 @@ while True:
         sleep(0.01)
         scr.refresh()
 
+    th.start()
     scr.refresh()
 
     blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
@@ -165,4 +180,6 @@ while True:
     blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
         curses.A_NORMAL | curses.color_pair(WHITE))
 
+
+th.join()
 curses.endwin()
