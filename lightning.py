@@ -173,13 +173,14 @@ while True:
         scr.refresh()
 
     th.start()
-    scr.refresh()
+    # scr.refresh()
 
     blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
         curses.A_NORMAL | curses.color_pair(WHITE))
     blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
         curses.A_NORMAL | curses.color_pair(WHITE))
 
+    break
 
 th.join()
 curses.endwin()
