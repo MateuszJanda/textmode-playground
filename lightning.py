@@ -149,10 +149,10 @@ th = Thread(target=sound)
 
 while True:
     # Oczekiwanie aż upłynie czas, lub albo zostanie naciśnięty klawisz
-    char = scr.getch()
+    ch = scr.getch()
     scr.clear()
 
-    if char == ord('q'):
+    if ch == ord('q'):
         break
 
     lightning, branches = createLightning()
@@ -173,7 +173,6 @@ while True:
         scr.refresh()
 
     th.start()
-    # scr.refresh()
 
     blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
         curses.A_NORMAL | curses.color_pair(WHITE))
