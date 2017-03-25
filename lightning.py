@@ -121,7 +121,7 @@ def indexer(light, branches):
     return res
 
 
-def sound():
+def thunderSound():
     FNULL = open(os.devnull, 'w')
     subprocess.call(['ffplay', '-nodisp', '-autoexit', 'thunder.mp3'],
         stdout=FNULL, stderr=subprocess.STDOUT)
@@ -143,7 +143,7 @@ WHITE = 3
 curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
 random.seed(4876)
-th = Thread(target=sound)
+th = Thread(target=thunderSound)
 
 while True:
     ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
