@@ -127,30 +127,28 @@ def sound():
         stdout=FNULL, stderr=subprocess.STDOUT)
 
 
-
 scr = curses.initscr()
-curses.start_color()
-curses.use_default_colors()
-curses.halfdelay(5)       # Ile częśći sekundy czekamy na klawisz, od 1 do 255
-curses.noecho()           # Nie drukuje znaków na wejściu
-curses.curs_set(False)
-random.seed(4876)
+curses.start_color()        # Potrzebne do definiowania kolorów
+curses.use_default_colors() # Używaj kolorów terminala
+curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
+curses.noecho()             # Nie drukuje znaków na wejściu
+curses.curs_set(False)      # Wyłącza pokazywanie kursora
 
 GRAY = 2
-curses.init_color(1, 600, 600, 600)
-curses.init_pair(GRAY, 1, -1)
+curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
+                                        # daje kolor RGB, ale wartości 0-1000
+curses.init_pair(GRAY, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
 
 WHITE = 3
 curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
-
+random.seed(4876)
 th = Thread(target=sound)
 
-
 while True:
-    # Oczekiwanie aż upłynie czas, lub albo zostanie naciśnięty klawisz
-    ch = scr.getch()
-    scr.clear()
+    ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
+                            # naciśnięty klawisz
+    scr.clear()             # Czyści ekran
 
     if ch == ord('q'):
         break
@@ -170,7 +168,7 @@ while True:
             i.index += 1
 
         sleep(0.01)
-        scr.refresh()
+        scr.refresh()       # Odświeżanie ekranu
 
     th.start()
 
@@ -182,4 +180,4 @@ while True:
     break
 
 th.join()
-curses.endwin()
+curses.endwin()             # Przywraca terminal do oryginalnych ustawień
