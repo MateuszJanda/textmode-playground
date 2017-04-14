@@ -60,7 +60,7 @@ def draw_line(screen_buf, rrr):
         if curses.LINES - 1 - int(y / 4) < 0:
             continue
         # screen_buf[int(y / 4)][int(x / 2)] = u'x'
-        uchar = ord(screen_buf[int(y / 4)][int(x / 2)])
+        uchar = ord(screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)])
         screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
 
 
