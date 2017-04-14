@@ -3,13 +3,16 @@
 
 from __future__ import division
 import curses
+import locale
+
+locale.setlocale(locale.LC_ALL, '')    # set your locale
 
 def main():
     scr = setup()
 
     screen_buf = []
     for _ in range(curses.LINES):
-        screen_buf.append((list(u' ' * (curses.COLS - 1))))
+        screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
 
     draw_line(screen_buf)
 
@@ -44,14 +47,19 @@ def draw_line(screen_buf):
 
         if int(y/4) >= curses.LINES:
             continue
-        screen_buf[int(y / 4)][int(x / 2)] = u'x'
+        # screen_buf[int(y / 4)][int(x / 2)] = u'x'
+        uchar = ord(screen_buf[int(y / 4)][int(x / 2)])
+        screen_buf[int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
 
 
+
+def fun(y, x):
+    return 0xff
 
 
 def display(scr, screen_buf):
     for num, line in enumerate(screen_buf):
-        scr.addstr(num, 0, u''.join(line))
+        scr.addstr(num, 0, u''.join(line).encode('utf-8'))
         # scr.addstr(num, 0, 'asdf')n)
 
 
