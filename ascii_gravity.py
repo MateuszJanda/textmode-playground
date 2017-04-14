@@ -36,7 +36,7 @@ def main():
     star.mass = 1000.0
 
     satellite = Body()
-    satellite.pos = Vec(1, 20)
+    satellite.pos = Vec(10, 10)
     satellite.vel = Vec(0, 6)
     satellite.mass = 10.0
 
@@ -52,24 +52,21 @@ def main():
         if d <= 1:
             break
 
-        Fg_mag = (G * star.mass * satellite.mass) / (d**2)
-        Fg = mul_s(sub(star.pos, satellite.pos), Fg_mag)
-
-        satellite.acc = div(Fg, satellite.mass)
-        satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
-        satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
-
         screen_buf = clear_buf()
-        # draw_line(screen_buf, r)
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
 
-        r += 1
+        # Fg_mag = (G * star.mass * satellite.mass) / (d**2)
+        # Fg = mul_s(sub(star.pos, satellite.pos), Fg_mag)
 
-        time.sleep(0.001)
+        # satellite.acc = div(Fg, satellite.mass)
+        # satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
+        # satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
 
-        if r > 40:
-            break
+        # draw_pt(screen_buf, star.pos)
+        # draw_pt(screen_buf, satellite.pos)
+
+        time.sleep(5)
 
         display(scr, screen_buf)
         t += dt
@@ -86,7 +83,6 @@ def norm(pt1, pt2):
 
 def mul_s(vec, val):
     return Vec(vec.x * val, vec.y * val)
-
 
 def div(vec, val):
     return Vec(vec.x / val, vec.y / val)
@@ -137,7 +133,7 @@ def draw_pt(screen_buf, pt):
         return
 
     if int(pt.x / 2) < 0 or \
-       int(pt.x / 2) > 0:
+       int(pt.x / 2) >= curses.COLS:
         return
 
     x = int(pt.x)
