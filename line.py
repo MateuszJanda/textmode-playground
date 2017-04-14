@@ -9,17 +9,16 @@ def main():
 
     screen_buf = []
     for _ in range(curses.LINES):
-        screen_buf.append(' ' * (curses.COLS - 1))
+        screen_buf.append((list(u' ' * (curses.COLS - 1))))
 
-    print type(screen_buf)
+    draw_line(screen_buf)
 
     while True:
-        ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
-                                # naciśnięty klawisz
+        ch = scr.getch()
         if ch == ord('q'):
             break
 
-        simulation(scr, screen_buf)
+        display(scr, screen_buf)
 
     curses.endwin()             # Przywraca terminal do oryginalnych ustawień
 
@@ -35,10 +34,27 @@ def setup():
 
     return scr
 
-def simulation(scr, screen_buf):
+
+def draw_line(screen_buf):
+    """ y = 6x + 3, x w [0, 40]"""
+
+    # x < curses.COLS * 2
+    for x in range(40):
+        y = 1 * x + 3
+
+        if int(y/4) >= curses.LINES:
+            continue
+        screen_buf[int(y / 4)][int(x / 2)] = u'x'
+
+
+
+
+def display(scr, screen_buf):
     for num, line in enumerate(screen_buf):
-        scr.addstr(num, 0, line)
-        # scr.addstr(num, 0, 'asdf')
+        scr.addstr(num, 0, u''.join(line))
+        # scr.addstr(num, 0, 'asdf')n)
+
 
 if __name__ == '__main__':
     main()
+
