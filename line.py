@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+import time
 import curses
 import locale
 
@@ -10,13 +11,24 @@ locale.setlocale(locale.LC_ALL, '')    # set your locale
 def main():
     scr = setup()
 
-    screen_buf = []
-    for _ in range(curses.LINES):
-        screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
+    # screen_buf = []
+    # for _ in range(curses.LINES):
+    #     screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
 
-    draw_line(screen_buf)
+    # draw_line(screen_buf)
 
+    r = 0
     while True:
+
+        screen_buf = []
+        for _ in range(curses.LINES):
+            screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
+
+        draw_line(screen_buf, r)
+        r += 1
+
+        time.sleep(0.1)
+
         ch = scr.getch()
         if ch == ord('q'):
             break
@@ -38,11 +50,11 @@ def setup():
     return scr
 
 
-def draw_line(screen_buf):
+def draw_line(screen_buf, rrr):
     """ y = 6x + 3, x w [0, 40]"""
 
     # x < curses.COLS * 2
-    for x in range(40):
+    for x in range(rrr):
         y = 1 * x + 3
 
         if curses.LINES - 1 - int(y / 4) < 0:
@@ -54,8 +66,8 @@ def draw_line(screen_buf):
 
 
 def fun(y, x):
-    by = y % 4
     bx = x % 2
+    by = y % 4
 
     if bx == 0:
         if by == 0:
