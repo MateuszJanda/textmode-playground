@@ -27,14 +27,15 @@ def main():
         draw_line(screen_buf, r)
         r += 1
 
-        time.sleep(0.1)
+        time.sleep(0.001)
 
-        ch = scr.getch()
-        if ch == ord('q'):
+        if r > 40:
             break
+
 
         display(scr, screen_buf)
 
+    time.sleep(2)
     curses.endwin()             # Przywraca terminal do oryginalnych ustawień
 
 
@@ -82,9 +83,13 @@ def fun(y, x):
 
 
 def display(scr, screen_buf):
+    scr.clear()
+
     for num, line in enumerate(screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
         # scr.addstr(num, 0, 'asdf')n)
+
+    scr.refresh()
 
 
 if __name__ == '__main__':
