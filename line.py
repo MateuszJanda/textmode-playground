@@ -63,7 +63,10 @@ def fun(y, x):
         else:
             return 0x4 >> (by - 1)
     else:
-        return 0xff
+        if by == 0:
+            return 0x80
+        else:
+            return 0x20 >> (by -1)
 
 
 def display(scr, screen_buf):
