@@ -45,16 +45,25 @@ def draw_line(screen_buf):
     for x in range(40):
         y = 1 * x + 3
 
-        if int(y/4) >= curses.LINES:
+        if curses.LINES - 1 - int(y / 4) < 0:
             continue
         # screen_buf[int(y / 4)][int(x / 2)] = u'x'
         uchar = ord(screen_buf[int(y / 4)][int(x / 2)])
-        screen_buf[int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
+        screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
 
 
 
 def fun(y, x):
-    return 0xff
+    by = y % 4
+    bx = x % 2
+
+    if bx == 0:
+        if by == 0:
+            return 0x40
+        else:
+            return 0x4 >> (by - 1)
+    else:
+        return 0xff
 
 
 def display(scr, screen_buf):
