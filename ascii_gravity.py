@@ -32,12 +32,12 @@ def main():
     # draw_line(screen_buf)
 
     star = Body()
-    star.pos = Vec(30, 10)
+    star.pos = Vec(100, 80)
     star.mass = 1000.0
 
     satellite = Body()
-    satellite.pos = Vec(10, 10)
-    satellite.vel = Vec(0, 6)
+    satellite.pos = Vec(80, 10)
+    satellite.vel = Vec(6, 0)
     satellite.mass = 10.0
 
     r = 0
@@ -46,27 +46,36 @@ def main():
     freq = 100
     dt = 1.0/freq
 
+    screen_buf = clear_buf()
+
     while True:
         d = distance(star, satellite)
 
         if d <= 1:
             break
 
-        screen_buf = clear_buf()
-        draw_pt(screen_buf, star.pos)
-        draw_pt(screen_buf, satellite.pos)
-
-        # Fg_mag = (G * star.mass * satellite.mass) / (d**2)
-        # Fg = mul_s(sub(star.pos, satellite.pos), Fg_mag)
-
-        # satellite.acc = div(Fg, satellite.mass)
-        # satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
-        # satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
-
         # draw_pt(screen_buf, star.pos)
         # draw_pt(screen_buf, satellite.pos)
 
-        time.sleep(5)
+
+
+        # screen_buf = draw_line(screen_buf, r)
+        # draw_line(screen_buf, r)
+        # if r > 40:
+        #     break
+        # r += 1
+
+        Fg_mag = (G * star.mass * satellite.mass) / (d**2)
+        Fg = mul_s(sub(star.pos, satellite.pos), Fg_mag)
+
+        satellite.acc = div(Fg, satellite.mass)
+        satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
+        satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
+
+        draw_pt(screen_buf, star.pos)
+        draw_pt(screen_buf, satellite.pos)
+
+        time.sleep(0.001)
 
         display(scr, screen_buf)
         t += dt
@@ -164,7 +173,7 @@ def distance(body1, body2):
 
 
 def display(scr, screen_buf):
-    scr.clear()
+    # scr.clear()
 
     for num, line in enumerate(screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
