@@ -19,7 +19,7 @@ class Vec:
         self.y = y
 
 
-G = 1.0
+G = 19.0
 
 
 def main():
@@ -36,9 +36,9 @@ def main():
     star.mass = 1000.0
 
     satellite = Body()
-    satellite.pos = Vec(80, 10)
-    satellite.vel = Vec(6, 0)
-    satellite.mass = 10.0
+    satellite.pos = Vec(80, 40)
+    satellite.vel = Vec(0, 16)
+    satellite.mass = 5.0
 
     r = 0
 
@@ -49,7 +49,7 @@ def main():
     screen_buf = clear_buf()
 
     while True:
-        d = distance(star, satellite)
+        d = distance(star.pos, satellite.pos)
 
         if d <= 1:
             break
@@ -66,7 +66,8 @@ def main():
         # r += 1
 
         Fg_mag = (G * star.mass * satellite.mass) / (d**2)
-        Fg = mul_s(sub(star.pos, satellite.pos), Fg_mag)
+
+        Fg = mul_s(normalize(sub(star.pos, satellite.pos)), Fg_mag)
 
         satellite.acc = div(Fg, satellite.mass)
         satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
@@ -75,7 +76,7 @@ def main():
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
 
-        time.sleep(0.001)
+        time.sleep(0.009)
 
         display(scr, screen_buf)
         t += dt
@@ -84,9 +85,11 @@ def main():
     curses.endwin()             # Przywraca terminal do oryginalnych ustawień
 
 
-def norm(pt1, pt2):
-    dx = pt2.x - pt1.x
-    dy = pt2.y - pt1.y
+def normalize(vec):
+    d = distance(Vec(0, 0), vec)
+    return Vec(vec.x / d, vec.y / d)
+    # dx = pt2.x - pt1.x
+    # dy = pt2.y - pt1.y
 
     return Vec(-dy, dx)
 
@@ -142,7 +145,7 @@ def draw_pt(screen_buf, pt):
         return
 
     if int(pt.x / 2) < 0 or \
-       int(pt.x / 2) >= curses.COLS:
+       int(pt.x / 2) >= curses.COLS - 1:
         return
 
     x = int(pt.x)
@@ -169,7 +172,7 @@ def fun(y, x):
 
 
 def distance(body1, body2):
-    return math.sqrt((body1.pos.x - body2.pos.x)**2 + (body1.pos.y - body2.pos.y)**2)
+    return math.sqrt((body1.x - body2.x)**2 + (body1.y - body2.y)**2)
 
 
 def display(scr, screen_buf):
