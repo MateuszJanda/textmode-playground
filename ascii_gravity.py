@@ -7,69 +7,32 @@ import time
 import curses
 import locale
 
-locale.setlocale(locale.LC_ALL, '')    # set your locale
 
-class Body:
-    pass
-
-
-class Vec:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-
+locale.setlocale(locale.LC_ALL, '')
 G = 19.0
 
 
 def main():
     scr = setup()
 
-    # screen_buf = []
-    # for _ in range(curses.LINES):
-    #     screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
-
-    # draw_line(screen_buf)
-
-    star = Body()
-    star.pos = Vec(100, 80)
-    star.mass = 1000.0
-
-    satellite = Body()
-    satellite.pos = Vec(80, 40)
-    satellite.vel = Vec(0, 16)
-    satellite.mass = 5.0
-
-    r = 0
+    star = Body(pos=Vector(100, 80), mass=1000, velocity=Vector(0, 0))
+    satellite = Body(pos=Vector(80, 40), mass=5, velocity=Vector(-14, -7))
 
     t = 0
     freq = 100
     dt = 1.0/freq
 
     screen_buf = clear_buf()
-
     while True:
-        d = distance(star.pos, satellite.pos)
+        distance = magnitude(star.pos, satellite.pos)
 
-        if d <= 1:
+        if distance <= 1:
             break
 
-        # draw_pt(screen_buf, star.pos)
-        # draw_pt(screen_buf, satellite.pos)
+        direction = normalize(sub(star.pos, satellite.pos))
+        Fg = mul_s(direction, (G * star.mass * satellite.mass) / (distance**2))
 
-
-
-        # screen_buf = draw_line(screen_buf, r)
-        # draw_line(screen_buf, r)
-        # if r > 40:
-        #     break
-        # r += 1
-
-        Fg_mag = (G * star.mass * satellite.mass) / (d**2)
-
-        Fg = mul_s(normalize(sub(star.pos, satellite.pos)), Fg_mag)
-
-        satellite.acc = div(Fg, satellite.mass)
+        satellite.acc = div_s(Fg, satellite.mass)
         satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
         satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
 
@@ -81,83 +44,38 @@ def main():
         display(scr, screen_buf)
         t += dt
 
-    # time.sleep(2)
-    curses.endwin()             # Przywraca terminal do oryginalnych ustawień
-
-
-def normalize(vec):
-    d = distance(Vec(0, 0), vec)
-    return Vec(vec.x / d, vec.y / d)
-    # dx = pt2.x - pt1.x
-    # dy = pt2.y - pt1.y
-
-    return Vec(-dy, dx)
-
-def mul_s(vec, val):
-    return Vec(vec.x * val, vec.y * val)
-
-def div(vec, val):
-    return Vec(vec.x / val, vec.y / val)
-
-def sub(pt1, pt2):
-    return Vec(pt1.x - pt2.x, pt1.y - pt2.y)
-
-def add(pt1, pt2):
-    return Vec(pt1.x + pt2.x, pt1.y + pt2.y)
+    curses.endwin()
 
 
 def setup():
     scr = curses.initscr()
-    curses.start_color()        # Potrzebne do definiowania kolorów
-    curses.use_default_colors() # Używaj kolorów terminala
-    curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
-    curses.noecho()             # Nie drukuje znaków na wejściu
-    curses.curs_set(False)      # Wyłącza pokazywanie kursora
+    curses.start_color()
+    curses.use_default_colors()
+    curses.halfdelay(5)
+    curses.noecho()
+    curses.curs_set(False)
     scr.clear()
-
     return scr
 
+
 def clear_buf():
-    screen_buf = []
-    for _ in range(curses.LINES):
-        screen_buf.append((list(u'\u2800' * (curses.COLS - 1))))
-
-    return screen_buf
-
-
-def draw_line(screen_buf, rrr):
-    """ y = 6x + 3, x w [0, 40]"""
-
-    # x < curses.COLS * 2
-    for x in range(rrr):
-        y = 1 * x + 3
-
-        if curses.LINES - 1 - int(y / 4) < 0:
-            continue
-        # screen_buf[int(y / 4)][int(x / 2)] = u'x'
-        uchar = ord(screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)])
-        screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
+    return [list(u'\u2800' * (curses.COLS - 1)) for _ in range(curses.LINES)]
 
 
 def draw_pt(screen_buf, pt):
-    if curses.LINES - 1 - int(pt.y / 4) < 0 or \
-       curses.LINES - 1 - int(pt.y / 4) >= curses.LINES:
+    x = int(pt.x / 2)
+    y = curses.LINES - 1 - int(pt.y / 4)
+
+    if y < 0 or y >= curses.LINES or x < 0 or x >= curses.COLS - 1:
         return
 
-    if int(pt.x / 2) < 0 or \
-       int(pt.x / 2) >= curses.COLS - 1:
-        return
-
-    x = int(pt.x)
-    y = int(pt.y)
-    uchar = ord(screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)])
-    screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | fun(y, x))
+    uchar = ord(screen_buf[y][x])
+    screen_buf[y][x] = unichr(uchar | relative_uchar(pt))
 
 
-
-def fun(y, x):
-    bx = x % 2
-    by = y % 4
+def relative_uchar(pt):
+    bx = int(pt.x) % 2
+    by = int(pt.y) % 4
 
     if bx == 0:
         if by == 0:
@@ -171,20 +89,50 @@ def fun(y, x):
             return 0x20 >> (by -1)
 
 
-def distance(body1, body2):
-    return math.sqrt((body1.x - body2.x)**2 + (body1.y - body2.y)**2)
-
-
 def display(scr, screen_buf):
-    # scr.clear()
-
     for num, line in enumerate(screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
-        # scr.addstr(num, 0, 'asdf')n)
 
     scr.refresh()
 
 
+class Body:
+    def __init__(self, pos, mass, velocity):
+        self.pos = pos
+        self.mass = mass
+        self.vel = velocity
+
+
+class Vector:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
+def magnitude(vec1, vec2):
+    return math.sqrt((vec1.x - vec2.x)**2 + (vec1.y - vec2.y)**2)
+
+
+def normalize(vec):
+    mag = magnitude(Vector(0, 0), vec)
+    return Vector(vec.x / mag, vec.y / mag)
+
+
+def mul_s(vec, s):
+    return Vector(vec.x * s, vec.y * s)
+
+
+def div_s(vec, s):
+    return Vector(vec.x / s, vec.y / s)
+
+
+def sub(vec1, vec2):
+    return Vector(vec1.x - vec2.x, vec1.y - vec2.y)
+
+
+def add(vec1, vec2):
+    return Vector(vec1.x + vec2.x, vec1.y + vec2.y)
+
+
 if __name__ == '__main__':
     main()
-
