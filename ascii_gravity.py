@@ -25,23 +25,16 @@ def main():
     screen_buf = clear_buf()
     while True:
         distance = magnitude(star.pos, satellite.pos)
-
         if distance <= 1:
             break
 
-        direction = normalize(sub(star.pos, satellite.pos))
-        Fg = mul_s(direction, (G * star.mass * satellite.mass) / (distance**2))
-
-        satellite.acc = div_s(Fg, satellite.mass)
-        satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
-        satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
+        calcs(star, satellite, dt)
 
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
+        display(scr, screen_buf)
 
         time.sleep(0.009)
-
-        display(scr, screen_buf)
         t += dt
 
     curses.endwin()
@@ -94,6 +87,16 @@ def display(scr, screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
 
     scr.refresh()
+
+
+def calcs(star, satellite, dt):
+    distance = magnitude(star.pos, satellite.pos)
+    direction = normalize(sub(star.pos, satellite.pos))
+    Fg = mul_s(direction, (G * star.mass * satellite.mass) / (distance**2))
+
+    satellite.acc = div_s(Fg, satellite.mass)
+    satellite.vel = add(satellite.vel, mul_s(satellite.acc, dt))
+    satellite.pos = add(satellite.pos, mul_s(satellite.vel, dt))
 
 
 class Body:
