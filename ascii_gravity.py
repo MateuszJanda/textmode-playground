@@ -16,7 +16,14 @@ def main():
     scr = setup()
 
     star = Body(pos=Vector(100, 80), mass=1000, velocity=Vector(0, 0))
-    satellite = Body(pos=Vector(80, 40), mass=5, velocity=Vector(-14, -7))
+    # satellite = Body(pos=Vector(50, 40), mass=1, velocity=Vector(4, 10))
+    # satellite = Body(pos=Vector(120, 40), mass=1, velocity=Vector(14, 7))
+    # satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(4, 19))
+    satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(15, 25))
+
+    star = Body(pos=Vector(100, 80), mass=1000, velocity=Vector(0, 0))
+    satellite = Body(pos=Vector(50, 40), mass=1, velocity=Vector(14, 7))
+
 
     t = 0
     freq = 100
@@ -32,9 +39,11 @@ def main():
 
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
+
+        # draw_debug(screen_buf, str(satellite.pos.x) + ',   ' + str(satellite.pos.y))
         display(scr, screen_buf)
 
-        time.sleep(0.009)
+        time.sleep(dt)
         t += dt
 
     curses.endwin()
@@ -59,11 +68,17 @@ def draw_pt(screen_buf, pt):
     x = int(pt.x / 2)
     y = curses.LINES - 1 - int(pt.y / 4)
 
-    if y < 0 or y >= curses.LINES or x < 0 or x >= curses.COLS - 1:
+    draw_debug(screen_buf, str(y) + ',   ' + str(pt.y) + ',   ' + str(curses.LINES))
+    if pt.y < 0 or y < 0 or pt.x < 0 or x >= curses.COLS - 1:
         return
 
     uchar = ord(screen_buf[y][x])
     screen_buf[y][x] = unichr(uchar | relative_uchar(pt))
+
+
+def draw_debug(screen_buf, s):
+    padding = curses.COLS - len(s) - 1
+    screen_buf[0] = list(s + padding * u'\u2800')
 
 
 def relative_uchar(pt):
