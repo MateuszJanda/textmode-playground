@@ -31,9 +31,14 @@ def main():
     # satellite = Body(pos=Vector(80, 40), mass=1, velocity=Vector(14, -17))
     # satellite2 = Body(pos=Vector(80, 40), mass=1, velocity=Vector(14, -17))
 
+    # star = Body(pos=Vector(100, 80), mass=10000, velocity=Vector(0, 0))
+    # satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(5, 35))
+    # satellite2 = Body(pos=Vector(80, 40), mass=300, velocity=Vector(14, -17))
+
     star = Body(pos=Vector(100, 80), mass=10000, velocity=Vector(0, 0))
-    satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(5, 35))
-    satellite2 = Body(pos=Vector(80, 40), mass=300, velocity=Vector(14, -17))
+    satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(5, 30))
+    satellite2 = Body(pos=Vector(80, 40), mass=300, velocity=Vector(-14, 47))
+
 
     t = 0
     freq = 100
@@ -87,8 +92,11 @@ def draw_pt(screen_buf, pt):
     x = int(pt.x / 2)
     y = curses.LINES - 1 - int(pt.y / 4)
 
-    if y < 0 or y >= curses.LINES or x < 0 or x >= curses.COLS - 1:
+    # if y < 0 or y >= curses.LINES or x < 0 or x >= curses.COLS - 1:
+        # return
+    if pt.y < 0 or y < 0 or pt.x < 0 or x >= curses.COLS - 1:
         return
+
 
     uchar = ord(screen_buf[y][x])
     screen_buf[y][x] = unichr(uchar | relative_uchar(pt))
