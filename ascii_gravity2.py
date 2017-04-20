@@ -4,6 +4,7 @@
 from __future__ import division
 import math
 import itertools
+import random
 import time
 import curses
 import locale
@@ -36,16 +37,29 @@ def main():
     # satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(5, 35))
     # satellite2 = Body(pos=Vector(80, 40), mass=300, velocity=Vector(14, -17))
 
-    star = Body(pos=Vector(100, 80), mass=10000, velocity=Vector(0, 0))
-    satellite = Body(pos=Vector(30, 40), mass=1, velocity=Vector(5, 30))
-    satellite2 = Body(pos=Vector(80, 40), mass=300, velocity=Vector(-14, 47))
+    star = Body(pos=Vector(100, 80), mass=1000, velocity=Vector(0, 6))
+    satellite = Body(pos=Vector(90, 120), mass=1, velocity=Vector(15, 5))
+    satellite2 = Body(pos=Vector(40, 100), mass=10, velocity=Vector(-14, -7))
 
+
+    star2 = Body(pos=Vector(20, 120), mass=1000, velocity=Vector(0, -4))
+
+    bodies = [ Body(pos=Vector(random.randint(0, (curses.LINES - 1) * 4),
+                               random.randint(0, (curses.COLS - 1) * 2)),
+                    mass=random.randint(1, 2),
+                    velocity=Vector(random.randint(-10, 10),
+                                    random.randint(-10, 10))) for _ in range(20)]
+
+    bodies[0].mass = 2000
+    bodies[0].vel = Vector(0, 0)
 
     t = 0
     freq = 100
     dt = 1.0/freq
 
     screen_buf = clear_buf()
+
+
     while True:
         distance = magnitude(star.pos, satellite.pos)
         if distance <= 1:
@@ -63,14 +77,20 @@ def main():
         # calcs(satellite, satellite2, dt)
         # calcs(satellite2, satellite, dt)
 
-        prev_cals([star, satellite, satellite2], dt)
 
-        draw_pt(screen_buf, star.pos)
-        draw_pt(screen_buf, satellite.pos)
-        draw_pt(screen_buf, satellite2.pos)
+        # prev_cals([star, satellite, satellite2, star2], dt)
+        # prev_cals([star, satellite, satellite2, star2], dt)
+        prev_cals(bodies, dt)
+
+        for b in bodies:
+            draw_pt(screen_buf, b.pos)
+        # draw_pt(screen_buf, star.pos)
+        # draw_pt(screen_buf, star2.pos)
+        # draw_pt(screen_buf, satellite.pos)
+        # draw_pt(screen_buf, satellite2.pos)
         display(scr, screen_buf)
 
-        time.sleep(0.01)
+        # time.sleep(0.01)
         t += dt
 
     curses.endwin()
@@ -184,6 +204,11 @@ def prev_cals(bodies, dt):
 
 def calcs3(body1, body2, dt):
     dist = magnitude(body1.pos, body2.pos)
+
+    if dist == 0:
+        return
+        # exit()
+
     dir1 = normalize(sub(body2.pos, body1.pos))
     dir2 = normalize(sub(body1.pos, body2.pos))
 
