@@ -3,6 +3,7 @@
 
 from __future__ import division
 import math
+import itertools
 import time
 import curses
 import locale
@@ -57,10 +58,12 @@ def main():
         # calcs(star, satellite, dt)
         # calcs(star, satellite2, dt)
         # calcs2(star, satellite2, satellite, dt)
-        calcs2(star, satellite, satellite2, dt)
+        # calcs2(star, satellite, satellite2, dt)
 
         # calcs(satellite, satellite2, dt)
         # calcs(satellite2, satellite, dt)
+
+        prev_cals([star, satellite, satellite2], dt)
 
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
@@ -163,6 +166,31 @@ def calcs2(star, satellite, satellite2, dt):
     satellite2.vel = add(satellite2.vel, mul_s(satellite2.acc, dt))
     satellite2.pos = add(satellite2.pos, mul_s(satellite2.vel, dt))
 
+
+
+
+def prev_cals(bodies, dt):
+    for b in bodies:
+        b.forces = Vector(0, 0)
+
+    for b1, b2 in itertools.combinations(bodies, 2):
+        calcs3(b1, b2, dt)
+
+    for b in bodies:
+        b.acc = div_s(b.forces, b.mass)
+        b.vel = add(b.vel, mul_s(b.acc, dt))
+        b.pos = add(b.pos, mul_s(b.vel, dt))
+
+
+def calcs3(body1, body2, dt):
+    dist = magnitude(body1.pos, body2.pos)
+    dir1 = normalize(sub(body2.pos, body1.pos))
+    dir2 = normalize(sub(body1.pos, body2.pos))
+
+    grav_mag = (G * body1.mass * body2.mass) / (dist**2)
+
+    body1.forces = add(body1.forces, mul_s(dir1, grav_mag))
+    body2.forces = add(body2.forces, mul_s(dir2, grav_mag))
 
 
 class Body:
