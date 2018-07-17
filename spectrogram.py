@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from scipy import signal
+# from scipy import signal
 from scipy.io import wavfile
-import numpy as np
+# import numpy as np
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
 # sample_rate ilość próbek na sekunde
@@ -15,12 +15,12 @@ print(samples.shape[0]/sample_rate) # seconds
 #     print(s)
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
-frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
-print(frequencies.shape)
-print(times.shape)
-print(spectrogram.shape)
-for x in frequencies:
-    print(x)
+# frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+# print(frequencies.shape)
+# print(times.shape)
+# print(spectrogram.shape)
+# for x in frequencies:
+#     print(x)
 
 # plt.plasma()
 
