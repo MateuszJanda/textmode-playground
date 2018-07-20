@@ -147,30 +147,33 @@ def setup_display():
 
 def colors():
     """ Setup lightning colors """
-    GRAY = 2
+    gray = 2
     curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
                                             # daje kolor RGB, ale wartości 0-1000
-    curses.init_pair(GRAY, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
+    curses.init_pair(gray, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
 
-    WHITE = 3
-    curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
+    white = 3
+    curses.init_pair(white, curses.COLOR_WHITE, -1)
 
-    return GRAY, WHITE
+    return gray, white
+
+
+def check_exit_key(scr):
+    ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
+                            # naciśnięty klawisz
+    return ch == ord('q')
 
 
 def main(scr):
-    # esetup()
+    # esetup()  # Just for debug
     setup_display()
-    GRAY, WHITE = colors()
+    gray, white = colors()
 
-    random.seed(4876)
+    random.seed(4876)  # Just for debug
 
     while True:
-        ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
-                                # naciśnięty klawisz
-        scr.clear()             # Czyści ekran
-
-        if ch == ord('q'):
+        scr.clear()
+        if check_exit_key(scr):
             break
 
         lightning, branches = create_lightning()
@@ -184,18 +187,18 @@ def main(scr):
                     continue
 
                 light = i.branch[i.index]
-                scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
+                scr.addstr(light.y, light.x, light.symbol, curses.color_pair(gray))
                 i.index += 1
 
             sleep(0.01)
-            scr.refresh()       # Odświeżanie ekranu
+            scr.refresh()
 
-        blink(scr, lightning, curses.A_BOLD | curses.color_pair(WHITE),
-            curses.A_NORMAL | curses.color_pair(WHITE))
-        blink(scr, lightning, curses.A_BOLD | curses.color_pair(WHITE),
-            curses.A_NORMAL | curses.color_pair(WHITE))
+        blink(scr, lightning, curses.A_BOLD | curses.color_pair(white),
+            curses.A_NORMAL | curses.color_pair(white))
+        blink(scr, lightning, curses.A_BOLD | curses.color_pair(white),
+            curses.A_NORMAL | curses.color_pair(white))
 
-    curses.endwin()             # Przywraca terminal do oryginalnych ustawień
+    curses.endwin()
 
 
 if __name__ == '__main__':
