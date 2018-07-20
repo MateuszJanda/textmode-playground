@@ -5,6 +5,7 @@ from __future__ import division
 import math
 import itertools
 import collections as co
+import random
 import time
 import curses
 import locale
@@ -17,18 +18,13 @@ def main(scr):
     setup()
     scr.clear()
 
-    bodies = [
-        Body(pos=Vector(110, 80), mass=10000, velocity=Vector(0, 0)),
-        Body(pos=Vector(50, 100), mass=10, velocity=Vector(12, 3)),
-        Body(pos=Vector(95, 80), mass=1, velocity=Vector(9, 21))
-    ]
-
+    # bodies = predefined_bodies()
+    bodies = rand_bodies()
+    screen_buf = clear_buf()
     t = 0
     freq = 100
     dt = 1.0/freq
     step = 0
-
-    screen_buf = clear_buf()
 
     while not check_exit_key(scr, step):
         calcs(bodies, dt)
@@ -60,6 +56,27 @@ def check_exit_key(scr, step):
     # Wait for key (defined by halfdelay), and check his code
     ch = scr.getch()
     return ch == ord('q')
+
+
+def predefined_bodies():
+    bodies = [
+        Body(pos=Vector(110, 80), mass=10000, velocity=Vector(0, 0)),
+        Body(pos=Vector(50, 100), mass=10, velocity=Vector(12, 3)),
+        Body(pos=Vector(95, 80), mass=1, velocity=Vector(9, 21))
+    ]
+
+    return bodies
+
+
+def rand_bodies():
+    bodies = []
+    for i in range(15):
+        pos = Vector(random.randint(0, curses.COLS), random.randint(0, curses.LINES))
+        mass = random.randint(1, 1000)
+        velocity = Vector(random.randint(0, 25), random.randint(0, 25))
+        bodies.append(Body(pos, mass, velocity))
+
+    return bodies
 
 
 def clear_buf():
