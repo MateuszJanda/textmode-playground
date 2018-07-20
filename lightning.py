@@ -132,8 +132,7 @@ def indexer(light, branches):
 
 
 def main(scr):
-    esetup()
-    eprint("cols and lines", curses.COLS, curses.LINES)
+    # esetup()
     curses.start_color()        # Potrzebne do definiowania kolorów
     curses.use_default_colors() # Używaj kolorów terminala
     curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
@@ -169,7 +168,6 @@ def main(scr):
                     continue
 
                 light = i.branch[i.index]
-                eprint(light.y, light.x, light.symbol, curses.color_pair(GRAY))
                 scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
                 i.index += 1
 
