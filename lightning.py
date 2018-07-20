@@ -6,10 +6,7 @@ import sys
 import curses
 import random
 from time import sleep
-import os
-import subprocess
 import collections
-from threading import Thread
 
 
 Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
@@ -171,10 +168,8 @@ def main(scr):
 
     random.seed(4876)  # Just for debug
 
-    while True:
+    while not check_exit_key(scr):
         scr.clear()
-        if check_exit_key(scr):
-            break
 
         lightning, branches = create_lightning()
         indexed = [LightningIndex(0, lightning)]
