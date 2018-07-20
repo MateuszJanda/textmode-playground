@@ -4,6 +4,7 @@
 from __future__ import division
 import math
 import itertools
+import collections as co
 import time
 import curses
 import locale
@@ -47,7 +48,7 @@ def main(scr):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    curses.halfdelay(5)
+    curses.halfdelay(1)
     curses.noecho()
     curses.curs_set(False)
 
@@ -105,14 +106,15 @@ def display(scr, screen_buf):
 
 
 def calcs(bodies, dt):
-    for b in bodies:
-        b.forces = Vector(0, 0)
+    forces = co.defaultdict(Vector)
 
-    for b1, b2 in itertools.combinations(bodies, 2):
-        calc_forces(b1, b2, dt)
+    for idx1, idx2 in itertools.combinations(range(len(bodies)), 2):
+        f1, f2 = calc_forces(bodies[idx1], bodies[idx2], dt)
+        forces[idx1] += f1
+        forces[idx2] += f2
 
-    for b in bodies:
-        b.acc = b.forces / b.mass
+    for idx, b in enumerate(bodies):
+        b.acc = forces[idx] / b.mass
         b.vel = b.vel + (b.acc * dt)
         b.pos = b.pos + (b.vel * dt)
 
@@ -125,8 +127,10 @@ def calc_forces(body1, body2, dt):
     dir1 = normalize(body2.pos - body1.pos)
     dir2 = normalize(body1.pos - body2.pos)
     grav_mag = (G * body1.mass * body2.mass) / (dist**2)
-    body1.forces = body1.forces + (dir1 * grav_mag)
-    body2.forces = body2.forces + (dir2 * grav_mag)
+    force1 = dir1 * grav_mag
+    force2 = dir2 * grav_mag
+
+    return force1, force2
 
 
 class Body:
@@ -137,12 +141,17 @@ class Body:
 
 
 class Vector:
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
     def __add__(self, vec):
         return Vector(self.x + vec.x, self.y + vec.y)
+
+    def __iadd__(self, vec):
+        self.x += vec.x
+        self.y += vec.y
+        return self
 
     def __sub__(self, vec):
         return Vector(self.x - vec.x, self.y - vec.y)
