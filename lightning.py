@@ -126,12 +126,13 @@ def blink(scr, lightning, attr1, attr2):
 
 
 def indexer(light, branches):
-    res = []
+    result = []
     for bs in branches:
         if light.x == bs[0].x and light.y == bs[0].y:
-            res.append(LightningIndex(0, bs))
+            result.append(LightningIndex(0, bs))
 
-    return res
+    return result
+
 
 def setup_display():
     """ Setup display - don't know if it still needed, when using wrapper. """
@@ -143,10 +144,11 @@ def setup_display():
 
 
 def colors():
-    """ Setup lightning colors """
+    """ Lightning colors """
+    # Define gray color under index 1 (RBG but values from 0 to 1000)
+    curses.init_color(1, 600, 600, 600)
+    # Define pair under index 2
     gray = 2
-    curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
-                                            # daje kolor RGB, ale wartości 0-1000
     curses.init_pair(gray, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
 
     white = 3
@@ -156,8 +158,8 @@ def colors():
 
 
 def check_exit_key(scr):
-    ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
-                            # naciśnięty klawisz
+    # Wait for key (defined by halfdelay), and check his code
+    ch = scr.getch()
     return ch == ord('q')
 
 
