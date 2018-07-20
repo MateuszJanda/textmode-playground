@@ -30,7 +30,7 @@ class LightningIndex:
 
 
 def create_lightning():
-    x = curses.COLS / 2 + random.randint(-10, 10)
+    x = curses.COLS // 2 + random.randint(-10, 10)
     y = 0
     lightning = [Light(y, x, random.choice('/|\\'))]
     branches = []
