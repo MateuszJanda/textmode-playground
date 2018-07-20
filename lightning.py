@@ -127,57 +127,61 @@ def thunderSound():
         stdout=FNULL, stderr=subprocess.STDOUT)
 
 
-scr = curses.initscr()
-curses.start_color()        # Potrzebne do definiowania kolorów
-curses.use_default_colors() # Używaj kolorów terminala
-curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
-curses.noecho()             # Nie drukuje znaków na wejściu
-curses.curs_set(False)      # Wyłącza pokazywanie kursora
+def main(scr):
+    curses.start_color()        # Potrzebne do definiowania kolorów
+    curses.use_default_colors() # Używaj kolorów terminala
+    curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
+    curses.noecho()             # Nie drukuje znaków na wejściu
+    curses.curs_set(False)      # Wyłącza pokazywanie kursora
 
-GRAY = 2
-curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
-                                        # daje kolor RGB, ale wartości 0-1000
-curses.init_pair(GRAY, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
+    GRAY = 2
+    curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
+                                            # daje kolor RGB, ale wartości 0-1000
+    curses.init_pair(GRAY, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
 
-WHITE = 3
-curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
+    WHITE = 3
+    curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
-random.seed(4876)
-th = Thread(target=thunderSound)
+    random.seed(4876)
+    th = Thread(target=thunderSound)
 
-while True:
-    ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
-                            # naciśnięty klawisz
-    scr.clear()             # Czyści ekran
+    while True:
+        ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
+                                # naciśnięty klawisz
+        scr.clear()             # Czyści ekran
 
-    if ch == ord('q'):
+        if ch == ord('q'):
+            break
+
+        lightning, branches = createLightning()
+        indexed = [LightningIndex(0, lightning)]
+
+        for l in lightning:
+            indexed += indexer(l, branches)
+
+            for i in indexed:
+                if i.index >= len(i.branch):
+                    continue
+
+                light = i.branch[i.index]
+                scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
+                i.index += 1
+
+            sleep(0.01)
+            scr.refresh()       # Odświeżanie ekranu
+
+        th.start()
+
+        blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
+        blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
+
         break
 
-    lightning, branches = createLightning()
-    indexed = [LightningIndex(0, lightning)]
+    th.join()
+    curses.endwin()             # Przywraca terminal do oryginalnych ustawień
 
-    for l in lightning:
-        indexed += indexer(l, branches)
 
-        for i in indexed:
-            if i.index >= len(i.branch):
-                continue
-
-            light = i.branch[i.index]
-            scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
-            i.index += 1
-
-        sleep(0.01)
-        scr.refresh()       # Odświeżanie ekranu
-
-    th.start()
-
-    blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
-        curses.A_NORMAL | curses.color_pair(WHITE))
-    blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
-        curses.A_NORMAL | curses.color_pair(WHITE))
-
-    break
-
-th.join()
-curses.endwin()             # Przywraca terminal do oryginalnych ustawień
+if __name__ == '__main__':
+    curses.wrapper(main)
