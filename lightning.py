@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+import sys
 import curses
 import random
 from time import sleep
@@ -11,6 +13,14 @@ from threading import Thread
 
 
 Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
+
+
+def esetup():
+    sys.stderr = open('/dev/pts/2', 'w')
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr)
 
 
 class LightningIndex:
@@ -128,6 +138,7 @@ def thunder_sound():
 
 
 def main(scr):
+    esetup()
     curses.start_color()        # Potrzebne do definiowania kolorów
     curses.use_default_colors() # Używaj kolorów terminala
     curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
@@ -164,6 +175,7 @@ def main(scr):
                     continue
 
                 light = i.branch[i.index]
+                eprint(light.y, light.x, light.symbol, curses.color_pair(GRAY))
                 scr.addstr(light.y, light.x, light.symbol, curses.color_pair(GRAY))
                 i.index += 1
 
