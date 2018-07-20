@@ -28,9 +28,10 @@ def main(scr):
     t = 0
     freq = 100
     dt = 1.0/freq
+    step = 0
 
     screen_buf = clear_buf()
-    while True:
+    while not check_exit_key(scr, step):
         distance = magnitude(star.pos, satellite.pos)
         if distance <= 1:
             break
@@ -40,11 +41,12 @@ def main(scr):
         draw_pt(screen_buf, star.pos)
         draw_pt(screen_buf, satellite.pos)
 
-        # draw_debug(screen_buf, str(satellite.pos.x) + ',   ' + str(satellite.pos.y))
+        # draw_debug(screen_buf, str(step))
         display(scr, screen_buf)
 
         time.sleep(dt)
         t += dt
+        step += 1
 
     curses.endwin()
 
@@ -52,9 +54,18 @@ def main(scr):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    curses.halfdelay(5)
+    curses.halfdelay(1)
     curses.noecho()
     curses.curs_set(False)
+
+
+def check_exit_key(scr, step):
+    # getch is very slow, so check every 200 steps only
+    if step % 200:
+        return False
+    # Wait for key (defined by halfdelay), and check his code
+    ch = scr.getch()
+    return ch == ord('q')
 
 
 def clear_buf():
