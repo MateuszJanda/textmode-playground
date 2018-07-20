@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division,  print_function
+import sys
 import math
 import itertools
 import collections as co
@@ -11,15 +12,28 @@ import curses
 import locale
 
 
-G = 1.0
+GRAVITY = 1.0
+
+
+def esetup():
+    """ Hardcoded stderr console for debug prints.
+    Console must exist before running script. """
+    sys.stderr = open('/dev/pts/1', 'w')
+
+
+def eprint(*args, **kwargs):
+    """ Debug print function (on stderr) """
+    print(*args, file=sys.stderr)
 
 
 def main(scr):
-    setup()
+    esetup()
+    setup_curses()
     scr.clear()
 
     # bodies = predefined_bodies()
-    bodies = rand_bodies()
+    bodies = predefined_bodies2()
+    # bodies = rand_bodies()
     screen_buf = clear_buf()
     t = 0
     freq = 100
@@ -31,7 +45,7 @@ def main(scr):
 
         for b in bodies:
             draw_pt(screen_buf, b.pos)
-        draw_info(screen_buf,  '[%.2f]: %.4f %.4f' % (t, bodies[1].pos.x, bodies[1].pos.y))
+        draw_info(screen_buf,  '[%05.2f]: %8.4f %8.4f' % (t, bodies[1].pos.x, bodies[1].pos.y))
         display(scr, screen_buf)
 
         time.sleep(dt)
@@ -41,7 +55,7 @@ def main(scr):
     curses.endwin()
 
 
-def setup():
+def setup_curses():
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
@@ -50,7 +64,7 @@ def setup():
 
 
 def check_exit_key(scr, step):
-    # getch is very slow, so check every 200 steps only
+    # getch() is very slow, so check every 200 steps only
     if step % 200:
         return False
     # Wait for key (defined by halfdelay), and check his code
@@ -68,13 +82,26 @@ def predefined_bodies():
     return bodies
 
 
+def predefined_bodies2():
+    bodies = [
+        Body(pos=Vector(110, 80), mass=10000, velocity=Vector(0, 0)),
+        Body(pos=Vector(50, 100), mass=10, velocity=Vector(12, 3)),
+        Body(pos=Vector(95, 80), mass=1, velocity=Vector(9, 21)),
+        Body(pos=Vector(145, 120), mass=104, velocity=Vector(-9, -20))
+    ]
+
+    return bodies
+
+
 def rand_bodies():
     bodies = []
-    for i in range(15):
+    for i in range(5):
         pos = Vector(random.randint(0, curses.COLS), random.randint(0, curses.LINES))
         mass = random.randint(1, 1000)
-        velocity = Vector(random.randint(0, 25), random.randint(0, 25))
+        velocity = Vector(random.randint(-25, 25), random.randint(-25, 25))
         bodies.append(Body(pos, mass, velocity))
+
+    bodies[0].mass = 10000
 
     return bodies
 
@@ -84,8 +111,7 @@ def clear_buf():
 
 
 def draw_info(screen_buf, s):
-    padding = curses.COLS - len(s) - 1
-    screen_buf[0] = list(s) + screen_buf[0][padding:]
+    screen_buf[0] = list(s) + screen_buf[0][len(s):]
 
 
 def draw_pt(screen_buf, pt):
@@ -143,7 +169,7 @@ def calc_forces(body1, body2, dt):
 
     dir1 = normalize(body2.pos - body1.pos)
     dir2 = normalize(body1.pos - body2.pos)
-    grav_mag = (G * body1.mass * body2.mass) / (dist**2)
+    grav_mag = (GRAVITY * body1.mass * body2.mass) / (dist**2)
     force1 = dir1 * grav_mag
     force2 = dir2 * grav_mag
 
