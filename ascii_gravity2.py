@@ -9,12 +9,12 @@ import curses
 import locale
 
 
-locale.setlocale(locale.LC_ALL, '')
 G = 1.0
 
 
-def main():
-    scr = setup()
+def main(scr):
+    setup()
+    scr.clear()
 
     bodies = [
         Body(pos=Vector(110, 80), mass=10000, velocity=Vector(0, 0)),
@@ -42,14 +42,11 @@ def main():
 
 
 def setup():
-    scr = curses.initscr()
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(5)
     curses.noecho()
     curses.curs_set(False)
-    scr.clear()
-    return scr
 
 
 def clear_buf():
@@ -159,4 +156,5 @@ def add(vec1, vec2):
 
 
 if __name__ == '__main__':
-    main()
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(main)
