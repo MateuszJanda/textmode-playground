@@ -108,7 +108,7 @@ def create_branch(prev, root):
     return branch
 
 
-def blink(lightning, attr1, attr2):
+def blink(scr, lightning, attr1, attr2):
     for l in lightning:
         scr.addstr(l.y, l.x, l.symbol, attr1)
 
@@ -131,14 +131,9 @@ def indexer(light, branches):
     return res
 
 
-def thunder_sound():
-    FNULL = open(os.devnull, 'w')
-    subprocess.call(['ffplay', '-nodisp', '-autoexit', 'thunder.mp3'],
-        stdout=FNULL, stderr=subprocess.STDOUT)
-
-
 def main(scr):
     esetup()
+    eprint("cols and lines", curses.COLS, curses.LINES)
     curses.start_color()        # Potrzebne do definiowania kolorów
     curses.use_default_colors() # Używaj kolorów terminala
     curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
@@ -154,7 +149,6 @@ def main(scr):
     curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
     random.seed(4876)
-    th = Thread(target=thunder_sound)
 
     while True:
         ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
@@ -182,16 +176,11 @@ def main(scr):
             sleep(0.01)
             scr.refresh()       # Odświeżanie ekranu
 
-        th.start()
-
-        blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+        blink(scr, lightning, curses.A_BOLD | curses.color_pair(WHITE),
             curses.A_NORMAL | curses.color_pair(WHITE))
-        blink(lightning, curses.A_BOLD | curses.color_pair(WHITE),
+        blink(scr, lightning, curses.A_BOLD | curses.color_pair(WHITE),
             curses.A_NORMAL | curses.color_pair(WHITE))
 
-        break
-
-    th.join()
     curses.endwin()             # Przywraca terminal do oryginalnych ustawień
 
 
