@@ -19,7 +19,7 @@ class LightningIndex:
         self.branch = branch
 
 
-def createLightning():
+def create_lightning():
     x = curses.COLS / 2 + random.randint(-10, 10)
     y = 0
     lightning = [Light(y, x, random.choice('/|\\'))]
@@ -52,14 +52,14 @@ def createLightning():
                 y += 1
 
         if random.randint(0, 30) == 1:
-            branches.append(createBranch(lightning[-1], Light(y, x, symbol)))
+            branches.append(create_branch(lightning[-1], Light(y, x, symbol)))
 
         lightning.append(Light(y, x, symbol))
 
     return lightning, branches
 
 
-def createBranch(prev, root):
+def create_branch(prev, root):
     branch = [prev, root]
     y = root.y
     x = root.x
@@ -121,7 +121,7 @@ def indexer(light, branches):
     return res
 
 
-def thunderSound():
+def thunder_sound():
     FNULL = open(os.devnull, 'w')
     subprocess.call(['ffplay', '-nodisp', '-autoexit', 'thunder.mp3'],
         stdout=FNULL, stderr=subprocess.STDOUT)
@@ -143,7 +143,7 @@ def main(scr):
     curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
 
     random.seed(4876)
-    th = Thread(target=thunderSound)
+    th = Thread(target=thunder_sound)
 
     while True:
         ch = scr.getch()        # Oczekiwanie aż upłynie czas, lub albo zostanie
@@ -153,7 +153,7 @@ def main(scr):
         if ch == ord('q'):
             break
 
-        lightning, branches = createLightning()
+        lightning, branches = create_lightning()
         indexed = [LightningIndex(0, lightning)]
 
         for l in lightning:
