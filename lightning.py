@@ -16,10 +16,13 @@ Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
 
 
 def esetup():
+    """ Hardcoded stderr console for debug prints.
+    Console must exist before running script. """
     sys.stderr = open('/dev/pts/2', 'w')
 
 
 def eprint(*args, **kwargs):
+    """ Debug print function (on stderr) """
     print(*args, file=sys.stderr)
 
 
@@ -30,6 +33,7 @@ class LightningIndex:
 
 
 def create_lightning():
+    """ Create lightning - random path with branches """
     x = curses.COLS // 2 + random.randint(-10, 10)
     y = 0
     lightning = [Light(y, x, random.choice('/|\\'))]
@@ -70,6 +74,7 @@ def create_lightning():
 
 
 def create_branch(prev, root):
+    """ Create lightning branches. Similar like create_lightning """
     branch = [prev, root]
     y = root.y
     x = root.x
@@ -109,6 +114,7 @@ def create_branch(prev, root):
 
 
 def blink(scr, lightning, attr1, attr2):
+    """ Blink main lightning branch on 0.1 seconds. Called when lightning hit ground. """
     for l in lightning:
         scr.addstr(l.y, l.x, l.symbol, attr1)
 
@@ -130,15 +136,17 @@ def indexer(light, branches):
 
     return res
 
-
-def main(scr):
-    # esetup()
+def setup_display():
+    """ Setup display - don't know if it still needed, when using wrapper. """
     curses.start_color()        # Potrzebne do definiowania kolorów
     curses.use_default_colors() # Używaj kolorów terminala
     curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
     curses.noecho()             # Nie drukuje znaków na wejściu
     curses.curs_set(False)      # Wyłącza pokazywanie kursora
 
+
+def colors():
+    """ Setup lightning colors """
     GRAY = 2
     curses.init_color(1, 600, 600, 600)     # Zdefinuj kolor pod identyfikatorem 1,
                                             # daje kolor RGB, ale wartości 0-1000
@@ -146,6 +154,14 @@ def main(scr):
 
     WHITE = 3
     curses.init_pair(WHITE, curses.COLOR_WHITE, -1)
+
+    return GRAY, WHITE
+
+
+def main(scr):
+    # esetup()
+    setup_display()
+    GRAY, WHITE = colors()
 
     random.seed(4876)
 
