@@ -4,6 +4,8 @@ import matplotlib.cm as cm
 from scipy.io import wavfile
 # import numpy as np
 
+# https://pl.wikipedia.org/wiki/Spektrogram
+
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
 # sample_rate ilość próbek na sekunde
 # samples - dla 32-bit PCM, będą to liczby w zakresie [-2147483648, 2147483647]
@@ -24,8 +26,19 @@ print(samples.shape[0]/sample_rate) # seconds
 
 # plt.plasma()
 
+print(type(cm.inferno))
+print(dir(cm.inferno))
+print(cm.inferno.N)
+# for k, v in cm.inferno.item():
+    # print(k, v)
+print(len(cm.inferno.colors)) # of RGB
+
+
 # plt.pcolormesh(times, frequencies, 10 * np.log10(spectrogram), animated=True)
 # plt.pcolormesh(times, frequencies, spectrogram, animated=True)
+
+
+
 
 # plt.imshow(spectrogram, cmap=cm.plasma)
 plt.specgram(samples, Fs=sample_rate, cmap=cm.inferno)
