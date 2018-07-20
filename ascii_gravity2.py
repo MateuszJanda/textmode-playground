@@ -25,9 +25,11 @@ def main(scr):
     t = 0
     freq = 100
     dt = 1.0/freq
+    step = 0
+
     screen_buf = clear_buf()
 
-    while True:
+    while not check_exit_key(scr, step):
         calcs(bodies, dt)
 
         for b in bodies:
@@ -35,8 +37,9 @@ def main(scr):
         draw_info(screen_buf,  '[%.2f]: %.4f %.4f' % (t, bodies[1].pos.x, bodies[1].pos.y))
         display(scr, screen_buf)
 
-        time.sleep(0.01)
+        time.sleep(dt)
         t += dt
+        step += 1
 
     curses.endwin()
 
@@ -47,6 +50,15 @@ def setup():
     curses.halfdelay(5)
     curses.noecho()
     curses.curs_set(False)
+
+
+def check_exit_key(scr, step):
+    # getch is very slow, so check every 200 steps only
+    if step % 200:
+        return False
+    # Wait for key (defined by halfdelay), and check his code
+    ch = scr.getch()
+    return ch == ord('q')
 
 
 def clear_buf():
@@ -148,7 +160,7 @@ def magnitude(vec1, vec2):
 
 def normalize(vec):
     mag = magnitude(Vector(0, 0), vec)
-    return Vector(vec.x / mag, vec.y / mag)
+    return vec / mag
 
 
 if __name__ == '__main__':
