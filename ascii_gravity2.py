@@ -100,9 +100,9 @@ def calcs(bodies, dt):
         calc_forces(b1, b2, dt)
 
     for b in bodies:
-        b.acc = div_s(b.forces, b.mass)
-        b.vel = add(b.vel, mul_s(b.acc, dt))
-        b.pos = add(b.pos, mul_s(b.vel, dt))
+        b.acc = b.forces / b.mass
+        b.vel = b.vel + (b.acc * dt)
+        b.pos = b.pos + (b.vel * dt)
 
 
 def calc_forces(body1, body2, dt):
@@ -110,11 +110,11 @@ def calc_forces(body1, body2, dt):
     if dist < 1:
         exit()
 
-    dir1 = normalize(sub(body2.pos, body1.pos))
-    dir2 = normalize(sub(body1.pos, body2.pos))
+    dir1 = normalize(body2.pos - body1.pos)
+    dir2 = normalize(body1.pos - body2.pos)
     grav_mag = (G * body1.mass * body2.mass) / (dist**2)
-    body1.forces = add(body1.forces, mul_s(dir1, grav_mag))
-    body2.forces = add(body2.forces, mul_s(dir2, grav_mag))
+    body1.forces = body1.forces + (dir1 * grav_mag)
+    body2.forces = body2.forces + (dir2 * grav_mag)
 
 
 class Body:
@@ -129,6 +129,18 @@ class Vector:
         self.x = x
         self.y = y
 
+    def __add__(self, vec):
+        return Vector(self.x + vec.x, self.y + vec.y)
+
+    def __sub__(self, vec):
+        return Vector(self.x - vec.x, self.y - vec.y)
+
+    def __mul__(self, scalar):
+        return Vector(self.x * scalar, self.y * scalar)
+
+    def __truediv__(self, scalar):
+        return Vector(self.x / scalar, self.y / scalar)
+
 
 def magnitude(vec1, vec2):
     return math.sqrt((vec1.x - vec2.x)**2 + (vec1.y - vec2.y)**2)
@@ -137,22 +149,6 @@ def magnitude(vec1, vec2):
 def normalize(vec):
     mag = magnitude(Vector(0, 0), vec)
     return Vector(vec.x / mag, vec.y / mag)
-
-
-def mul_s(vec, s):
-    return Vector(vec.x * s, vec.y * s)
-
-
-def div_s(vec, s):
-    return Vector(vec.x / s, vec.y / s)
-
-
-def sub(vec1, vec2):
-    return Vector(vec1.x - vec2.x, vec1.y - vec2.y)
-
-
-def add(vec1, vec2):
-    return Vector(vec1.x + vec2.x, vec1.y + vec2.y)
 
 
 if __name__ == '__main__':
