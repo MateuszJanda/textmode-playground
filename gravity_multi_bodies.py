@@ -13,6 +13,7 @@ import locale
 
 
 GRAVITY = 1.0
+BLANK_BRAILLE = u'\u2800'
 
 
 def esetup():
@@ -107,7 +108,7 @@ def rand_bodies():
 
 
 def clear_buf():
-    return [list(u'\u2800' * (curses.COLS - 1)) for _ in range(curses.LINES)]
+    return [list(BLANK_BRAILLE * (curses.COLS - 1)) for _ in range(curses.LINES)]
 
 
 def draw_info(screen_buf, s):
