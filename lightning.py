@@ -9,7 +9,7 @@ from time import sleep
 import collections
 
 
-Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
+LightPart = collections.namedtuple('LightPart', ['y', 'x', 'symbol'])
 
 
 def esetup():
@@ -24,19 +24,19 @@ def eprint(*args, **kwargs):
 
 
 class LightningIndex:
-    def __init__(self, index, branch):
-        self.index = index
+    def __init__(self, branch):
+        self.index = 0
         self.branch = branch
 
 
-def create_lightning():
-    """ Create lightning - random path with branches """
+def lightning():
+    """ Create main lightning with random lightning branches """
     x = curses.COLS // 2 + random.randint(-10, 10)
     y = 0
-    lightning = [Light(y, x, random.choice('/|\\'))]
+    root = [LightPart(y, x, random.choice('/|\\'))]
     branches = []
     while y < curses.LINES - 1:
-        _, _, prev_symbol = lightning[-1]
+        _, _, prev_symbol = root[-1]
         if prev_symbol == '|':
             y += 1
             symbol = random.choice('/|\\')
@@ -53,7 +53,7 @@ def create_lightning():
             if symbol != '_':
                 y += 1
         elif prev_symbol == '_':
-            if lightning[-1].x < lightning[-2].x:
+            if root[-1].x < root[-2].x:
                 symbol = random.choice('/_')
                 x -= 1
             else:
@@ -63,15 +63,15 @@ def create_lightning():
                 y += 1
 
         if random.randint(0, 30) == 1:
-            branches.append(create_branch(lightning[-1], Light(y, x, symbol)))
+            branches.append(lightning_branch(root[-1], LightPart(y, x, symbol)))
 
-        lightning.append(Light(y, x, symbol))
+        root.append(LightPart(y, x, symbol))
 
-    return lightning, branches
+    return root, branches
 
 
-def create_branch(prev, root):
-    """ Create lightning branches. Similar like create_lightning """
+def lightning_branch(prev, root):
+    """ Create lightning branches. Similar like lightning """
     branch = [prev, root]
     y = root.y
     x = root.x
@@ -104,14 +104,14 @@ def create_branch(prev, root):
 
         if x < 0 or x >= curses.COLS or y < 0 or y >= curses.LINES:
             break
-        branch.append(Light(y, x, symbol))
+        branch.append(LightPart(y, x, symbol))
 
     del branch[0]
     return branch
 
 
 def blink(scr, lightning, attr1, attr2):
-    """ Blink main lightning branch on 0.1 seconds. Called when lightning hit ground. """
+    """ Blink lightning on 0.1 seconds. Called when lightning hit ground. """
     for l in lightning:
         scr.addstr(l.y, l.x, l.symbol, attr1)
 
@@ -125,11 +125,11 @@ def blink(scr, lightning, attr1, attr2):
     scr.refresh()
 
 
-def indexer(light, branches):
+def indexer(light_part, branches):
     result = []
-    for bs in branches:
-        if light.x == bs[0].x and light.y == bs[0].y:
-            result.append(LightningIndex(0, bs))
+    for b in branches:
+        if light_part.x == b[0].x and light_part.y == b[0].y:
+            result.append(LightningIndex(b))
 
     return result
 
@@ -144,7 +144,7 @@ def setup_curses():
 
 def colors():
     """ Lightning colors """
-    # Define gray color under index 1 (RBG but values from 0 to 1000)
+    # Define gray color under index 1 (RBG, value rane [0, 1000])
     curses.init_color(1, 600, 600, 600)
     # Define pair under index 2
     gray = 2
@@ -172,11 +172,11 @@ def main(scr):
     while not check_exit_key(scr):
         scr.clear()
 
-        lightning, branches = create_lightning()
-        indexed = [LightningIndex(0, lightning)]
+        lightning_root, lightning_branches = lightning()
+        indexed = [LightningIndex(lightning_root)]
 
-        for l in lightning:
-            indexed += indexer(l, branches)
+        for l in lightning_root:
+            indexed += indexer(l, lightning_branches)
 
             for i in indexed:
                 if i.index >= len(i.branch):
@@ -189,9 +189,9 @@ def main(scr):
             sleep(0.01)
             scr.refresh()
 
-        blink(scr, lightning, curses.A_BOLD | curses.color_pair(white),
+        blink(scr, lightning_root, curses.A_BOLD | curses.color_pair(white),
             curses.A_NORMAL | curses.color_pair(white))
-        blink(scr, lightning, curses.A_BOLD | curses.color_pair(white),
+        blink(scr, lightning_root, curses.A_BOLD | curses.color_pair(white),
             curses.A_NORMAL | curses.color_pair(white))
 
 

@@ -36,8 +36,7 @@ def main(scr):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    curses.halfdelay(5)
-    curses.noecho()
+    curses.halfdelay(1)
     curses.curs_set(False)
 
 
