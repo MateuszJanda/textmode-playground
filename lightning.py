@@ -13,13 +13,13 @@ Light = collections.namedtuple('Light', ['y', 'x', 'symbol'])
 
 
 def esetup():
-    """ Hardcoded stderr console for debug prints.
+    """ Hard-coded std err console for debug prints.
     Console must exist before running script. """
     sys.stderr = open('/dev/pts/2', 'w')
 
 
 def eprint(*args, **kwargs):
-    """ Debug print function (on stderr) """
+    """ Debug print function (on std err) """
     print(*args, file=sys.stderr)
 
 

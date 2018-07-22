@@ -41,9 +41,9 @@ def setup():
     curses.curs_set(False)
 
 
-def draw_line(screen_buf, num):
+def draw_line(screen_buf, num, f=lambda x:1*x+3):
     for x in range(num):
-        y = 1 * x + 3
+        y = f(x)
 
         if curses.LINES - 1 - int(y / 4) < 0:
             continue
