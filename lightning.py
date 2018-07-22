@@ -134,13 +134,12 @@ def indexer(light, branches):
     return result
 
 
-def setup_display():
-    """ Setup display - don't know if it still needed, when using wrapper. """
-    curses.start_color()        # Potrzebne do definiowania kolorów
-    curses.use_default_colors() # Używaj kolorów terminala
-    curses.halfdelay(5)         # Ile częśći sekundy czekamy na klawisz, od 1 do 255
-    curses.noecho()             # Nie drukuje znaków na wejściu
-    curses.curs_set(False)      # Wyłącza pokazywanie kursora
+def setup_curses():
+    """ Setup curses """
+    curses.start_color()        # Needed to define colors
+    curses.use_default_colors() # Use terminal colors
+    curses.halfdelay(1)         # Wait x tenths of seconds for key
+    curses.curs_set(False)      # Disable cursor
 
 
 def colors():
@@ -158,14 +157,14 @@ def colors():
 
 
 def check_exit_key(scr):
-    # Wait for key (defined by halfdelay), and check his code
+    # Wait for key (time defined by halfdelay)
     ch = scr.getch()
     return ch == ord('q')
 
 
 def main(scr):
     # esetup()  # Just for debug
-    setup_display()
+    setup_curses()
     gray, white = colors()
 
     random.seed(4876)  # Just for debug
@@ -194,8 +193,6 @@ def main(scr):
             curses.A_NORMAL | curses.color_pair(white))
         blink(scr, lightning, curses.A_BOLD | curses.color_pair(white),
             curses.A_NORMAL | curses.color_pair(white))
-
-    curses.endwin()
 
 
 if __name__ == '__main__':

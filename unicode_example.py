@@ -6,6 +6,7 @@ import locale
 import time
 
 """
+Useful links:
 http://stackoverflow.com/questions/1279341/how-do-i-use-extended-characters-in-pythons-curses-library
 https://en.wikipedia.org/wiki/Braille_Patterns
 """
@@ -19,8 +20,6 @@ def main(scr):
 
     while not check_exit_key(scr):
         time.sleep(0.1)
-
-    curses.endwin()
 
 
 def check_exit_key(scr):
