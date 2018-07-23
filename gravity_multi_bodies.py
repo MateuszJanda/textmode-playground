@@ -157,7 +157,13 @@ def draw_pt(screen_buf, pt):
         return
 
     uchar = ord(screen_buf[y][x])
-    screen_buf[y][x] = unichr(uchar | relative_uchar(pt))
+    screen_buf[y][x] = unicode_char(uchar | relative_uchar(pt))
+
+
+def unicode_char(param):
+    if sys.version_info[0] == 2:
+        return unichr(param)
+    return chr(param)
 
 
 def relative_uchar(pt):
