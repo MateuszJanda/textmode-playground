@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import curses
-from curses.textpad import Textbox, rectangle
-import random
-from time import sleep
-import locale
-
-
 """
 |     .-.
 |    /   \         .-.
@@ -19,41 +12,63 @@ import locale
 unknown
 """
 
+import curses
+import math
+import random
+from time import sleep
+import locale
 
-stdscr = curses.initscr()
-curses.halfdelay(5)           # How many tenths of a second are waited, from 1 to 255
-curses.noecho()               # Wont print the input
-curses.curs_set(0)
 
-stdscr.clear()
-stdscr.refresh()
+BLANK_BRAILLE = u'\u2800'
 
-locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
-i = 0x2800
-while True:
-    char = stdscr.getch()        # This blocks (waits) until the time has elapsed,
-                              # or there is input to be handled
+def main(scr):
+    setup_curses()
+    scr.clear()
 
-    if char == ord('q'):
-        break
-    elif char == curses.KEY_LEFT:
-        break
+    buf = clean_buf()
+    x = 0
 
-    # s = u''.join(wave)
-    # s = ' '.join(wave)
-    # stdscr.addstr(2, 10, s.encode('utf-8'))
-    # stdscr.addstr(2, 10, u'\u2833'.encode('utf-8'))
-    # stdscr.addstr(2, 10, s)
-    # stdscr.addstr(2, 10, unichr(i).encode('utf-8'))
-    stdscr.addch(ord(u'\u2833'))
-    # print unichr(i).encode('utf-8')
-    i += 1
-    sleep(0.1)
-    stdscr.refresh()
+    while not check_exit_key(scr):
+        shift_buf(buf)
+        draw_pt(buf, x)
+        show(buf)
 
-    continue
-    wave = wave[1:]
-    wave.append(unichr(0x2800 + random.randint(0, 0xff)))
+        x += 1
+        sleep(0.1)
+        scr.refresh()
 
-curses.endwin()
+
+def setup_curses():
+    curses.use_default_colors()
+    curses.halfdelay(1)
+    curses.curs_set(False)
+
+
+def clean_buf():
+    return [list(BLANK_BRAILLE * (curses.COLS - 1)) for _ in range(curses.LINES)]
+
+
+def check_exit_key(scr):
+    """ Wait for key (defined by halfdelay), and check if q """
+    ch = scr.getch()
+    return ch == ord('q')
+
+
+def shift_buf(buf):
+    pass
+
+
+def draw_pt(buf, x, f=lambda x: 3*math.sin(x*3)):
+    pass
+
+
+def show(buf):
+    pass
+
+
+if __name__ == '__main__':
+    locale.setlocale(locale.LC_ALL, '')
+    # locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    curses.wrapper(main)
+
