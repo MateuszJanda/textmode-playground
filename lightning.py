@@ -55,10 +55,10 @@ def eprint(*args, **kwargs):
 
 def setup_curses():
     """ Setup curses """
-    curses.start_color()        # Needed to define setup_colors
-    curses.use_default_colors() # Use terminal setup_colors
-    curses.halfdelay(1)         # Wait x tenths of seconds for key
-    curses.curs_set(False)      # Disable cursor
+    curses.start_color()         # Needed to define setup_colors
+    curses.use_default_colors()  # Use terminal colors
+    curses.halfdelay(1)          # Wait x tenths of seconds for key
+    curses.curs_set(False)       # Disable cursor
 
 
 def setup_colors():
@@ -83,7 +83,7 @@ def check_exit_key(scr):
 
 
 def lightning():
-    """ Create main lightning with random lightning branches """
+    """ Create root lightning with random lightning branches """
     x = curses.COLS // 2 + random.randint(-10, 10)
     y = 0
     root = [LightPart(y, x, random.choice('/|\\'))]
@@ -124,7 +124,7 @@ def lightning():
 
 
 def lightning_branch(prev, root):
-    """ Create lightning branches. Similar like lightning """
+    """ Create lightning branches. Similar to lightning """
     branch = [prev, root]
     y = root.y
     x = root.x
