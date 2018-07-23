@@ -9,24 +9,28 @@ from time import sleep
 import collections
 
 
+GRAY = 2
+WHITE = 3
+
 LightPart = collections.namedtuple('LightPart', ['y', 'x', 'symbol'])
 
 
+class Track:
+    """ Keep tracking which part of lightning (root, branch) was drawn """
+    def __init__(self, branch):
+        self.branch_idx = 0
+        self.branch = branch
+
+
 def esetup():
-    """ Hard-coded std err console for debug prints.
-    Console must exist before running script. """
+    """ Hard-coded console for debug prints (std err).
+    Console must exist before running this script. """
     sys.stderr = open('/dev/pts/2', 'w')
 
 
 def eprint(*args, **kwargs):
     """ Debug print function (on std err) """
     print(*args, file=sys.stderr)
-
-
-class LightningIndex:
-    def __init__(self, branch):
-        self.index = 0
-        self.branch = branch
 
 
 def lightning():
@@ -125,74 +129,85 @@ def blink(scr, lightning, attr1, attr2):
     scr.refresh()
 
 
-def indexer(light_part, branches):
-    result = []
+def add_starting_tracks(light_part, branches):
+    """ Add all branches that start at given position """
+    new_tracks = []
     for b in branches:
         if light_part.x == b[0].x and light_part.y == b[0].y:
-            result.append(LightningIndex(b))
+            new_tracks.append(Track(b))
 
-    return result
+    return new_tracks
 
 
 def setup_curses():
     """ Setup curses """
-    curses.start_color()        # Needed to define colors
-    curses.use_default_colors() # Use terminal colors
+    curses.start_color()        # Needed to define setup_colors
+    curses.use_default_colors() # Use terminal setup_colors
     curses.halfdelay(1)         # Wait x tenths of seconds for key
     curses.curs_set(False)      # Disable cursor
 
 
-def colors():
-    """ Lightning colors """
+def setup_colors():
+    """ Setup colors """
+    gray_fg = 1
+    transparent_bg = -1
+
     # Define gray color under index 1 (RBG, value rane [0, 1000])
-    curses.init_color(1, 600, 600, 600)
-    # Define pair under index 2
-    gray = 2
-    curses.init_pair(gray, 1, -1)           # Stwórz parę tło/czcionka. -1 przeźroczyste
+    curses.init_color(gray_fg, 600, 600, 600)
 
-    white = 3
-    curses.init_pair(white, curses.COLOR_WHITE, -1)
+    # Define pair (forground, background) under index defined color "GRAY"
+    curses.init_pair(GRAY, gray_fg, transparent_bg)
+    curses.init_pair(WHITE, curses.COLOR_WHITE, transparent_bg)
 
-    return gray, white
+    return GRAY, WHITE
 
 
 def check_exit_key(scr):
-    # Wait for key (time defined by halfdelay)
+    """ Wait for key (time defined by curses.halfdelay) """
     ch = scr.getch()
     return ch == ord('q')
+
+
+def draw_lightning(scr, root, branches):
+    """ Draw lightning building animation """
+    tracks = [Track(root)]
+
+    for l in root:
+        tracks += add_starting_tracks(l, branches)
+        draw_lightning_ends(scr, tracks)
+
+        sleep(0.01)
+        scr.refresh()
+
+
+def draw_lightning_ends(scr, tracks):
+    """ Draw lightning ends from all branches (stored in tracks list) """
+    for t in tracks:
+        if t.branch_idx >= len(t.branch):
+            continue
+
+        light_part = t.branch[t.branch_idx]
+        t.branch_idx += 1
+        scr.addstr(light_part.y, light_part.x, light_part.symbol, curses.color_pair(GRAY))
 
 
 def main(scr):
     # esetup()  # Just for debug
     setup_curses()
-    gray, white = colors()
+    setup_colors()
 
-    random.seed(4876)  # Just for debug
+    random.seed(4876)
 
     while not check_exit_key(scr):
         scr.clear()
 
-        lightning_root, lightning_branches = lightning()
-        indexed = [LightningIndex(lightning_root)]
+        root, branches = lightning()
+        draw_lightning(scr, root, branches)
 
-        for l in lightning_root:
-            indexed += indexer(l, lightning_branches)
-
-            for i in indexed:
-                if i.index >= len(i.branch):
-                    continue
-
-                light = i.branch[i.index]
-                scr.addstr(light.y, light.x, light.symbol, curses.color_pair(gray))
-                i.index += 1
-
-            sleep(0.01)
-            scr.refresh()
-
-        blink(scr, lightning_root, curses.A_BOLD | curses.color_pair(white),
-            curses.A_NORMAL | curses.color_pair(white))
-        blink(scr, lightning_root, curses.A_BOLD | curses.color_pair(white),
-            curses.A_NORMAL | curses.color_pair(white))
+        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
+        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
 
 
 if __name__ == '__main__':
