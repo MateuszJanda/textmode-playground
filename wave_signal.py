@@ -8,6 +8,18 @@ from time import sleep
 import locale
 
 
+"""
+|     .-.
+|    /   \         .-.
+|   /     \       /   \       .-.     .-.     _   _
++--/-------\-----/-----\-----/---\---/---\---/-\-/-\/\/---
+| /         \   /       \   /     '-'     '-'
+|/           '-'         '-'
+
+unknown
+"""
+
+
 stdscr = curses.initscr()
 curses.halfdelay(5)           # How many tenths of a second are waited, from 1 to 255
 curses.noecho()               # Wont print the input
