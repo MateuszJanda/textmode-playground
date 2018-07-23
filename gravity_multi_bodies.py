@@ -16,15 +16,40 @@ GRAVITY = 1.0
 BLANK_BRAILLE = u'\u2800'
 
 
-def esetup():
-    """ Hardcoded stderr console for debug prints.
-    Console must exist before running script. """
-    sys.stderr = open('/dev/pts/1', 'w')
+class Body:
+    def __init__(self, pos, mass, velocity):
+        self.pos = pos
+        self.mass = mass
+        self.vel = velocity
 
 
-def eprint(*args, **kwargs):
-    """ Debug print function (on stderr) """
-    print(*args, file=sys.stderr)
+class Vector:
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+    def __add__(self, vec):
+        return Vector(self.x + vec.x, self.y + vec.y)
+
+    def __iadd__(self, vec):
+        self.x += vec.x
+        self.y += vec.y
+        return self
+
+    def __sub__(self, vec):
+        return Vector(self.x - vec.x, self.y - vec.y)
+
+    def __mul__(self, scalar):
+        return Vector(self.x * scalar, self.y * scalar)
+
+    def __truediv__(self, scalar):
+        return Vector(self.x / scalar, self.y / scalar)
+
+    def mag(self):
+        return math.sqrt(self.x**2 + self.y**2)
+
+    def normalize(self):
+        return self/self.mag()
 
 
 def main(scr):
@@ -47,28 +72,37 @@ def main(scr):
         for b in bodies:
             draw_pt(screen_buf, b.pos)
         draw_info(screen_buf,  '[%05.2f]: %8.4f %8.4f' % (t, bodies[1].pos.x, bodies[1].pos.y))
-        display(scr, screen_buf)
+        show(scr, screen_buf)
 
         time.sleep(dt)
         t += dt
         step += 1
 
-    curses.endwin()
+
+def esetup():
+    """ Hard-coded console for debug prints (std err).
+    Console must exist before running script. """
+    sys.stderr = open('/dev/pts/1', 'w')
+
+
+def eprint(*args, **kwargs):
+    """ Debug print function (on std err) """
+    print(*args, file=sys.stderr)
 
 
 def setup_curses():
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
-    curses.noecho()
     curses.curs_set(False)
 
 
 def check_exit_key(scr, step):
+    """ Wait for key (defined by halfdelay), and check if q """
     # getch() is very slow, so check every 200 steps only
     if step % 200:
         return False
-    # Wait for key (defined by halfdelay), and check his code
+
     ch = scr.getch()
     return ch == ord('q')
 
@@ -142,7 +176,7 @@ def relative_uchar(pt):
             return 0x20 >> (by -1)
 
 
-def display(scr, screen_buf):
+def show(scr, screen_buf):
     for num, line in enumerate(screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
 
@@ -164,12 +198,12 @@ def calcs(bodies, dt):
 
 
 def calc_forces(body1, body2, dt):
-    dist = magnitude(body1.pos, body2.pos)
+    dist = distance(body1.pos, body2.pos)
     if dist < 1:
         exit()
 
-    dir1 = normalize(body2.pos - body1.pos)
-    dir2 = normalize(body1.pos - body2.pos)
+    dir1 = (body2.pos - body1.pos).normalize()
+    dir2 = (body1.pos - body2.pos).normalize()
     grav_mag = (GRAVITY * body1.mass * body2.mass) / (dist**2)
     force1 = dir1 * grav_mag
     force2 = dir2 * grav_mag
@@ -177,43 +211,8 @@ def calc_forces(body1, body2, dt):
     return force1, force2
 
 
-class Body:
-    def __init__(self, pos, mass, velocity):
-        self.pos = pos
-        self.mass = mass
-        self.vel = velocity
-
-
-class Vector:
-    def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
-
-    def __add__(self, vec):
-        return Vector(self.x + vec.x, self.y + vec.y)
-
-    def __iadd__(self, vec):
-        self.x += vec.x
-        self.y += vec.y
-        return self
-
-    def __sub__(self, vec):
-        return Vector(self.x - vec.x, self.y - vec.y)
-
-    def __mul__(self, scalar):
-        return Vector(self.x * scalar, self.y * scalar)
-
-    def __truediv__(self, scalar):
-        return Vector(self.x / scalar, self.y / scalar)
-
-
-def magnitude(vec1, vec2):
+def distance(vec1, vec2):
     return math.sqrt((vec1.x - vec2.x)**2 + (vec1.y - vec2.y)**2)
-
-
-def normalize(vec):
-    mag = magnitude(Vector(0, 0), vec)
-    return vec / mag
 
 
 if __name__ == '__main__':
