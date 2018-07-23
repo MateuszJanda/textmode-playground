@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+import sys
 import time
 import curses
 import locale
@@ -11,7 +12,7 @@ BLANK_BRAILLE = u'\u2800'
 
 
 def main(scr):
-    setup()
+    setup_curses()
     scr.clear()
 
     num = 0
@@ -27,13 +28,13 @@ def main(scr):
         if num > 40:
             break
 
-        display(scr, screen_buf)
+        show(scr, screen_buf)
 
     time.sleep(2)
     curses.endwin()
 
 
-def setup():
+def setup_curses():
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
@@ -48,6 +49,12 @@ def draw_line(screen_buf, num, f=lambda x:1*x+3):
             continue
         uchar = ord(screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)])
         screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | relative_uchar(y, x))
+
+
+def unicode_char(param):
+    if sys.version_info[0] == 2:
+        return unichr(param)
+    return chr(param)
 
 
 def relative_uchar(y, x):
@@ -66,7 +73,7 @@ def relative_uchar(y, x):
             return 0x20 >> (by -1)
 
 
-def display(scr, screen_buf):
+def show(scr, screen_buf):
     scr.clear()
 
     for num, line in enumerate(screen_buf):
