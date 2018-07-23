@@ -12,6 +12,7 @@ import collections
 GRAY = 2
 WHITE = 3
 
+
 LightPart = collections.namedtuple('LightPart', ['y', 'x', 'symbol'])
 
 
@@ -20,6 +21,25 @@ class Track:
     def __init__(self, branch):
         self.branch_idx = 0
         self.branch = branch
+
+
+def main(scr):
+    # esetup()  # Just for debug
+    setup_curses()
+    setup_colors()
+
+    random.seed(4876)
+
+    while not check_exit_key(scr):
+        scr.clear()
+
+        root, branches = lightning()
+        draw_lightning(scr, root, branches)
+
+        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
+        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
+            curses.A_NORMAL | curses.color_pair(WHITE))
 
 
 def esetup():
@@ -31,6 +51,35 @@ def esetup():
 def eprint(*args, **kwargs):
     """ Debug print function (on std err) """
     print(*args, file=sys.stderr)
+
+
+def setup_curses():
+    """ Setup curses """
+    curses.start_color()        # Needed to define setup_colors
+    curses.use_default_colors() # Use terminal setup_colors
+    curses.halfdelay(1)         # Wait x tenths of seconds for key
+    curses.curs_set(False)      # Disable cursor
+
+
+def setup_colors():
+    """ Setup colors """
+    gray_fg = 1
+    transparent_bg = -1
+
+    # Define gray color under index 1 (RBG, value range [0, 1000])
+    curses.init_color(gray_fg, 600, 600, 600)
+
+    # Define pair (foreground, background) under index defined color "GRAY"
+    curses.init_pair(GRAY, gray_fg, transparent_bg)
+    curses.init_pair(WHITE, curses.COLOR_WHITE, transparent_bg)
+
+    return GRAY, WHITE
+
+
+def check_exit_key(scr):
+    """ Wait for key (time defined by curses.halfdelay) """
+    ch = scr.getch()
+    return ch == ord('q')
 
 
 def lightning():
@@ -114,60 +163,6 @@ def lightning_branch(prev, root):
     return branch
 
 
-def blink(scr, lightning, attr1, attr2):
-    """ Blink lightning on 0.1 seconds. Called when lightning hit ground. """
-    for l in lightning:
-        scr.addstr(l.y, l.x, l.symbol, attr1)
-
-    sleep(0.1)
-    scr.refresh()
-
-    for l in lightning:
-        scr.addstr(l.y, l.x, l.symbol, attr2)
-
-    sleep(0.1)
-    scr.refresh()
-
-
-def add_starting_tracks(light_part, branches):
-    """ Add all branches that start at given position """
-    new_tracks = []
-    for b in branches:
-        if light_part.x == b[0].x and light_part.y == b[0].y:
-            new_tracks.append(Track(b))
-
-    return new_tracks
-
-
-def setup_curses():
-    """ Setup curses """
-    curses.start_color()        # Needed to define setup_colors
-    curses.use_default_colors() # Use terminal setup_colors
-    curses.halfdelay(1)         # Wait x tenths of seconds for key
-    curses.curs_set(False)      # Disable cursor
-
-
-def setup_colors():
-    """ Setup colors """
-    gray_fg = 1
-    transparent_bg = -1
-
-    # Define gray color under index 1 (RBG, value rane [0, 1000])
-    curses.init_color(gray_fg, 600, 600, 600)
-
-    # Define pair (forground, background) under index defined color "GRAY"
-    curses.init_pair(GRAY, gray_fg, transparent_bg)
-    curses.init_pair(WHITE, curses.COLOR_WHITE, transparent_bg)
-
-    return GRAY, WHITE
-
-
-def check_exit_key(scr):
-    """ Wait for key (time defined by curses.halfdelay) """
-    ch = scr.getch()
-    return ch == ord('q')
-
-
 def draw_lightning(scr, root, branches):
     """ Draw lightning building animation """
     tracks = [Track(root)]
@@ -178,6 +173,16 @@ def draw_lightning(scr, root, branches):
 
         sleep(0.01)
         scr.refresh()
+
+
+def add_starting_tracks(light_part, branches):
+    """ Add all branches that start at given position """
+    new_tracks = []
+    for b in branches:
+        if light_part.x == b[0].x and light_part.y == b[0].y:
+            new_tracks.append(Track(b))
+
+    return new_tracks
 
 
 def draw_lightning_ends(scr, tracks):
@@ -191,23 +196,19 @@ def draw_lightning_ends(scr, tracks):
         scr.addstr(light_part.y, light_part.x, light_part.symbol, curses.color_pair(GRAY))
 
 
-def main(scr):
-    # esetup()  # Just for debug
-    setup_curses()
-    setup_colors()
+def blink(scr, lightning_root, attr1, attr2):
+    """ Blink lightning on 0.1 seconds. Called when lightning hit ground. """
+    for l in lightning_root:
+        scr.addstr(l.y, l.x, l.symbol, attr1)
 
-    random.seed(4876)
+    sleep(0.1)
+    scr.refresh()
 
-    while not check_exit_key(scr):
-        scr.clear()
+    for l in lightning_root:
+        scr.addstr(l.y, l.x, l.symbol, attr2)
 
-        root, branches = lightning()
-        draw_lightning(scr, root, branches)
-
-        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
-            curses.A_NORMAL | curses.color_pair(WHITE))
-        blink(scr, root, curses.A_BOLD | curses.color_pair(WHITE),
-            curses.A_NORMAL | curses.color_pair(WHITE))
+    sleep(0.1)
+    scr.refresh()
 
 
 if __name__ == '__main__':
