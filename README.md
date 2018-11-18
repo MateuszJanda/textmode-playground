@@ -1,4 +1,4 @@
 # textmode-playground
 textmode/ASCII art playground
 
-<img src="./demo/lightning.gif" width="320" height="240"/>
+<img src="./demo/lightning.gif" alt="lightning" width="320" height="240"/>
