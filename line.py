@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+import collections as co
 import sys
 import time
 import curses
@@ -9,26 +10,30 @@ import locale
 
 
 BLANK_BRAILLE = u'\u2800'
+CELL_WIDTH = 2
+CELL_HEIGHT = 4
+
+Point = co.namedtuple('Point', ['x', 'y'])
 
 
 def main(scr):
     setup_curses()
     scr.clear()
 
-    num = 0
+    # num = 0
     while True:
-        screen_buf = []
-        for _ in range(curses.LINES):
-            screen_buf.append((list(BLANK_BRAILLE * (curses.COLS - 1))))
+        screen_buf = clear_screen()
 
-        draw_line(screen_buf, num)
-        num += 1
+        # draw_line(screen_buf, num)
+        draw_line(screen_buf, 2, 5, 16, 8)
+        # num += 1
 
+
+        # if num > 40:
+            # break
+
+        refresh_screen(scr, screen_buf)
         time.sleep(0.1)
-        if num > 40:
-            break
-
-        show(scr, screen_buf)
 
     time.sleep(2)
     curses.endwin()
@@ -41,14 +46,74 @@ def setup_curses():
     curses.curs_set(False)
 
 
-def draw_line(screen_buf, num, f=lambda x:1*x+3):
-    for x in range(num):
-        y = f(x)
+def draw():
+    nx = ar.axis.x * math.cos(angel) - ar.axis.y * math.sin(angel)
+    ny = ar.axis.x * math.sin(angel) + ar.axis.y * math.cos(angel)
 
-        if curses.LINES - 1 - int(y / 4) < 0:
-            continue
-        uchar = ord(screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)])
-        screen_buf[curses.LINES - 1 - int(y / 4)][int(x / 2)] = unichr(uchar | relative_uchar(y, x))
+
+def draw_line(screen_buf, x1, y1, x2, y2):
+    # https://pl.wikipedia.org/wiki/Algorytm_Bresenhama
+    x, y = x1, y1
+
+    # Drawing direction
+    if x1 < x2:
+        xi = 1
+        dx = x2 - x1
+    else:
+        xi = -1
+        dx = x1 - x2
+
+    if (y1 < y2):
+        yi = 1
+        dy = y2 - y1
+    else:
+        yi = -1
+        dy = y1 - y2
+
+    # First point
+    draw_point(screen_buf, x, y)
+    # Axis OX
+    if dx > dy:
+        ai = (dy - dx) * 2
+        bi = dy * 2
+        d = bi - dx
+        while x != x2:
+            # coordinate test
+            if d >= 0:
+                x += xi
+                y += yi
+                d += ai
+            else:
+                d += bi
+                x += xi
+            draw_point(screen_buf, x, y)
+    # Axis OY
+    else:
+        ai = (dx - dy) * 2
+        bi = dx * 2
+        d = bi - dy
+        while y != y2:
+            # coordinate test
+            if d >= 0:
+                x += xi
+                y += yi
+                d += ai
+            else:
+                d += bi
+                y += yi
+            draw_point(screen_buf, x, y)
+
+# def draw_line(screen_buf, num, f=lambda x:1*x+3):
+#     for x in range(num):
+#         y = f(x)
+#         draw_point(screen_buf, x, y)
+
+
+def draw_point(screen_buf, x, y):
+    if curses.LINES - 1 - int(y/CELL_HEIGHT) < 0:
+        return
+    uchar = ord(screen_buf[curses.LINES - 1 - int(y/CELL_HEIGHT)][int(x/CELL_WIDTH)])
+    screen_buf[curses.LINES - 1 - int(y/CELL_HEIGHT)][int(x/CELL_WIDTH)] = unicode_char(uchar | relative_uchar(y, x))
 
 
 def unicode_char(param):
@@ -73,7 +138,15 @@ def relative_uchar(y, x):
             return 0x20 >> (by -1)
 
 
-def show(scr, screen_buf):
+def clear_screen():
+    screen_buf = []
+    for _ in range(curses.LINES):
+        screen_buf.append((list(BLANK_BRAILLE * (curses.COLS - 1))))
+
+    return screen_buf
+
+
+def refresh_screen(scr, screen_buf):
     scr.clear()
 
     for num, line in enumerate(screen_buf):
