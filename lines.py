@@ -20,7 +20,7 @@ Point = co.namedtuple('Point', ['x', 'y'])
 
 def main(scr):
     setup_curses()
-    scr.clear()
+    scr.erase()
 
     center_pt = Point(60, 50)
     points = [
@@ -159,7 +159,8 @@ def empty_screen_buf():
 
 
 def refresh_screen(scr, screen_buf):
-    scr.clear()
+    # https://stackoverflow.com/questions/24964940/python-curses-tty-screen-blink
+    scr.erase()
 
     for num, line in enumerate(screen_buf):
         scr.addstr(num, 0, u''.join(line).encode('utf-8'))
