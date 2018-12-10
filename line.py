@@ -71,7 +71,7 @@ def draw_line(screen_buf, pt1, pt2):
         dy = pt1.y - pt2.y
 
     # First point
-    draw_point(screen_buf, x, y)
+    draw_point(screen_buf, Point(x, y))
     # Axis OX
     if dx > dy:
         ai = (dy - dx) * 2
@@ -86,7 +86,7 @@ def draw_line(screen_buf, pt1, pt2):
             else:
                 d += bi
                 x += xi
-            draw_point(screen_buf, x, y)
+            draw_point(screen_buf, Point(x, y))
     # Axis OY
     else:
         ai = (dx - dy) * 2
@@ -101,7 +101,7 @@ def draw_line(screen_buf, pt1, pt2):
             else:
                 d += bi
                 y += yi
-            draw_point(screen_buf, x, y)
+            draw_point(screen_buf, Point(x, y))
 
 # def draw_line(screen_buf, num, f=lambda x:1*x+3):
 #     for x in range(num):
@@ -109,11 +109,11 @@ def draw_line(screen_buf, pt1, pt2):
 #         draw_point(screen_buf, x, y)
 
 
-def draw_point(screen_buf, x, y):
-    if curses.LINES - 1 - int(y/CELL_HEIGHT) < 0:
+def draw_point(screen_buf, pt):
+    if curses.LINES - 1 - int(pt.y/CELL_HEIGHT) < 0:
         return
-    uchar = ord(screen_buf[curses.LINES - 1 - int(y/CELL_HEIGHT)][int(x/CELL_WIDTH)])
-    screen_buf[curses.LINES - 1 - int(y/CELL_HEIGHT)][int(x/CELL_WIDTH)] = unicode_char(uchar | relative_uchar(y, x))
+    uchar = ord(screen_buf[curses.LINES - 1 - int(pt.y/CELL_HEIGHT)][int(pt.x/CELL_WIDTH)])
+    screen_buf[curses.LINES - 1 - int(pt.y/CELL_HEIGHT)][int(pt.x/CELL_WIDTH)] = unicode_char(uchar | relative_uchar(pt.y, pt.x))
 
 
 def unicode_char(param):
