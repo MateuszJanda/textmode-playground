@@ -25,7 +25,7 @@ def main(scr):
         screen_buf = clear_screen()
 
         # draw_line(screen_buf, num)
-        draw_line(screen_buf, 2, 5, 16, 8)
+        draw_line(screen_buf, Point(2, 5), Point(16, 8))
         # num += 1
 
 
@@ -51,24 +51,24 @@ def draw():
     ny = ar.axis.x * math.sin(angel) + ar.axis.y * math.cos(angel)
 
 
-def draw_line(screen_buf, x1, y1, x2, y2):
+def draw_line(screen_buf, pt1, pt2):
     # https://pl.wikipedia.org/wiki/Algorytm_Bresenhama
-    x, y = x1, y1
+    x, y = pt1.x, pt1.y
 
     # Drawing direction
-    if x1 < x2:
+    if pt1.x < pt2.x:
         xi = 1
-        dx = x2 - x1
+        dx = pt2.x - pt1.x
     else:
         xi = -1
-        dx = x1 - x2
+        dx = pt1.x - pt2.x
 
-    if (y1 < y2):
+    if (pt1.y < pt2.y):
         yi = 1
-        dy = y2 - y1
+        dy = pt2.y - pt1.y
     else:
         yi = -1
-        dy = y1 - y2
+        dy = pt1.y - pt2.y
 
     # First point
     draw_point(screen_buf, x, y)
@@ -77,7 +77,7 @@ def draw_line(screen_buf, x1, y1, x2, y2):
         ai = (dy - dx) * 2
         bi = dy * 2
         d = bi - dx
-        while x != x2:
+        while x != pt2.x:
             # coordinate test
             if d >= 0:
                 x += xi
@@ -92,7 +92,7 @@ def draw_line(screen_buf, x1, y1, x2, y2):
         ai = (dx - dy) * 2
         bi = dx * 2
         d = bi - dy
-        while y != y2:
+        while y != pt2.y:
             # coordinate test
             if d >= 0:
                 x += xi
