@@ -22,22 +22,23 @@ def main(scr):
     scr.clear()
 
     center_pt = Point(60, 50)
-    pt1 = Point(60, 80)
-    pt2 = Point(90, 50)
-    pt3 = Point(60, 20)
-    pt4 = Point(30, 50)
+    points = [
+        Point(60, 80),
+        Point(90, 50),
+        Point(60, 20),
+        Point(30, 50),
+    ]
     angle = 0.1 / (2 * math.pi)
 
     while True:
         screen_buf = empty_screen_buf()
 
-        pt1, pt2, pt3, pt4 = rotate_points(angle, center_pt, [pt1, pt2, pt3, pt4])
-        draw_rect(screen_buf, pt1, pt2, pt3, pt4)
+        points = rotate_points(angle, center_pt, points)
+        draw_figure(screen_buf, points)
 
         refresh_screen(scr, screen_buf)
         time.sleep(0.02)
 
-    time.sleep(2)
     curses.endwin()
 
 
@@ -52,7 +53,6 @@ def rotate_points(angle, center_pt, points):
     result = []
     for pt in points:
         vec = Point(pt.x - center_pt.x, pt.y - center_pt.y)
-
         nx = vec.x * math.cos(angle) - vec.y * math.sin(angle)
         ny = vec.x * math.sin(angle) + vec.y * math.cos(angle)
 
@@ -60,9 +60,8 @@ def rotate_points(angle, center_pt, points):
 
     return result
 
-
-def draw_rect(screen_buf, pt1, pt2, pt3, pt4):
-    for start, end in zip([pt1, pt2, pt3, pt4], [pt2, pt3, pt4, pt1]):
+def draw_figure(screen_buf, points):
+    for start, end in zip(points, points[1:] + [points[0]]):
         start = Point(int(start.x), int(start.y))
         end = Point(int(end.x), int(end.y))
         draw_line(screen_buf, start, end)
