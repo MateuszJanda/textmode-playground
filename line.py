@@ -21,11 +21,11 @@ def main(scr):
     setup_curses()
     scr.clear()
 
-    center_pt = Point(80, 50)
-    pt1 = Point(80, 80)
-    pt2 = Point(110, 80)
-    pt3 = Point(80, 20)
-    pt4 = Point(50, 80)
+    center_pt = Point(60, 50)
+    pt1 = Point(60, 80)
+    pt2 = Point(90, 50)
+    pt3 = Point(60, 20)
+    pt4 = Point(30, 50)
     angle = 0.1 / (2 * math.pi)
 
     while True:
@@ -35,7 +35,7 @@ def main(scr):
         draw_rect(screen_buf, pt1, pt2, pt3, pt4)
 
         refresh_screen(scr, screen_buf)
-        time.sleep(0.01)
+        time.sleep(0.02)
 
     time.sleep(2)
     curses.endwin()
