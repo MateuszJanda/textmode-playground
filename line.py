@@ -31,12 +31,11 @@ def main(scr):
     while True:
         screen_buf = empty_screen_buf()
 
-        # draw_line(screen_buf, Point(80, 50), Point(16, 8))
         pt1, pt2, pt3, pt4 = rotate_points(angle, center_pt, [pt1, pt2, pt3, pt4])
         draw_rect(screen_buf, pt1, pt2, pt3, pt4)
 
         refresh_screen(scr, screen_buf)
-        time.sleep(0.1)
+        time.sleep(0.01)
 
     time.sleep(2)
     curses.endwin()
@@ -52,10 +51,10 @@ def setup_curses():
 def rotate_points(angle, center_pt, points):
     result = []
     for pt in points:
-        a = Point(center_pt.x - pt.x, center_pt.y - pt.y)
+        vec = Point(pt.x - center_pt.x, pt.y - center_pt.y)
 
-        nx = a.x * math.cos(angle) - a.y * math.sin(angle)
-        ny = a.x * math.sin(angle) + a.y * math.cos(angle)
+        nx = vec.x * math.cos(angle) - vec.y * math.sin(angle)
+        ny = vec.x * math.sin(angle) + vec.y * math.cos(angle)
 
         result.append(Point(center_pt.x + nx, center_pt.y + ny))
 
@@ -168,6 +167,16 @@ def refresh_screen(scr, screen_buf):
     scr.refresh()
 
 
+def setup_stderr():
+    """Redirect stderr to other terminal. Run tty command, to get terminal id."""
+    sys.stderr = open('/dev/pts/2', 'w')
+
+
+def eprint(*args, **kwargs):
+    """Print on stderr"""
+    print(*args, file=sys.stderr)
+
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
+    setup_stderr()
     curses.wrapper(main)
