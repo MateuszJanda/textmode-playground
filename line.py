@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division
+import math
 import collections as co
 import sys
 import time
@@ -20,17 +21,19 @@ def main(scr):
     setup_curses()
     scr.clear()
 
-    # num = 0
+    center_pt = Point(80, 50)
+    pt1 = Point(80, 80)
+    pt2 = Point(110, 80)
+    pt3 = Point(80, 20)
+    pt4 = Point(50, 80)
+    angle = 0.1 / (2 * math.pi)
+
     while True:
-        screen_buf = clear_screen()
+        screen_buf = empty_screen_buf()
 
-        # draw_line(screen_buf, num)
-        draw_line(screen_buf, Point(2, 5), Point(16, 8))
-        # num += 1
-
-
-        # if num > 40:
-            # break
+        # draw_line(screen_buf, Point(80, 50), Point(16, 8))
+        pt1, pt2, pt3, pt4 = rotate_points(angle, center_pt, [pt1, pt2, pt3, pt4])
+        draw_rect(screen_buf, pt1, pt2, pt3, pt4)
 
         refresh_screen(scr, screen_buf)
         time.sleep(0.1)
@@ -46,9 +49,24 @@ def setup_curses():
     curses.curs_set(False)
 
 
-def draw():
-    nx = ar.axis.x * math.cos(angel) - ar.axis.y * math.sin(angel)
-    ny = ar.axis.x * math.sin(angel) + ar.axis.y * math.cos(angel)
+def rotate_points(angle, center_pt, points):
+    result = []
+    for pt in points:
+        a = Point(center_pt.x - pt.x, center_pt.y - pt.y)
+
+        nx = a.x * math.cos(angle) - a.y * math.sin(angle)
+        ny = a.x * math.sin(angle) + a.y * math.cos(angle)
+
+        result.append(Point(center_pt.x + nx, center_pt.y + ny))
+
+    return result
+
+
+def draw_rect(screen_buf, pt1, pt2, pt3, pt4):
+    for start, end in zip([pt1, pt2, pt3, pt4], [pt2, pt3, pt4, pt1]):
+        start = Point(int(start.x), int(start.y))
+        end = Point(int(end.x), int(end.y))
+        draw_line(screen_buf, start, end)
 
 
 def draw_line(screen_buf, pt1, pt2):
@@ -70,9 +88,9 @@ def draw_line(screen_buf, pt1, pt2):
         yi = -1
         dy = pt1.y - pt2.y
 
-    # First point
     draw_point(screen_buf, Point(x, y))
-    # Axis OX
+
+    # X axis
     if dx > dy:
         ai = (dy - dx) * 2
         bi = dy * 2
@@ -87,7 +105,7 @@ def draw_line(screen_buf, pt1, pt2):
                 d += bi
                 x += xi
             draw_point(screen_buf, Point(x, y))
-    # Axis OY
+    # Y axis
     else:
         ai = (dx - dy) * 2
         bi = dx * 2
@@ -102,11 +120,6 @@ def draw_line(screen_buf, pt1, pt2):
                 d += bi
                 y += yi
             draw_point(screen_buf, Point(x, y))
-
-# def draw_line(screen_buf, num, f=lambda x:1*x+3):
-#     for x in range(num):
-#         y = f(x)
-#         draw_point(screen_buf, x, y)
 
 
 def draw_point(screen_buf, pt):
@@ -123,8 +136,8 @@ def unicode_char(param):
 
 
 def relative_uchar(y, x):
-    bx = x % 2
-    by = y % 4
+    bx = x % CELL_WIDTH
+    by = y % CELL_HEIGHT
 
     if bx == 0:
         if by == 0:
@@ -138,7 +151,7 @@ def relative_uchar(y, x):
             return 0x20 >> (by -1)
 
 
-def clear_screen():
+def empty_screen_buf():
     screen_buf = []
     for _ in range(curses.LINES):
         screen_buf.append((list(BLANK_BRAILLE * (curses.COLS - 1))))
