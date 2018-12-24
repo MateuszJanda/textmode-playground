@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ $1 == "-c" || $1 == "--capture" ]]; then
-    ffmpeg -video_size 640x480 -framerate 25 -f x11grab -i :0.0+0,45 output.mp4
+    ffmpeg -video_size 640x480 -framerate 25 -f x11grab -i :0.0+0,48 output.mp4
 fi
 
 # PALETTE_FILE="tmp_pallete.png"
