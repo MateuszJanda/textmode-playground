@@ -61,6 +61,7 @@ def rotate_points(angle, center_pt, points):
 
     return result
 
+
 def draw_figure(screen_buf, points):
     for start, end in zip(points, points[1:] + [points[0]]):
         start = Point(int(start.x), int(start.y))
@@ -69,7 +70,8 @@ def draw_figure(screen_buf, points):
 
 
 def draw_line(screen_buf, pt1, pt2):
-    # https://pl.wikipedia.org/wiki/Algorytm_Bresenhama
+    """ Bresenham's line algorithm
+    https://pl.wikipedia.org/wiki/Algorytm_Bresenhama """
     x, y = pt1.x, pt1.y
 
     # Drawing direction
@@ -176,6 +178,7 @@ def setup_stderr():
 def eprint(*args, **kwargs):
     """Print on stderr"""
     print(*args, file=sys.stderr)
+
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
