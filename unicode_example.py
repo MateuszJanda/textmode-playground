@@ -34,7 +34,8 @@ def char_support(scr, character=unichr(0x28a7)):
         font = fontconfig.FcFont(name)
         if font.has_char(character) and font.fullname:
             # info = font.file
-            info = font.fullname[0][1]
+            # info = font.fullname[0][1] + ' [' + str(font.spacing) + ']'
+            info = str(font.fullname)
             scr.addstr(row, 0, info)
             row += 1
 
