@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-# from scipy import signal
+from scipy import signal
 from scipy.io import wavfile
-# import numpy as np
+import numpy as np
 
 # https://pl.wikipedia.org/wiki/Spektrogram
 
@@ -13,18 +13,31 @@ sample_rate, samples = wavfile.read('out.wav')
 print('Rate:', sample_rate)
 print('Shape:', samples.shape)
 print('Time:', samples.shape[0]/sample_rate, '[sec]') # seconds
+
 # for s in samples:
 #     print(s)
 
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
-# frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
-# print(frequencies.shape)
-# print(times.shape)
-# print(spectrogram.shape)
+frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+print('frequencies.shape', frequencies.shape)
+print('times.shape', times.shape)
+print('spectrogram.shape', spectrogram.shape)
+
+print('spectrogram value', 10*np.log10(spectrogram[0][1]))
 # for x in frequencies:
 #     print(x)
 
 # plt.plasma()
+
+plt.figure(figsize=(5, 4))
+# plt.imshow(spectrogram, aspect='auto', cmap=cm.inferno, origin='lower')
+plt.imshow(10*np.log10(spectrogram), aspect='auto', cmap=cm.inferno, origin='lower')
+plt.title('Spectrogram 1')
+plt.ylabel('Frequency band')
+plt.xlabel('Time window')
+plt.tight_layout()
+plt.show()
+
 
 print('Inferno colors data:')
 print(type(cm.inferno))
@@ -44,7 +57,8 @@ print('Inferno colors:', len(cm.inferno.colors)) # of RGB
 
 
 # plt.imshow(spectrogram, cmap=cm.plasma)
-plt.specgram(samples, Fs=sample_rate, cmap=cm.inferno)
+plt.specgram(samples, Fs=sample_rate, cmap=cm.inferno, NFFT=1028)
+plt.title('Spectrogram 2')
 plt.ylabel('Frequency [Hz]')
 plt.xlabel('Time [sec]')
 plt.show()
