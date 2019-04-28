@@ -3,6 +3,7 @@
 import locale
 import curses
 import sys
+import time
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import signal
@@ -11,8 +12,8 @@ import numpy as np
 
 
 TELEMETRY_MODE = False
-RGB_DIM = 3
-BLACK = (0, 0, 0)
+RGB_DIM = 1
+BLACK = 0
 
 
 def main(scr):
@@ -39,7 +40,17 @@ def main(scr):
 
     screen = Screen(scr)
     log('COLOR_PAIRS', curses.COLOR_PAIRS)
-    # screen.refresh()
+    screen.refresh()
+
+    while not can_exit(scr):
+        time.sleep(0.5)
+
+
+def can_exit(scr):
+    """ Wait for key (defined by halfdelay), and check if q """
+    # getch() is very slow, so check every 200 steps only
+    ch = scr.getch()
+    return ch == ord('q')
 
 
 def setup(scr, enable=False, terminal='/dev/pts/1'):
@@ -47,11 +58,15 @@ def setup(scr, enable=False, terminal='/dev/pts/1'):
     setup_curses(scr)
     setup_telemetry(enable, terminal)
 
+    if not curses.can_change_color():
+        log('Color change not supported in this terminal!')
+        exit()
+
 
 def setup_curses(scr):
     """Setup curses screen."""
     curses.start_color()
-    curses.use_default_colors()
+    # curses.use_default_colors()
     curses.halfdelay(5)
     curses.noecho()
     curses.curs_set(False)
@@ -106,6 +121,18 @@ class Screen:
         buf_shape = (2*curses.LINES, curses.COLS-1, RGB_DIM)
         self._buf = np.full(shape=buf_shape, fill_value=BLACK)
 
+        self._init_colors()
+
+    def _init_colors(self):
+        # curses.init_color(0, 0, 0, 0)
+        curses.init_color(1, 0, 999, 0)
+        curses.init_color(2, 999, 999, 0)
+
+        # At most curses.COLOR_PAIRS-1
+        # curses.init_pair(0, 1, 0)
+        curses.init_pair(1, 0, 1)
+        curses.init_pair(2, 2, 1)
+
     def draw_point(self, pos, color):
         # Don't draw point when they are out of the screen
         if not (0 <= pos[1] < self._buf[1] and 0 <= pos[0] < self._buf[0]):
@@ -115,9 +142,15 @@ class Screen:
 
     def refresh(self):
         """Draw buffer content to screen."""
-        dtype = np.dtype('U' + str(self._buf.shape[1]))
-        for num, line in enumerate(self._buf):
-            self._scr.addstr(num, 0, line.view(dtype)[0])
+        # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
+        LOWER_HALF_BLOCK = u'\u2584'
+
+        # for num, line in enumerate(self._buf):
+            # self._scr.addstr(num, 0, LOWER_HALF_BLOCK, color)
+        self._scr.addstr(0, 0, LOWER_HALF_BLOCK, curses.color_pair(0))
+        self._scr.addstr(1, 0, LOWER_HALF_BLOCK, curses.color_pair(1))
+        self._scr.addstr(2, 0, LOWER_HALF_BLOCK, curses.color_pair(2))
+        self._scr.addstr(3, 0, 'asdf', 2)
         self._scr.refresh()
 
 
