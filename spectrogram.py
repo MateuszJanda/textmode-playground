@@ -18,7 +18,7 @@ BLACK = 0
 
 def main(scr):
     # https://pl.wikipedia.org/wiki/Spektrogram
-    setup(scr, enable=True, terminal='/dev/pts/2')
+    setup(scr, telemetry=True, terminal='/dev/pts/2')
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
@@ -47,16 +47,15 @@ def main(scr):
 
 
 def can_exit(scr):
-    """ Wait for key (defined by halfdelay), and check if q """
-    # getch() is very slow, so check every 200 steps only
+    """Wait for key (defined by halfdelay), and check if q."""
     ch = scr.getch()
     return ch == ord('q')
 
 
-def setup(scr, enable=False, terminal='/dev/pts/1'):
+def setup(scr, telemetry=False, terminal='/dev/pts/1'):
     """Main setup function."""
     setup_curses(scr)
-    setup_telemetry(enable, terminal)
+    setup_telemetry(telemetry, terminal)
 
     if not curses.can_change_color():
         log('Color change not supported in this terminal!')
@@ -66,14 +65,13 @@ def setup(scr, enable=False, terminal='/dev/pts/1'):
 def setup_curses(scr):
     """Setup curses screen."""
     curses.start_color()
-    # curses.use_default_colors()
     curses.halfdelay(5)
     curses.noecho()
     curses.curs_set(False)
     scr.clear()
 
 
-def setup_telemetry(enable=False, terminal='/dev/pts/1'):
+def setup_telemetry(telemetry=False, terminal='/dev/pts/1'):
     """
     Redirect stderr to other terminal. Run tty command, to get terminal id.
 
@@ -81,7 +79,7 @@ def setup_telemetry(enable=False, terminal='/dev/pts/1'):
     /dev/pts/1
     """
     global TELEMETRY_MODE
-    TELEMETRY_MODE = enable
+    TELEMETRY_MODE = telemetry
     if TELEMETRY_MODE:
         sys.stderr = open(terminal, 'w')
 
