@@ -116,20 +116,29 @@ def plt_spectogram(samples, sample_rate):
 class Screen:
     def __init__(self, scr):
         self._scr = scr
-        buf_shape = (2*curses.LINES, curses.COLS-1, RGB_DIM)
-        self._buf = np.full(shape=buf_shape, fill_value=BLACK)
+        buf_shape = (curses.LINES*2, curses.COLS-1, RGB_DIM)
+        self._buf = np.zeros(shape=buf_shape)
 
         self._init_colors()
 
     def _init_colors(self):
-        # curses.init_color(0, 0, 0, 0)
-        curses.init_color(1, 0, 999, 0)
-        curses.init_color(2, 999, 999, 0)
+        assert cm.inferno.N == curses.COLORS
+
+        for color_num in range(cm.inferno.N):
+            r, g, b = cm.inferno.colors[color_num]
+            curses.init_color(color_num, int(r*1000), int(g*1000), int(b*1000))
 
         # At most curses.COLOR_PAIRS-1
-        # curses.init_pair(0, 1, 0)
-        curses.init_pair(1, 0, 1)
-        curses.init_pair(2, 2, 1)
+        log('COLOR_PAIRS - 1', curses.COLOR_PAIRS - 1)
+        for bg in range(cm.inferno.N):
+            for fg in range(cm.inferno.N):
+
+                pair_num = bg*256+fg
+                # pair_num = bg*256+fg
+                if pair_num == 0 or pair_num == (2**15)-1:
+                    continue
+                log(pair_num)
+                curses.init_pair(pair_num, fg, bg)
 
     def draw_point(self, pos, color):
         # Don't draw point when they are out of the screen
@@ -149,6 +158,12 @@ class Screen:
         self._scr.addstr(1, 0, LOWER_HALF_BLOCK, curses.color_pair(1))
         self._scr.addstr(2, 0, LOWER_HALF_BLOCK, curses.color_pair(2))
         self._scr.addstr(3, 0, 'asdf', 2)
+
+        for y in range(curses.LINES):
+            for x in range(curses.COLS-1):
+                bg,fg = self._buf[y*2:y*2+2, x]
+                self._scr.addstr(2, 0, LOWER_HALF_BLOCK, curses.color_pair(bg*256+fg))
+
         self._scr.refresh()
 
 
