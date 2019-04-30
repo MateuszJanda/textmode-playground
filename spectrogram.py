@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
 import locale
-import curses
 import sys
-import time
+import ctypes
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import signal
@@ -12,13 +11,12 @@ import numpy as np
 
 
 TELEMETRY_MODE = False
-RGB_DIM = 1
 BLACK = 0
 
 
-def main(scr):
+def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
-    setup(scr, telemetry=True, terminal='/dev/pts/2')
+    setup(telemetry=True, terminal='/dev/pts/2')
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
@@ -38,37 +36,15 @@ def main(scr):
     log(cm.inferno.N)
     log('Inferno colors:', len(cm.inferno.colors))  # of RGB
 
-    screen = Screen(scr)
-    log('COLOR_PAIRS', curses.COLOR_PAIRS)
+    screen = Screen()
     screen.refresh()
 
-    while not can_exit(scr):
-        time.sleep(0.5)
+    # screen.endwin()
 
 
-def can_exit(scr):
-    """Wait for key (defined by halfdelay), and check if q."""
-    ch = scr.getch()
-    return ch == ord('q')
-
-
-def setup(scr, telemetry=False, terminal='/dev/pts/1'):
+def setup(telemetry=False, terminal='/dev/pts/1'):
     """Main setup function."""
-    setup_curses(scr)
     setup_telemetry(telemetry, terminal)
-
-    if not curses.can_change_color():
-        log('Color change not supported in this terminal!')
-        exit()
-
-
-def setup_curses(scr):
-    """Setup curses screen."""
-    curses.start_color()
-    curses.halfdelay(5)
-    curses.noecho()
-    curses.curs_set(False)
-    scr.clear()
 
 
 def setup_telemetry(telemetry=False, terminal='/dev/pts/1'):
@@ -113,32 +89,65 @@ def plt_spectogram(samples, sample_rate):
     plt.xlabel('Time [sec]')
 
 
-class Screen:
-    def __init__(self, scr):
-        self._scr = scr
-        buf_shape = (curses.LINES*2, curses.COLS-1, RGB_DIM)
-        self._buf = np.zeros(shape=buf_shape)
+# Macros and definitions from curses.h
+NCURSES_ATTR_SHIFT = 8
 
+
+def NCURSES_BITS(mask, shift):
+    return mask << (shift + NCURSES_ATTR_SHIFT)
+
+
+A_COLOR = NCURSES_BITS((1 << 8) - 1, 0)
+
+
+def COLOR_PAIR(n):
+    return NCURSES_BITS(n, 0) & A_COLOR
+
+
+class Screen:
+    def __init__(self):
+        self._ncurses = ctypes.CDLL('libncursesw.so.6.1')
+
+        # if not self._ncurses.can_change_color():
+        #     log('Color change not supported in this terminal!')
+        #     exit()
+
+        self._setup_ncurses()
         self._init_colors()
 
-    def _init_colors(self):
-        assert cm.inferno.N == curses.COLORS
+        self.LINES, self.COLS = self._getmaxyx()
 
+        buf_shape = (self.LINES*2, self.COLS-1)
+        # self._buf = np.zeros(shape=buf_shape, dtype=np.int32)
+        self._buf = np.ones(shape=buf_shape, dtype=np.int32)
+
+
+    def _setup_ncurses(self):
+        """Setup ncurses screen."""
+        self._win = self._ncurses.initscr()
+        self._ncurses.start_color()
+        self._ncurses.halfdelay(5)
+        self._ncurses.noecho()
+        self._ncurses.curs_set(0)
+
+    def _getmaxyx(self):
+       y = self._ncurses.getmaxy(self._win)
+       x = self._ncurses.getmaxx(self._win)
+       return y, x
+
+    def _init_colors(self):
         for color_num in range(cm.inferno.N):
             r, g, b = cm.inferno.colors[color_num]
-            curses.init_color(color_num, int(r*1000), int(g*1000), int(b*1000))
+            self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
 
-        # At most curses.COLOR_PAIRS-1
-        log('COLOR_PAIRS - 1', curses.COLOR_PAIRS - 1)
         for bg in range(cm.inferno.N):
             for fg in range(cm.inferno.N):
-
-                pair_num = bg*256+fg
-                # pair_num = bg*256+fg
-                if pair_num == 0 or pair_num == (2**15)-1:
-                    continue
-                log(pair_num)
-                curses.init_pair(pair_num, fg, bg)
+                pair_num = bg * cm.inferno.N + fg
+                # if pair_num == 0:
+                #     continue
+                r = self._ncurses.init_extended_pair(pair_num, fg, bg)
+                if r < 0:
+                    log(r, pair_num)
 
     def draw_point(self, pos, color):
         # Don't draw point when they are out of the screen
@@ -148,25 +157,39 @@ class Screen:
         self._buf[pos[0], pos[1]] = color
 
     def refresh(self):
-        """Draw buffer content to screen."""
+        """Draw buffer content on screen."""
         # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
-        LOWER_HALF_BLOCK = u'\u2584'
+        LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
 
-        # for num, line in enumerate(self._buf):
-            # self._scr.addstr(num, 0, LOWER_HALF_BLOCK, color)
-        self._scr.addstr(0, 0, LOWER_HALF_BLOCK, curses.color_pair(0))
-        self._scr.addstr(1, 0, LOWER_HALF_BLOCK, curses.color_pair(1))
-        self._scr.addstr(2, 0, LOWER_HALF_BLOCK, curses.color_pair(2))
-        self._scr.addstr(3, 0, 'asdf', 2)
+        # self._ncurses.attron(COLOR_PAIR(1))
+        # self._ncurses.mvprintw(3, 1, LOWER_HALF_BLOCK)
+        # self._ncurses.attroff(COLOR_PAIR(1))
 
-        for y in range(curses.LINES):
-            for x in range(curses.COLS-1):
-                bg,fg = self._buf[y*2:y*2+2, x]
-                self._scr.addstr(2, 0, LOWER_HALF_BLOCK, curses.color_pair(bg*256+fg))
+        log('tutaj')
 
-        self._scr.refresh()
+        for y in range(self.LINES):
+            for x in range(self.COLS-1):
+                bg, fg = self._buf[y*2:y*2+2, x]
+                pair_num = bg * cm.inferno.N + fg
+                # log(pair_num)
+                log(self._buf[y*2:y*2+2, x])
+                log(bg)
+                log(fg)
+                log(pair_num)
+
+                # self._ncurses.attron(COLOR_PAIR(pair_num))
+                self._ncurses.attron(self._ncurses.COLOR_PAIR(pair_num))
+                self._ncurses.mvprintw(2, 0, LOWER_HALF_BLOCK)
+                self._ncurses.attroff(COLOR_PAIR(pair_num))
+
+        self._ncurses.refresh()
+        log('po refresh')
+
+    def endwin(self):
+        self._ncurses.getch()
+        self._ncurses.endwin()
 
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    main()
