@@ -1,8 +1,9 @@
 # textmode-playground
-textmode/utf8art/ASCII art playground
+Playground for console animations (ASCII-art/Unicode-art).
 
 ## Requirements
-- GNOME Terminal with configured DejaVu Sans Mono 12 font
+Tested on GNOME Terminal (default Ubuntu Mono 12 font), and braille font support.
+- Python-fontconfig (0.5.1)  - Python bindings for Fontconfig library
 
 ## Gallery
 
