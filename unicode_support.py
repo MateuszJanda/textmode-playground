@@ -1,9 +1,13 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+
+"""
+Author: Mateusz Janda <mateusz janda at gmail com>
+Site: github.com/MateuszJanda
+Ad maiorem Dei gloriam
+"""
 
 import curses
 import locale
-import time
 import fontconfig
 
 """
@@ -21,12 +25,10 @@ def main(scr):
     char_support(scr)
 
     scr.refresh()
-
-    while not check_exit_key(scr):
-        time.sleep(0.1)
+    scr.getch()
 
 
-def char_support(scr, character=unichr(0x28a7)):
+def char_support(scr, character=chr(0x28a7)):
     font_names = fontconfig.query()
     row = 4
 
@@ -38,11 +40,6 @@ def char_support(scr, character=unichr(0x28a7)):
             info = str(font.fullname)
             scr.addstr(row, 0, info)
             row += 1
-
-
-def check_exit_key(scr):
-    ch = scr.getch()
-    return ch == ord('q')
 
 
 if __name__ == '__main__':

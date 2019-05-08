@@ -1,8 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
-from __future__ import division
-from __future__ import print_function
+"""
+Author: Mateusz Janda <mateusz janda at gmail com>
+Site: github.com/MateuszJanda
+Ad maiorem Dei gloriam
+"""
+
+
 import math
 import collections as co
 import sys
