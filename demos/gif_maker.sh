@@ -3,11 +3,11 @@
 VIDEO_FILE="caputerd_screen.mp4"
 
 if [[ $1 == "-c" || $1 == "--capture" ]]; then
-    ffmpeg -video_size 640x480 -framerate 25 -f x11grab -i :0.0+0,48 $VIDEO_FILE
+    ffmpeg -video_size 400x400 -framerate 30 -f x11grab -i :0.0+1,48 $VIDEO_FILE
 elif [[ $1 == "-g" || $1 == "--video-to-gif" ]]; then
     PALETTE_FILE="tmp_pallete.png"
     OUTPUT_GIF="output.gif"
-    FILTERS="fps=25"
+    FILTERS="fps=30"
 
     ffmpeg -v warning -i $VIDEO_FILE -vf "$FILTERS,palettegen" -y $PALETTE_FILE
     ffmpeg -v warning -i $VIDEO_FILE -i $PALETTE_FILE -lavfi "$FILTERS [x]; [x][1:v] paletteuse" -y $OUTPUT_GIF
