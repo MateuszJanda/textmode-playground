@@ -10,8 +10,29 @@ import curses
 import locale
 
 
+BODY_COUNT = 25
+NEIGHBORHOOD_RADIUS = 3
+VIEWING_ANGLE = 20
+MIN_DISTANCE = 20
+
+
+
+
+class Body:
+    def __init__(self, pos, vel):
+        self.pos = pos
+        self.vel = vel
+
+
 def main():
     setup_curses()
+
+    bodis = []
+    for i in range(BODY_COUNT):
+        bodis.append(Body(pos=(0, 0), vel=(0, 0)))
+
+
+
 
 
 def setup_curses():
@@ -19,6 +40,8 @@ def setup_curses():
     curses.use_default_colors()
     curses.halfdelay(1)
     curses.curs_set(False)
+
+
 
 
 if __name__ == '__main__':
