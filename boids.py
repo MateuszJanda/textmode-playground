@@ -33,13 +33,11 @@ class Body:
 
 
 def main(scr):
-    # esetup()
-    # setup_curses()
-    # scr.clear()
+    setup_stderr()
+    setup_curses()
+    scr.clear()
 
-    bodies = []
-    for i in range(BODY_COUNT):
-        bodies.append(Body())
+    bodies = [Body() for _ in range(BODY_COUNT)]
 
     while True:
         draw(bodies)
@@ -119,14 +117,14 @@ def setup_curses():
     curses.curs_set(False)
 
 
-def esetup():
-    """ Hard-coded console for debug prints (std err).
-    Console must exist before running script. """
+def setup_stderr():
+    """Hard-coded console for debug prints (std err).
+    Console must exist before running script."""
     sys.stderr = open('/dev/pts/1', 'w')
 
 
 def eprint(*args, **kwargs):
-    """ Debug print function (on std err) """
+    """Debug print function (on std err)"""
     print(*args, file=sys.stderr)
 
 
@@ -135,7 +133,6 @@ def draw(bodies):
 
 
 if __name__ == '__main__':
-    # locale.setlocale(locale.LC_ALL, '')
-    # curses.wrapper(main)
-    main(None)
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(main)
 
