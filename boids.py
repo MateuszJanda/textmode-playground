@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 2
+BODY_COUNT = 25
 VIEWING_ANGLE = 20
 MIN_DISTANCE = 20
 NEIGHBORHOOD_RADIUS = 3
@@ -27,8 +27,8 @@ MAX_VEL = 4
 
 class Body:
     def __init__(self):
-        self.pos = [np.random.uniform(0, curses.LINES*4),
-                    np.random.uniform(0, (curses.COLS-1)*2)]
+        self.pos = np.array([np.random.uniform(0, curses.LINES*4),
+                             np.random.uniform(0, (curses.COLS-1)*2)])
         self.vel = np.random.uniform(0, 2, [2])
         self.l = 1
 
@@ -97,14 +97,14 @@ def main(scr):
                 b1.vel = 0.75 * b1.vel
 
         for b in bodies:
-            if b1.vel[1] < 0:
-                b1.vel[1] += (curses.COLS-1)*2
-            if b1.vel[0] < 0:
-                b1.vel[0] += curses.LINES*4
-            if b1.vel[1] > (curses.COLS-1)*2:
-                b1.vel[1] -= (curses.COLS-1)*2
-            if b1.vel[0] > curses.LINES*4:
-                b1.vel[0] -= curses.LINES*4
+            if b.pos[1] < 0:
+                b.pos[1] += (curses.COLS-1)*2
+            if b.pos[0] < 0:
+                b.pos[0] += curses.LINES*4
+            if b.pos[1] > (curses.COLS-1)*2:
+                b.pos[1] -= (curses.COLS-1)*2
+            if b.pos[0] > curses.LINES*4:
+                b.pos[0] -= curses.LINES*4
 
         for b in bodies:
             b.pos += b.vel
@@ -114,8 +114,8 @@ def main(scr):
                 b.vel[1] = MAX_VEL / 1000
         draw(scr, bodies)
 
-        eprint('Body pos', bodies[0].pos)
-        time.sleep(0.2)
+        # eprint('Body pos', bodies[0].pos)
+        # time.sleep(0.2)
 
 
 def setup_curses():
