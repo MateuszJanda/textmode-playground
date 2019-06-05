@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 25
+BODY_COUNT = 2
 VIEWING_ANGLE = 20
 MIN_DISTANCE = 20
 NEIGHBORHOOD_RADIUS = 3
@@ -27,7 +27,8 @@ MAX_VEL = 4
 
 class Body:
     def __init__(self):
-        self.pos = np.random.uniform(0, 400, [2])
+        self.pos = [np.random.uniform(0, curses.LINES*4),
+                    np.random.uniform(0, (curses.COLS-1)*2)]
         self.vel = np.random.uniform(0, 2, [2])
         self.l = 1
 
@@ -40,10 +41,8 @@ def main(scr):
     bodies = [Body() for _ in range(BODY_COUNT)]
 
     while True:
-        draw(scr, bodies)
-
         for b1 in bodies:
-            b1.avg_vel = b1.vel
+            b1.avg_vel = np.copy(b1.vel)
             b1.avg_dist = 0
             b1.l = 1
 
@@ -99,13 +98,21 @@ def main(scr):
 
         for b in bodies:
             if b1.vel[1] < 0:
-                b1.vel[1] += 450
+                b1.vel[1] += (curses.COLS-1)*2
             if b1.vel[0] < 0:
-                b1.vel[0] += 400
-            if b1.vel[1] > 450:
-                b1.vel[1] -= 450
-            if b1.vel[0] > 400:
-                b1.vel[0] -= 400
+                b1.vel[0] += curses.LINES*4
+            if b1.vel[1] > (curses.COLS-1)*2:
+                b1.vel[1] -= (curses.COLS-1)*2
+            if b1.vel[0] > curses.LINES*4:
+                b1.vel[0] -= curses.LINES*4
+
+        for b in bodies:
+            b.pos += b.vel
+            if b.vel[0] == 0:
+                b.vel[0] = MAX_VEL / 1000
+            if b.vel[1] == 0:
+                b.vel[1] = MAX_VEL / 1000
+        draw(scr, bodies)
 
         eprint('Body pos', bodies[0].pos)
         time.sleep(0.2)
