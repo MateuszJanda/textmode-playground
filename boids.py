@@ -37,8 +37,6 @@ def main(scr):
     setup_curses()
     scr.clear()
 
-    scr.addstr(0, 0, 'xxx')
-
     bodies = [Body() for _ in range(BODY_COUNT)]
 
     while True:
@@ -109,6 +107,7 @@ def main(scr):
             if b1.vel[0] > 400:
                 b1.vel[0] -= 400
 
+        eprint('Body pos', bodies[0].pos)
         time.sleep(0.2)
 
 
@@ -146,23 +145,23 @@ def draw(scr, bodies):
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
         for x in range(count.shape[1]):
-            if count[y][x] > BODY_COUNT * 0.8:
-                buf[y][x] = gray_symbols[0]
-            elif count[y][x] > BODY_COUNT * 0.7:
-                buf[y][x] = gray_symbols[1]
-            elif count[y][x] > BODY_COUNT * 0.6:
-                buf[y][x] = gray_symbols[2]
-            elif count[y][x] > BODY_COUNT * 0.5:
-                buf[y][x] = gray_symbols[3]
-            elif count[y][x] > BODY_COUNT * 0.4:
-                buf[y][x] = gray_symbols[4]
-            elif count[y][x] > BODY_COUNT * 0.3:
-                buf[y][x] = gray_symbols[5]
-            elif count[y][x] > BODY_COUNT * 0.2:
-                buf[y][x] = gray_symbols[6]
-            elif count[y][x] > BODY_COUNT * 0.1:
-                buf[y][x] = gray_symbols[7]
-            elif count[y][x] != 0:
+            # if count[y][x] > BODY_COUNT * 0.8:
+            #     buf[y][x] = gray_symbols[0]
+            # elif count[y][x] > BODY_COUNT * 0.7:
+            #     buf[y][x] = gray_symbols[1]
+            # elif count[y][x] > BODY_COUNT * 0.6:
+            #     buf[y][x] = gray_symbols[2]
+            # elif count[y][x] > BODY_COUNT * 0.5:
+            #     buf[y][x] = gray_symbols[3]
+            # elif count[y][x] > BODY_COUNT * 0.4:
+            #     buf[y][x] = gray_symbols[4]
+            # elif count[y][x] > BODY_COUNT * 0.3:
+            #     buf[y][x] = gray_symbols[5]
+            # elif count[y][x] > BODY_COUNT * 0.2:
+            #     buf[y][x] = gray_symbols[6]
+            # elif count[y][x] > BODY_COUNT * 0.1:
+            #     buf[y][x] = gray_symbols[7]
+            if count[y][x] != 0:
                 buf[y][x] = gray_symbols[8]
 
     dtype = np.dtype('U' + str(buf.shape[1]))
