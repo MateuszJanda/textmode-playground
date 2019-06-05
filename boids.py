@@ -27,8 +27,8 @@ MAX_VEL = 4
 
 class Body:
     def __init__(self):
-        self.pos = np.random.uniform(0, 400, [2, 1])
-        self.vel = np.random.uniform(0, 2, [2, 1])
+        self.pos = np.random.uniform(0, 400, [2])
+        self.vel = np.random.uniform(0, 2, [2])
         self.l = 1
 
 
@@ -37,10 +37,12 @@ def main(scr):
     setup_curses()
     scr.clear()
 
+    scr.addstr(0, 0, 'xxx')
+
     bodies = [Body() for _ in range(BODY_COUNT)]
 
     while True:
-        draw(bodies)
+        draw(scr, bodies)
 
         for b1 in bodies:
             b1.avg_vel = b1.vel
@@ -69,7 +71,7 @@ def main(scr):
 
         for b1 in bodies:
             b1.vel += NEIGHBORHOOD_VEL_WEIGHT * ((b1.avg_vel / b1.l) - b1.vel)
-            b1.vel += NOISE_WEIGHT * (np.random.uniform(0, 0.5, [2, 1]) * MAX_VEL)
+            b1.vel += NOISE_WEIGHT * (np.random.uniform(0, 0.5, [2]) * MAX_VEL)
             if b1.l > 1:
                 b1.avg_dist /= b1.l - 1
 
@@ -128,11 +130,46 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr)
 
 
-def draw(bodies):
-    pass
+def draw(scr, bodies):
+    # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
+    # shape = [(curses.COLS - 1) * 2, curses.ROW * 4]
+    shape = [curses.LINES, curses.COLS - 1]
+    count = np.full(shape=shape, fill_value=0)
 
+    for b in bodies:
+        if b.pos[0]//4 >= curses.LINES or b.pos[1]//2 >= curses.COLS - 1:
+            continue
+        # import pdb; pdb.set_trace()
+        count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
+
+    gray_symbols = '@%#x+=:-. '
+    buf = np.full(shape=shape, fill_value=' ')
+    for y in range(count.shape[0]):
+        for x in range(count.shape[1]):
+            if count[y][x] > BODY_COUNT * 0.8:
+                buf[y][x] = gray_symbols[0]
+            elif count[y][x] > BODY_COUNT * 0.7:
+                buf[y][x] = gray_symbols[1]
+            elif count[y][x] > BODY_COUNT * 0.6:
+                buf[y][x] = gray_symbols[2]
+            elif count[y][x] > BODY_COUNT * 0.5:
+                buf[y][x] = gray_symbols[3]
+            elif count[y][x] > BODY_COUNT * 0.4:
+                buf[y][x] = gray_symbols[4]
+            elif count[y][x] > BODY_COUNT * 0.3:
+                buf[y][x] = gray_symbols[5]
+            elif count[y][x] > BODY_COUNT * 0.2:
+                buf[y][x] = gray_symbols[6]
+            elif count[y][x] > BODY_COUNT * 0.1:
+                buf[y][x] = gray_symbols[7]
+            elif count[y][x] != 0:
+                buf[y][x] = gray_symbols[8]
+
+    dtype = np.dtype('U' + str(buf.shape[1]))
+    for num, line in enumerate(buf):
+        scr.addstr(num, 0, line.view(dtype)[0])
+    scr.refresh()
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
     curses.wrapper(main)
-
