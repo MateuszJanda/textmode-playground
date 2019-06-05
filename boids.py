@@ -6,6 +6,7 @@ Site: github.com/MateuszJanda
 Ad maiorem Dei gloriam
 """
 
+import sys
 import curses
 import locale
 import time
@@ -28,12 +29,13 @@ class Body:
     def __init__(self):
         self.pos = np.random.uniform(0, 400, [2, 1])
         self.vel = np.random.uniform(0, 2, [2, 1])
-        self.l = 0
+        self.l = 1
 
 
 def main(scr):
-    setup_curses()
-    scr.clear()
+    # esetup()
+    # setup_curses()
+    # scr.clear()
 
     bodies = []
     for i in range(BODY_COUNT):
@@ -45,6 +47,7 @@ def main(scr):
         for b1 in bodies:
             b1.avg_vel = b1.vel
             b1.avg_dist = 0
+            b1.l = 1
 
             for b2 in bodies:
                 if b1 is b2:
@@ -55,6 +58,7 @@ def main(scr):
                     ((b2.pos[1] - b1.pos[1]) / dist) + \
                     b1.pos[0] / math.sqrt(b1.vel[1]**2 + b1.pos[0]**2) * \
                     ((b2.pos[0] - b1.pos[0]) / dist)
+
                 if k < -1:
                     k = -1
                 elif k > 0:
@@ -115,11 +119,23 @@ def setup_curses():
     curses.curs_set(False)
 
 
+def esetup():
+    """ Hard-coded console for debug prints (std err).
+    Console must exist before running script. """
+    sys.stderr = open('/dev/pts/1', 'w')
+
+
+def eprint(*args, **kwargs):
+    """ Debug print function (on std err) """
+    print(*args, file=sys.stderr)
+
+
 def draw(bodies):
     pass
 
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    # locale.setlocale(locale.LC_ALL, '')
+    # curses.wrapper(main)
+    main(None)
 
