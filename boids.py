@@ -14,14 +14,14 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 25
-VIEWING_ANGLE = 20
-MIN_DISTANCE = 20
-NEIGHBORHOOD_RADIUS = 3
-NEIGHBORHOOD_VEL_WEIGHT = 0.1
-NEIGHBORHOOD_DIST_WEIGHT = 0.15
-MIN_DIST_WEIGHT = 0.15
-NOISE_WEIGHT = 0.1
+BODY_COUNT = 20
+VIEWING_ANGLE = 120
+MIN_DIST = 20
+NEIGHB_RADIUS = 50
+WEIGHT_VEL = 0.1
+WEIGHT_NEIGHB_DIST = 0.15
+WEIGHT_MIN_DIST = 0.15
+WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 
 
@@ -29,7 +29,7 @@ class Body:
     def __init__(self):
         self.pos = np.array([np.random.uniform(0, curses.LINES*4),
                              np.random.uniform(0, (curses.COLS-1)*2)])
-        self.vel = np.random.uniform(0, 2, [2])
+        self.vel = np.random.uniform(-4, 4, [2])
         self.l = 1
 
 
@@ -61,14 +61,14 @@ def main(scr):
                 elif k > 0:
                     k = 1
                 k = math.fabs(180*math.acos(k)) / math.pi
-                if dist < NEIGHBORHOOD_RADIUS and k > VIEWING_ANGLE:
+                if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
                     b1.l += 1
                     b1.avg_vel += b2.vel
                     b1.avg_dist += dist
 
         for b1 in bodies:
-            b1.vel += NEIGHBORHOOD_VEL_WEIGHT * ((b1.avg_vel / b1.l) - b1.vel)
-            b1.vel += NOISE_WEIGHT * (np.random.uniform(0, 0.5, [2]) * MAX_VEL)
+            b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
+            b1.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, [2]) * MAX_VEL)
             if b1.l > 1:
                 b1.avg_dist /= b1.l - 1
 
@@ -87,11 +87,11 @@ def main(scr):
                 elif k > 1:
                     k = 1
                 k = math.fabs(180*math.acos(k)) / math.pi
-                if dist < NEIGHBORHOOD_RADIUS and k > VIEWING_ANGLE:
-                    if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DISTANCE:
-                        b1.vel += (NEIGHBORHOOD_DIST_WEIGHT / b1.l) * (((b2.pos - b1.pos) * (dist - b1.avg_dist)) / dist)
+                if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
+                    if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DIST:
+                        b1.vel += (WEIGHT_NEIGHB_DIST / b1.l) * (((b2.pos - b1.pos) * (dist - b1.avg_dist)) / dist)
                     else:
-                        b1.vel += (MIN_DIST_WEIGHT / b1.l) * (((b2.pos - b1.pos) * MIN_DISTANCE) / dist) - (b2.pos - b1.pos)
+                        b1.vel += (WEIGHT_MIN_DIST / b1.l) * (((b2.pos - b1.pos) * MIN_DIST) / dist) - (b2.pos - b1.pos)
 
             if math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) > MAX_VEL:
                 b1.vel = 0.75 * b1.vel
@@ -115,7 +115,7 @@ def main(scr):
         draw(scr, bodies)
 
         # eprint('Body pos', bodies[0].pos)
-        # time.sleep(0.2)
+        time.sleep(0.2)
 
 
 def setup_curses():
