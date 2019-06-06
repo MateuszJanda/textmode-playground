@@ -27,9 +27,9 @@ DT = 1
 
 
 class Body:
-    def __init__(self):
-        self.pos = np.array([np.random.uniform(0, curses.LINES*4),
-                             np.random.uniform(0, (curses.COLS-1)*2)])
+    def __init__(self, size):
+        self.pos = np.array([np.random.uniform(0, size[0]),
+                             np.random.uniform(0, size[1])])
         self.vel = np.random.uniform(-4, 4, [2])
         self.l = 1
 
@@ -39,7 +39,8 @@ def main(scr):
     setup_curses()
     scr.clear()
 
-    bodies = [Body() for _ in range(BODY_COUNT)]
+    size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    bodies = [Body(size) for _ in range(BODY_COUNT)]
 
     while True:
         for b1 in bodies:
@@ -106,21 +107,17 @@ def main(scr):
 
         for b in bodies:
             if b.pos[1] < 0:
-                b.pos[1] += (curses.COLS-1)*2
+                b.pos[1] = b.pos[1] % -size[1] + size[1]
+            elif b.pos[1] > size[1]:
+                b.pos[1] = b.pos[1] % size[1]
+
             if b.pos[0] < 0:
-                b.pos[0] += curses.LINES*4
-            if b.pos[1] > (curses.COLS-1)*2:
-                b.pos[1] -= (curses.COLS-1)*2
-            if b.pos[0] > curses.LINES*4:
-                b.pos[0] -= curses.LINES*4
-
-            # if np.any(b.pos < 0):
-            #     eprint('BUKA ', b.pos)
-
+                b.pos[0] = b.pos[0] % -size[0] + size[0]
+            elif b.pos[0] > size[0]:
+                b.pos[0] = b.pos[0] % size[0]
 
         draw(scr, bodies)
 
-        # eprint('Body pos', bodies[0].pos)
         time.sleep(0.2)
 
 
@@ -144,19 +141,12 @@ def eprint(*args, **kwargs):
 
 def draw(scr, bodies):
     # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
-    # shape = [(curses.COLS - 1) * 2, curses.ROW * 4]
     shape = [curses.LINES, curses.COLS - 1]
     count = np.full(shape=shape, fill_value=0)
 
     for b in bodies:
-
-
-        if np.any(b.pos < 0):
-            eprint('BUKA ', b.pos)
-
         if b.pos[0]//4 >= curses.LINES or b.pos[1]//2 >= curses.COLS - 1:
             continue
-        # import pdb; pdb.set_trace()
         count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
 
     gray_symbols = '@%#x+=:-. '
