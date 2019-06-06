@@ -31,6 +31,8 @@ class Body:
         self.pos = np.array([np.random.uniform(0, size[0]),
                              np.random.uniform(0, size[1])])
         self.vel = np.random.uniform(-2, 2, size=[2])
+        self.avg_vel = np.copy(self.vel)
+        self.avg_dist = 0
         self.l = 1
 
 
@@ -45,10 +47,6 @@ def main(scr):
 
     while True:
         for b1 in bodies:
-            b1.avg_vel = np.copy(b1.vel)
-            b1.avg_dist = 0
-            b1.l = 1
-
             for b2 in bodies:
                 if b1 is b2:
                     continue
@@ -106,7 +104,6 @@ def main(scr):
             if b.vel[1] == 0:
                 b.vel[1] = MAX_VEL / 1000
 
-        for b in bodies:
             if b.pos[1] < 0:
                 b.pos[1] = b.pos[1] % -size[1] + size[1]
             elif b.pos[1] > size[1]:
@@ -116,6 +113,10 @@ def main(scr):
                 b.pos[0] = b.pos[0] % -size[0] + size[0]
             elif b.pos[0] > size[0]:
                 b.pos[0] = b.pos[0] % size[0]
+
+            b.avg_vel = np.copy(b.vel)
+            b.avg_dist = 0
+            b.l = 1
 
         draw(scr, bodies)
 
