@@ -24,6 +24,7 @@ WEIGHT_MIN_DIST = 0.15
 WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 DT = 1
+TONE_SYMBOLS = '@%#x+=:-. '
 
 
 class Body:
@@ -69,7 +70,7 @@ def main(scr):
 
         for b1 in bodies:
             b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
-            b1.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, [2]) * MAX_VEL)
+            b1.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
             if b1.l > 1:
                 b1.avg_dist /= b1.l - 1
 
@@ -131,8 +132,7 @@ def setup_curses():
 
 
 def setup_stderr():
-    """Hard-coded console for debug prints (std err).
-    Console must exist before running script."""
+    """Hard-coded console for debug prints (stderr)"""
     sys.stderr = open('/dev/pts/1', 'w')
 
 
@@ -145,14 +145,13 @@ def draw(scr, bodies):
     # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
     # http://mkweb.bcgsc.ca/asciiart/
     shape = [curses.LINES, curses.COLS - 1]
-    count = np.full(shape=shape, fill_value=0)
+    count = np.zeros(shape=shape)
 
     for b in bodies:
         if b.pos[0]//4 >= curses.LINES or b.pos[1]//2 >= curses.COLS - 1:
             continue
         count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
 
-    TONE_SYMBOLS = '@%#x+=:-. '
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
         for x in range(count.shape[1]):
@@ -179,6 +178,7 @@ def draw(scr, bodies):
     for num, line in enumerate(buf):
         scr.addstr(num, 0, line.view(dtype)[0])
     scr.refresh()
+
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
