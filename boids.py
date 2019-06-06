@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 5
+BODY_COUNT = 200
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -94,7 +94,7 @@ def main(scr):
                     if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DIST:
                         b1.vel += (WEIGHT_NEIGHB_DIST / b1.l) * (((b2.pos - b1.pos) * (dist - b1.avg_dist)) / dist)
                     else:
-                        b1.vel += (WEIGHT_MIN_DIST / b1.l) * (((b2.pos - b1.pos) * MIN_DIST) / dist) - (b2.pos - b1.pos)
+                        b1.vel -= (WEIGHT_MIN_DIST / b1.l) * (((b2.pos - b1.pos) * MIN_DIST) / dist) - (b2.pos - b1.pos)
 
             if math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) > MAX_VEL:
                 b1.vel = 0.75 * b1.vel
@@ -119,7 +119,7 @@ def main(scr):
 
         draw(scr, bodies)
 
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
 
 def setup_curses():
@@ -155,21 +155,21 @@ def draw(scr, bodies):
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
         for x in range(count.shape[1]):
-            # if count[y][x] > BODY_COUNT * 0.8:
-            #     buf[y][x] = TONE_SYMBOLS[0]
-            # elif count[y][x] > BODY_COUNT * 0.7:
-            #     buf[y][x] = TONE_SYMBOLS[1]
-            # elif count[y][x] > BODY_COUNT * 0.6:
-            #     buf[y][x] = TONE_SYMBOLS[2]
-            # elif count[y][x] > BODY_COUNT * 0.5:
-            #     buf[y][x] = TONE_SYMBOLS[3]
-            # elif count[y][x] > BODY_COUNT * 0.4:
-            #     buf[y][x] = TONE_SYMBOLS[4]
-            # elif count[y][x] > BODY_COUNT * 0.3:
-            #     buf[y][x] = TONE_SYMBOLS[5]
-            # elif count[y][x] > BODY_COUNT * 0.2:
-            #     buf[y][x] = TONE_SYMBOLS[6]
-            if count[y][x] > 1:
+            if count[y][x] > 50:
+                buf[y][x] = TONE_SYMBOLS[0]
+            elif count[y][x] > 40:
+                buf[y][x] = TONE_SYMBOLS[1]
+            elif count[y][x] > 30:
+                buf[y][x] = TONE_SYMBOLS[2]
+            elif count[y][x] > 20:
+                buf[y][x] = TONE_SYMBOLS[3]
+            elif count[y][x] > 10:
+                buf[y][x] = TONE_SYMBOLS[4]
+            elif count[y][x] > 5:
+                buf[y][x] = TONE_SYMBOLS[5]
+            elif count[y][x] > 3:
+                buf[y][x] = TONE_SYMBOLS[6]
+            elif count[y][x] > 1:
                 buf[y][x] = TONE_SYMBOLS[7]
             elif count[y][x] != 0:
                 buf[y][x] = TONE_SYMBOLS[8]
