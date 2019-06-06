@@ -14,7 +14,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 20
+BODY_COUNT = 5
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -30,7 +30,7 @@ class Body:
     def __init__(self, size):
         self.pos = np.array([np.random.uniform(0, size[0]),
                              np.random.uniform(0, size[1])])
-        self.vel = np.random.uniform(-4, 4, [2])
+        self.vel = np.random.uniform(-2, 2, size=[2])
         self.l = 1
 
 
@@ -39,6 +39,7 @@ def main(scr):
     setup_curses()
     scr.clear()
 
+    np.random.seed(3145)
     size = np.array([curses.LINES*4, (curses.COLS-1)*2])
     bodies = [Body(size) for _ in range(BODY_COUNT)]
 
@@ -118,7 +119,7 @@ def main(scr):
 
         draw(scr, bodies)
 
-        time.sleep(0.2)
+        time.sleep(0.1)
 
 
 def setup_curses():
@@ -141,6 +142,7 @@ def eprint(*args, **kwargs):
 
 def draw(scr, bodies):
     # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
+    # http://mkweb.bcgsc.ca/asciiart/
     shape = [curses.LINES, curses.COLS - 1]
     count = np.full(shape=shape, fill_value=0)
 
@@ -149,28 +151,28 @@ def draw(scr, bodies):
             continue
         count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
 
-    gray_symbols = '@%#x+=:-. '
+    TONE_SYMBOLS = '@%#x+=:-. '
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
         for x in range(count.shape[1]):
             # if count[y][x] > BODY_COUNT * 0.8:
-            #     buf[y][x] = gray_symbols[0]
+            #     buf[y][x] = TONE_SYMBOLS[0]
             # elif count[y][x] > BODY_COUNT * 0.7:
-            #     buf[y][x] = gray_symbols[1]
+            #     buf[y][x] = TONE_SYMBOLS[1]
             # elif count[y][x] > BODY_COUNT * 0.6:
-            #     buf[y][x] = gray_symbols[2]
+            #     buf[y][x] = TONE_SYMBOLS[2]
             # elif count[y][x] > BODY_COUNT * 0.5:
-            #     buf[y][x] = gray_symbols[3]
+            #     buf[y][x] = TONE_SYMBOLS[3]
             # elif count[y][x] > BODY_COUNT * 0.4:
-            #     buf[y][x] = gray_symbols[4]
+            #     buf[y][x] = TONE_SYMBOLS[4]
             # elif count[y][x] > BODY_COUNT * 0.3:
-            #     buf[y][x] = gray_symbols[5]
+            #     buf[y][x] = TONE_SYMBOLS[5]
             # elif count[y][x] > BODY_COUNT * 0.2:
-            #     buf[y][x] = gray_symbols[6]
-            # elif count[y][x] > BODY_COUNT * 0.1:
-            #     buf[y][x] = gray_symbols[7]
-            if count[y][x] != 0:
-                buf[y][x] = gray_symbols[8]
+            #     buf[y][x] = TONE_SYMBOLS[6]
+            if count[y][x] > 1:
+                buf[y][x] = TONE_SYMBOLS[7]
+            elif count[y][x] != 0:
+                buf[y][x] = TONE_SYMBOLS[8]
 
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
