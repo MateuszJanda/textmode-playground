@@ -23,6 +23,7 @@ WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
 WEIGHT_NOISE = 0.1
 MAX_VEL = 4
+DT = 1
 
 
 class Body:
@@ -51,9 +52,9 @@ def main(scr):
                     continue
 
                 dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
-                k = b1.vel[1] / math.sqrt(b1.vel[1]**2 + b1.pos[0]**2) * \
+                k = b1.vel[1] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
                     ((b2.pos[1] - b1.pos[1]) / dist) + \
-                    b1.pos[0] / math.sqrt(b1.vel[1]**2 + b1.pos[0]**2) * \
+                    b1.vel[0] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
                     ((b2.pos[0] - b1.pos[0]) / dist)
 
                 if k < -1:
@@ -78,7 +79,7 @@ def main(scr):
 
                 dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
                 k = b1.vel[1] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
-                    ((b2.pos[1] -b1.pos[1]) / dist) + \
+                    ((b2.pos[1] - b1.pos[1]) / dist) + \
                     b1.vel[0] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
                     ((b2.pos[0] - b1.pos[0]) / dist)
 
@@ -97,6 +98,13 @@ def main(scr):
                 b1.vel = 0.75 * b1.vel
 
         for b in bodies:
+            b.pos += b.vel * DT
+            if b.vel[0] == 0:
+                b.vel[0] = MAX_VEL / 1000
+            if b.vel[1] == 0:
+                b.vel[1] = MAX_VEL / 1000
+
+        for b in bodies:
             if b.pos[1] < 0:
                 b.pos[1] += (curses.COLS-1)*2
             if b.pos[0] < 0:
@@ -106,12 +114,10 @@ def main(scr):
             if b.pos[0] > curses.LINES*4:
                 b.pos[0] -= curses.LINES*4
 
-        for b in bodies:
-            b.pos += b.vel
-            if b.vel[0] == 0:
-                b.vel[0] = MAX_VEL / 1000
-            if b.vel[1] == 0:
-                b.vel[1] = MAX_VEL / 1000
+            # if np.any(b.pos < 0):
+            #     eprint('BUKA ', b.pos)
+
+
         draw(scr, bodies)
 
         # eprint('Body pos', bodies[0].pos)
@@ -143,6 +149,11 @@ def draw(scr, bodies):
     count = np.full(shape=shape, fill_value=0)
 
     for b in bodies:
+
+
+        if np.any(b.pos < 0):
+            eprint('BUKA ', b.pos)
+
         if b.pos[0]//4 >= curses.LINES or b.pos[1]//2 >= curses.COLS - 1:
             continue
         # import pdb; pdb.set_trace()
