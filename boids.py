@@ -110,7 +110,7 @@ class KdTree:
 
         return rect
 
-    def nearest(self, pos, radius):
+    def nearest(self, body, radius):
         # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
         if root == None:
             return []
@@ -121,14 +121,15 @@ class KdTree:
         stack = [Task(self.root, KdTree.Y_AXIS)]
         while stack:
             task = stack.pop()
-            if task.node == None or task.node.rect.distance_squared(pos) > radius_squared:
+            if task.node == None or task.node.body is body or \
+              task.node.rect.distance_squared(body.pos) > radius_squared:
                 continue
 
             result.append(task.node.body)
 
             next_dim = self._next_dimension(task.dim)
-            if (task.dim == KdTree.Y_AXIS and pos[0] < task.node.body.pos[0]) or \
-               (task.dim == KdTree.X_AXIS and pos[1] < task.node.body.pos[1]):
+            if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
+               (task.dim == KdTree.X_AXIS and body.pos[1] < task.node.body.pos[1]):
                 stack.append(Task(task.node.rt, next_dim))
                 stack.append(Task(task.node.lb, next_dim))
             else:
@@ -178,10 +179,32 @@ def main(scr):
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
     tree = KdTree(bodies, screen_size)
 
+    '''
+    while True:
+        for body in bodies:
+            neighbors = tree.nearest(body.pos, NEIGHB_RADIUS)
 
-    # while True:
-    #     for b in bodies:
+            avg_vel = 0
+            avg_dist = 0
+            for nb in neighbors:
+                dist = math.sqrt((body.pos[1] - nb.pos[1])**2 + (body.pos[0] - nb.pos[0])**2)
 
+                k = body.vel[1] / math.sqrt(body.vel[1]**2 + body.vel[0]**2) * \
+                    ((nb.pos[1] - body.pos[1]) / dist) + \
+                    body.vel[0] / math.sqrt(body.vel[1]**2 + body.vel[0]**2) * \
+                    ((nb.pos[0] - body.pos[0]) / dist)
+
+                if k < -1:
+                    k = -1
+                elif k > 0:
+                    k = 1
+                k = math.fabs(180*math.acos(k)) / math.pi
+                # if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
+                if k > VIEWING_ANGLE:
+                    # b1.l += 1
+                    avg_vel += nb.vel
+                    avg_dist += dist
+    '''
 
     while True:
         for b1 in bodies:
@@ -197,7 +220,7 @@ def main(scr):
 
                 if k < -1:
                     k = -1
-                elif k > 0:
+                elif k > 1:
                     k = 1
                 k = math.fabs(180*math.acos(k)) / math.pi
                 if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
