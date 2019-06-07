@@ -172,8 +172,7 @@ class Rect:
 
 def main2(scr):
     setup_stderr()
-    setup_curses()
-    scr.clear()
+    setup_curses(scr)
 
     np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
@@ -221,8 +220,7 @@ def main2(scr):
 
 def main(scr):
     setup_stderr()
-    setup_curses()
-    scr.clear()
+    setup_curses(scr)
 
     np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
@@ -274,11 +272,12 @@ def main(scr):
         draw(scr, bodies)
 
 
-def setup_curses():
+def setup_curses(scr):
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
     curses.curs_set(False)
+    scr.clear()
 
 
 def setup_stderr():
