@@ -72,8 +72,8 @@ class KdTree:
             if np.all(parent.point == insert_node.point):
                 return
 
-            if parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0] or \
-               parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]:
+            if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+               (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
                 pointer = pointer.lb
             else:
                 pointer = pointer.rt
@@ -84,11 +84,11 @@ class KdTree:
             root = insert_node
         else:
             insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
-            if parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0] or \
-               parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]:
-                parent.lb = insertNode
+            if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+               (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
+                parent.lb = insert_node
             else:
-                parent.rt = insertNode
+                parent.rt = insert_node
 
         self.node_counter += 1
 
@@ -111,8 +111,8 @@ class KdTree:
             if np.all(pointer.point == point):
                 return True
 
-            if dim == Y_AXIS and point[0] < pointer.point[0] or \
-               dim == X_AXIS and point[1] < pointer.point[1]:
+            if (dim == Y_AXIS and point[0] < pointer.point[0]) or \
+               (dim == X_AXIS and point[1] < pointer.point[1]):
                 pointer = pointer.lb
             else:
                 pointer = pointer.rt
