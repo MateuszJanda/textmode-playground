@@ -38,6 +38,37 @@ class Body:
         self.avg_dist = 0
         self.neighb_count = 1
 
+    def reset(self):
+        self.avg_vel = np.copy(self.vel)
+        self.avg_dist = 0
+        self.neighb_count = 1
+        self.neighbors = []
+
+    def adjust(self, screen_size):
+        self.adjust_vel()
+        self.adjust_pos(screen_size)
+
+    def adjust_vel(self):
+        if self.vel[0] == 0:
+            self.vel[0] = MAX_VEL / 1000
+        if self.vel[1] == 0:
+            self.vel[1] = MAX_VEL / 1000
+
+        return self.vel
+
+    def adjust_pos(self, screen_size):
+        if self.pos[0] < 0:
+            self.pos[0] = self.pos[0] % -screen_size[0] + screen_size[0]
+        elif self.pos[0] > screen_size[0]:
+            self.pos[0] = self.pos[0] % screen_size[0]
+
+        if self.pos[1] < 0:
+            self.pos[1] = self.pos[1] % -screen_size[1] + screen_size[1]
+        elif self.pos[1] > screen_size[1]:
+            self.pos[1] = self.pos[1] % screen_size[1]
+
+        return self.pos
+
     def mag_vel_squared(self):
         return self.vel[0]**2 + self.vel[1]**2
 
@@ -202,11 +233,8 @@ def main2(scr):
         tree = KdTree(bodies, screen_size)
 
         for body in bodies:
+            body.reset()
             candidates = tree.nearest(body, NEIGHB_RADIUS)
-            body.avg_vel = np.copy(body.vel)
-            body.avg_dist = 0
-            body.neighb_count = 1
-            body.neighbors = []
 
             # visible_neighbors = []
             for neighb_body, dist in candidates:
@@ -242,8 +270,7 @@ def main2(scr):
 
         for body in bodies:
             body.pos += body.vel * DT
-            body.pos = adjust_pos(body.pos, screen_size)
-            body.vel = adjust_vel(body.vel)
+            body.adjust(screen_size)
 
         draw(scr, bodies)
 
@@ -260,6 +287,8 @@ def main(scr):
 
     while True:
         for body in bodies:
+            body.reset()
+
             for neighb_body in bodies:
                 if body is neighb_body:
                     continue
@@ -300,12 +329,7 @@ def main(scr):
 
         for body in bodies:
             body.pos += body.vel * DT
-            body.pos = adjust_pos(body.pos, screen_size)
-            body.vel = adjust_vel(body.vel)
-
-            body.avg_vel = np.copy(body.vel)
-            body.avg_dist = 0
-            body.neighb_count = 1
+            body.adjust(screen_size)
 
         draw(scr, bodies)
 
@@ -352,29 +376,6 @@ def view_angle(body1, body2, dist):
     return angle
 
 
-def adjust_vel(vel):
-    if vel[0] == 0:
-        vel[0] = MAX_VEL / 1000
-    if vel[1] == 0:
-        vel[1] = MAX_VEL / 1000
-
-    return vel
-
-
-def adjust_pos(pos, screen_size):
-    if pos[0] < 0:
-        pos[0] = pos[0] % -screen_size[0] + screen_size[0]
-    elif pos[0] > screen_size[0]:
-        pos[0] = pos[0] % screen_size[0]
-
-    if pos[1] < 0:
-        pos[1] = pos[1] % -screen_size[1] + screen_size[1]
-    elif pos[1] > screen_size[1]:
-        pos[1] = pos[1] % screen_size[1]
-
-    return pos
-
-
 def draw(scr, bodies):
     # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
     # http://mkweb.bcgsc.ca/asciiart/
@@ -416,4 +417,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main2)
