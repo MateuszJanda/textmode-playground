@@ -36,6 +36,141 @@ class Body:
         self.avg_dist = 0
         self.l = 1
 
+class KdTree:
+    Y_AXIS = 0
+    X_AXIS = 1
+
+    class Node:
+        def __init__(self, point):
+            self.point = point
+            self.rect = (0, 0, 0, 0)
+            self.lb = None
+            self.rt = None
+
+    class Task:
+        def __init__(self, node, dim):
+            self.node = node
+            self.dim = dim
+
+    def __init__(self):
+        self.node_counter = 0
+        self.root = None
+
+    def insert(self, point):
+        insert_node = Node(point)
+
+        pointer = root
+        dim = Y_AXIS
+
+        parent = None
+        parent_dim = None
+
+        while pointer:
+            parent = pointer
+            parent_dim = dim
+
+            if np.all(parent.point == insert_node.point):
+                return
+
+            if parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0] or \
+               parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]:
+                pointer = pointer.lb
+            else:
+                pointer = pointer.rt
+            dim = self._next_dimension(dim)
+
+        if parent:
+            insert_node.rect = RectHV(0.0, 0.0, 1.0, 1.0)
+            root = insert_node
+        else:
+            insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
+            if parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0] or \
+               parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]:
+                parent.lb = insertNode
+            else:
+                parent.rt = insertNode
+
+        self.node_counter += 1
+
+    def _create_rect(self, parent, insert_pt, parent_dim):
+        if parent_dim == Y_AXIS:
+            if insert_pt[0] < parent.point[0]:
+                return RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.rect.xmax(), parent.point[0])
+            else:
+                return RectHV(parent.rect.xmin(), parent.point[0], parent.rect.xmax(), parent.rect.ymax())
+        else:
+            if insert_pt[1] < parent.point[1]:
+                return RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.point[1], parent.rect.ymax())
+            else:
+                return RectHV(parent.point[1], parent.rect.ymin(), parent.rect.xmax(), parent.rect.ymax())
+
+    def contains(self, point):
+        pointer = root
+        dim = Y_AXIS
+        while pointer:
+            if np.all(pointer.point == point):
+                return True
+
+            if dim == Y_AXIS and point[0] < pointer.point[0] or \
+               dim == X_AXIS and point[1] < pointer.point[1]:
+                pointer = pointer.lb
+            else:
+                pointer = pointer.rt
+            dim = self._next_dimension(dim)
+
+        return False
+
+    def range(self, rect):
+        result = []
+        stack = [self.root]
+        while stack:
+            node = stack.pop()
+            if node == None or rect.intersects(node.rect):
+                continue
+
+            if rect.contains(node.point):
+                result.append(node.point)
+
+            stack.append(node.rt)
+            stack.append(node.lb)
+
+        return result
+
+    def nearest(self, point):
+        # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
+        if root == None:
+            return None
+
+        best_point = self.root.point
+        best_dist = self.root.point.distanceSquaredTo(point)
+
+        stack = [Task(self.root, Y_AXIS)]
+        while stack:
+            task = stack.pop()
+            if task.node == None or task.node.rect.distanceSquaredTo(p) > best_dist:
+                continue
+
+            dist = task.node.point.distanceSquaredTo(point)
+            if dist < best_dist:
+                bestDist = dist
+                bestPoint = task.node.point
+
+            next_dim = self._next_dimension(task.dim)
+            if (task.dim == Y_AXIS and point[0] < task.node.point[0]) or \
+               (task.dim == X_AXIS and point[1] < task.node.point[1]):
+                stack.append(Task(task.node.rt, next_dim))
+                stack.append(Task(task.node.lb, next_dim))
+            else:
+                stack.append(Task(task.node.lb, next_dim))
+                stack.append(Task(task.node.rt, next_dim))
+
+        return best_dist
+
+    def _next_dimension(self, dim):
+        if dim == Y_AXIS:
+            return X_AXIS
+        return Y_AXIS
+
 
 def main(scr):
     setup_stderr()
