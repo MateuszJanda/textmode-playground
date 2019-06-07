@@ -190,12 +190,12 @@ class Rect:
 
 
 def main2(scr):
-    # setup_stderr()
-    # setup_curses(scr)
+    setup_stderr()
+    setup_curses(scr)
 
     np.random.seed(3145)
-    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    screen_size = np.array([128, 238])
+    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    # screen_size = np.array([128, 238])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
@@ -215,13 +215,12 @@ def main2(scr):
                     avg_dist += dist
                     neighbors_count += 1
                     visible_neighbors.append((nb, dist))
-                    eprint('nb.pos', nb.pos)
+                    eprint('b2.pos', nb.pos)
 
-            eprint('body.pos', body.pos)
-
+            eprint('b1.pos', body.pos)
 
             eprint('L:', neighbors_count)
-            exit()
+            # exit()
 
             body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
             body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
@@ -238,22 +237,21 @@ def main2(scr):
             if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
 
+        for body in bodies:
             body.pos += body.vel * DT
             body.pos = adjust_pos(body.pos, screen_size)
             body.vel = adjust_vel(body.vel)
 
-        # draw(scr, bodies)
+        draw(scr, bodies)
 
 
 def main(scr):
-    # setup_stderr()
-    # setup_curses(scr)
+    setup_stderr()
+    setup_curses(scr)
 
     np.random.seed(3145)
-    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    screen_size = np.array([128, 238])
-    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    eprint(screen_size)
+    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    # screen_size = np.array([128, 238])
 
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
@@ -273,7 +271,7 @@ def main(scr):
 
             eprint('b1.pos', b1.pos)
             eprint('L:', b1.l)
-            exit()
+            # exit()
 
         for b1 in bodies:
             b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
@@ -296,15 +294,16 @@ def main(scr):
             if b1.mag_vel_squared() > MAX_VEL_SQUARED:
                 b1.vel = 0.75 * b1.vel
 
-            b1.pos += b1.vel * DT
-            b1.pos = adjust_pos(b1.pos, screen_size)
-            b1.vel = adjust_vel(b1.vel)
+        for body in bodies:
+            body.pos += body.vel * DT
+            body.pos = adjust_pos(body.pos, screen_size)
+            body.vel = adjust_vel(body.vel)
 
-            b1.avg_vel = np.copy(b1.vel)
-            b1.avg_dist = 0
-            b1.l = 1
+            body.avg_vel = np.copy(body.vel)
+            body.avg_dist = 0
+            body.l = 1
 
-        # draw(scr, bodies)
+        draw(scr, bodies)
 
 
 def setup_curses(scr):
@@ -317,7 +316,7 @@ def setup_curses(scr):
 
 def setup_stderr():
     """Hard-coded console for debug prints (stderr)."""
-    sys.stderr = open('/dev/pts/1', 'w')
+    sys.stderr = open('/dev/pts/3', 'w')
 
 
 def eprint(*args, **kwargs):
@@ -412,6 +411,5 @@ def draw(scr, bodies):
 
 
 if __name__ == '__main__':
-    # locale.setlocale(locale.LC_ALL, '')
-    # curses.wrapper(main2)
-    main2(None)
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(main)
