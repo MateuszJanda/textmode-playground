@@ -112,7 +112,7 @@ class KdTree:
 
     def nearest(self, body, radius):
         # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
-        if root == None:
+        if self.root == None:
             return []
 
         result = []
@@ -168,7 +168,7 @@ class Rect:
         return dx**2 + dy**2
 
 
-def main(scr):
+def main2(scr):
     setup_stderr()
     setup_curses()
     scr.clear()
@@ -179,32 +179,69 @@ def main(scr):
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
     tree = KdTree(bodies, screen_size)
 
-    '''
     while True:
         for body in bodies:
             neighbors = tree.nearest(body.pos, NEIGHB_RADIUS)
 
             avg_vel = 0
             avg_dist = 0
+            neighbors_count = 1
             for nb in neighbors:
                 dist = math.sqrt((body.pos[1] - nb.pos[1])**2 + (body.pos[0] - nb.pos[0])**2)
 
-                k = body.vel[1] / math.sqrt(body.vel[1]**2 + body.vel[0]**2) * \
-                    ((nb.pos[1] - body.pos[1]) / dist) + \
-                    body.vel[0] / math.sqrt(body.vel[1]**2 + body.vel[0]**2) * \
-                    ((nb.pos[0] - body.pos[0]) / dist)
-
-                if k < -1:
-                    k = -1
-                elif k > 0:
-                    k = 1
-                k = math.fabs(180*math.acos(k)) / math.pi
-                # if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
-                if k > VIEWING_ANGLE:
-                    # b1.l += 1
+                angle = view_angle(body, nb, dist)
+                if angle < VIEWING_ANGLE:
                     avg_vel += nb.vel
                     avg_dist += dist
-    '''
+                    neighbors_count += 1
+
+            body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
+            body.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
+
+            if neighbors_count > 1:
+                avg_dist /= neighbors_count - 1
+
+            for nb in neighbors:
+                dist = math.sqrt((body.pos[1] - nb.pos[1])**2 + (body.pos[0] - nb.pos[0])**2)
+                angle = view_angle(body, nb, dist)
+                if angle < VIEWING_ANGLE:
+                    if math.fabs(nb.pos[1] - body.pos[1]) > MIN_DIST:
+                        body.vel += (WEIGHT_NEIGHB_DIST / neighbors_count) * (((nb.pos - body.pos) * (dist - avg_dist)) / dist)
+                    else:
+                        body.vel -= (WEIGHT_MIN_DIST / neighbors_count) * (((nb.pos - body.pos) * MIN_DIST) / dist) - (nb.pos - body.pos)
+
+            if math.sqrt(body.vel[1]**2 + body.vel[0]**2) > MAX_VEL:
+                body.vel = 0.75 * body.vel
+
+        for b in bodies:
+            b.pos += b.vel * DT
+            if b.vel[0] == 0:
+                b.vel[0] = MAX_VEL / 1000
+            if b.vel[1] == 0:
+                b.vel[1] = MAX_VEL / 1000
+
+            if b.pos[1] < 0:
+                b.pos[1] = b.pos[1] % -screen_size[1] + screen_size[1]
+            elif b.pos[1] > screen_size[1]:
+                b.pos[1] = b.pos[1] % screen_size[1]
+
+            if b.pos[0] < 0:
+                b.pos[0] = b.pos[0] % -screen_size[0] + screen_size[0]
+            elif b.pos[0] > screen_size[0]:
+                b.pos[0] = b.pos[0] % screen_size[0]
+
+        draw(scr, bodies)
+
+
+def main(scr):
+    setup_stderr()
+    setup_curses()
+    scr.clear()
+
+    np.random.seed(3145)
+    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+
+    bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
         for b1 in bodies:
@@ -281,8 +318,6 @@ def main(scr):
 
         draw(scr, bodies)
 
-        # time.sleep(0.1)
-
 
 def setup_curses():
     curses.start_color()
@@ -299,6 +334,21 @@ def setup_stderr():
 def eprint(*args, **kwargs):
     """Debug print function (on std err)"""
     print(*args, file=sys.stderr)
+
+
+def view_angle(body1, body2, dist):
+    k = body1.vel[1] / math.sqrt(body1.vel[1]**2 + body1.vel[0]**2) * \
+        ((body2.pos[1] - body1.pos[1]) / dist) + \
+        body1.vel[0] / math.sqrt(body1.vel[1]**2 + body1.vel[0]**2) * \
+        ((body2.pos[0] - body1.pos[0]) / dist)
+
+    if k < -1:
+        k = -1
+    elif k > 1:
+        k = 1
+    angle = math.fabs(180*math.acos(k)) / math.pi
+
+    return angle
 
 
 def draw(scr, bodies):
