@@ -41,6 +41,9 @@ class Body:
     def mag_vel_squared(self):
         return self.vel[0]**2 + self.vel[1]**2
 
+    def mag_vel(self):
+        return math.sqrt(self.mag_vel_squared())
+
 
 class KdTree:
     Y_AXIS = 0
@@ -291,27 +294,28 @@ def setup_curses(scr):
 
 
 def setup_stderr():
-    """Hard-coded console for debug prints (stderr)"""
+    """Hard-coded console for debug prints (stderr)."""
     sys.stderr = open('/dev/pts/1', 'w')
 
 
 def eprint(*args, **kwargs):
-    """Debug print function (on std err)"""
+    """Debug print function (on std err)."""
     print(*args, file=sys.stderr)
-
-
-def distance(pos1, pos2):
-    return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
 
 def distance_squared(pos1, pos2):
     return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2
 
 
+def distance(pos1, pos2):
+    return math.sqrt(distance_squared(pos1, pos2))
+
+
 def view_angle(body1, body2, dist):
-    k = body1.vel[1] / math.sqrt(body1.vel[1]**2 + body1.vel[0]**2) * \
+    mag_vel = body1.mag_vel()
+    k = body1.vel[1] / mag_vel * \
         ((body2.pos[1] - body1.pos[1]) / dist) + \
-        body1.vel[0] / math.sqrt(body1.vel[1]**2 + body1.vel[0]**2) * \
+        body1.vel[0] / mag_vel * \
         ((body2.pos[0] - body1.pos[0]) / dist)
 
     if k < -1:
