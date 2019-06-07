@@ -68,7 +68,7 @@ class KdTree:
             self.insert(body, screen_size)
 
     def insert(self, body, screen_size):
-        insert_node = KdTree.Node(body)
+        new_node = KdTree.Node(body)
 
         pointer = self.root
         dim = KdTree.Y_AXIS
@@ -80,26 +80,26 @@ class KdTree:
             parent = pointer
             parent_dim = dim
 
-            if np.all(parent.body.pos == insert_node.body.pos):
+            if np.all(parent.body.pos == new_node.body.pos):
                 return
 
-            if (parent_dim == KdTree.Y_AXIS and insert_node.body.pos[0] < parent.body.pos[0]) or \
-               (parent_dim == KdTree.X_AXIS and insert_node.body.pos[1] < parent.body.pos[1]):
+            if (parent_dim == KdTree.Y_AXIS and new_node.body.pos[0] < parent.body.pos[0]) or \
+               (parent_dim == KdTree.X_AXIS and new_node.body.pos[1] < parent.body.pos[1]):
                 pointer = pointer.lb
             else:
                 pointer = pointer.rt
             dim = self._next_dimension(dim)
 
         if not parent:
-            insert_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
-            root = insert_node
+            new_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
+            root = new_node
         else:
-            insert_node.rect = self._create_rect(parent, insert_node.body.pos, parent_dim)
-            if (parent_dim == KdTree.Y_AXIS and insert_node.body.pos[0] < parent.body.pos[0]) or \
-               (parent_dim == KdTree.X_AXIS and insert_node.body.pos[1] < parent.body.pos[1]):
-                parent.lb = insert_node
+            new_node.rect = self._create_rect(parent, new_node.body.pos, parent_dim)
+            if (parent_dim == KdTree.Y_AXIS and new_node.body.pos[0] < parent.body.pos[0]) or \
+               (parent_dim == KdTree.X_AXIS and new_node.body.pos[1] < parent.body.pos[1]):
+                parent.lb = new_node
             else:
-                parent.rt = insert_node
+                parent.rt = new_node
 
     def _create_rect(self, parent, insert_pt, parent_dim):
         rect = copy.copy(parent.rect)
@@ -183,11 +183,11 @@ def main2(scr):
 
     np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
-    tree = KdTree(bodies, screen_size)
 
     while True:
+        tree = KdTree(bodies, screen_size)
+
         for body in bodies:
             neighbors = tree.nearest(body.pos, NEIGHB_RADIUS)
             avg_vel = 0
@@ -222,8 +222,8 @@ def main2(scr):
                 body.vel = 0.75 * body.vel
 
             body.pos += body.vel * DT
-            body.vel = adjust_vel(body.vel)
             body.pos = adjust_pos(body.pos, screen_size)
+            body.vel = adjust_vel(body.vel)
 
         draw(scr, bodies)
 
@@ -275,8 +275,8 @@ def main(scr):
                 b1.vel = 0.75 * b1.vel
 
             b1.pos += b1.vel * DT
-            b1.vel = adjust_vel(b1.vel)
             b1.pos = adjust_pos(b1.pos, screen_size)
+            b1.vel = adjust_vel(b1.vel)
 
             b1.avg_vel = np.copy(b1.vel)
             b1.avg_dist = 0
@@ -337,15 +337,15 @@ def adjust_vel(vel):
 
 
 def adjust_pos(pos, screen_size):
-    if pos[1] < 0:
-        pos[1] = pos[1] % -screen_size[1] + screen_size[1]
-    elif pos[1] > screen_size[1]:
-        pos[1] = pos[1] % screen_size[1]
-
     if pos[0] < 0:
         pos[0] = pos[0] % -screen_size[0] + screen_size[0]
     elif pos[0] > screen_size[0]:
         pos[0] = pos[0] % screen_size[0]
+
+    if pos[1] < 0:
+        pos[1] = pos[1] % -screen_size[1] + screen_size[1]
+    elif pos[1] > screen_size[1]:
+        pos[1] = pos[1] % screen_size[1]
 
     return pos
 
@@ -391,4 +391,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main2)
