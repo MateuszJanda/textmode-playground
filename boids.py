@@ -29,9 +29,9 @@ TONE_SYMBOLS = '@%#x+=:-. '
 
 
 class Body:
-    def __init__(self, size):
-        self.pos = np.array([np.random.uniform(0, size[0]),
-                             np.random.uniform(0, size[1])])
+    def __init__(self, screen_size):
+        self.pos = np.array([np.random.uniform(0, screen_size[0]),
+                             np.random.uniform(0, screen_size[1])])
         self.vel = np.random.uniform(-2, 2, size=[2])
         self.avg_vel = np.copy(self.vel)
         self.avg_dist = 0
@@ -114,12 +114,12 @@ class KdTree:
             return []
 
         result = []
-        radius = radius**2
+        radius_squared = radius**2
 
         stack = [Task(self.root, Y_AXIS)]
         while stack:
             task = stack.pop()
-            if task.node == None or task.node.rect.distance_squared(point) > radius:
+            if task.node == None or task.node.rect.distance_squared(point) > radius_squared:
                 continue
 
             result.append(task.node.point)
@@ -171,8 +171,9 @@ def main(scr):
     scr.clear()
 
     np.random.seed(3145)
-    size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    bodies = [Body(size) for _ in range(BODY_COUNT)]
+    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+
+    bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
         for b1 in bodies:
@@ -234,14 +235,14 @@ def main(scr):
                 b.vel[1] = MAX_VEL / 1000
 
             if b.pos[1] < 0:
-                b.pos[1] = b.pos[1] % -size[1] + size[1]
-            elif b.pos[1] > size[1]:
-                b.pos[1] = b.pos[1] % size[1]
+                b.pos[1] = b.pos[1] % -screen_size[1] + screen_size[1]
+            elif b.pos[1] > screen_size[1]:
+                b.pos[1] = b.pos[1] % screen_size[1]
 
             if b.pos[0] < 0:
-                b.pos[0] = b.pos[0] % -size[0] + size[0]
-            elif b.pos[0] > size[0]:
-                b.pos[0] = b.pos[0] % size[0]
+                b.pos[0] = b.pos[0] % -screen_size[0] + screen_size[0]
+            elif b.pos[0] > screen_size[0]:
+                b.pos[0] = b.pos[0] % screen_size[0]
 
             b.avg_vel = np.copy(b.vel)
             b.avg_dist = 0
