@@ -202,37 +202,39 @@ def main2(scr):
         tree = KdTree(bodies, screen_size)
 
         for body in bodies:
-            neighbors = tree.nearest(body, NEIGHB_RADIUS)
-            avg_vel = 0
-            avg_dist = 0
-            neighbors_count = 1
+            candidates = tree.nearest(body, NEIGHB_RADIUS)
+            body.avg_vel = 0
+            body.avg_dist = 0
+            body.neighb_count = 1
+            body.neighbors = []
 
-            visible_neighbors = []
-            for nb, dist in neighbors:
-                angle = view_angle(body, nb, dist)
+            # visible_neighbors = []
+            for neighb_body, dist in candidates:
+                angle = view_angle(body, neighb_body, dist)
                 if angle > VIEWING_ANGLE:
-                    avg_vel += nb.vel
-                    avg_dist += dist
-                    neighbors_count += 1
-                    visible_neighbors.append((nb, dist))
-                    eprint('b2.pos', nb.pos)
+                    body.avg_vel += neighb_body.vel
+                    body.avg_dist += dist
+                    body.neighb_count += 1
+                    body.neighbors.append((neighb_body, dist))
+                    eprint('b2.pos', neighb_body.pos)
 
             eprint('b1.pos', body.pos)
 
-            eprint('L:', neighbors_count)
+            eprint('L:', body.neighb_count)
             # exit()
 
-            body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
+        for body in bodies:
+            body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
             body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
 
-            if neighbors_count > 1:
-                avg_dist /= neighbors_count - 1
+            if body.neighb_count > 1:
+                body.avg_dist /= body.neighb_count - 1
 
-            for nb, dist in visible_neighbors:
-                if math.fabs(nb.pos[1] - body.pos[1]) > MIN_DIST:
-                    body.vel += (WEIGHT_NEIGHB_DIST / neighbors_count) * (((nb.pos - body.pos) * (dist - avg_dist)) / dist)
+            for neighb_body, dist in body.neighbors:
+                if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
+                    body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                 else:
-                    body.vel -= (WEIGHT_MIN_DIST / neighbors_count) * (((nb.pos - body.pos) * MIN_DIST) / dist) - (nb.pos - body.pos)
+                    body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
             if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
@@ -412,4 +414,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main2)
