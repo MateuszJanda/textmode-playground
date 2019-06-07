@@ -15,7 +15,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 200
+BODY_COUNT = 50
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -196,6 +196,9 @@ def main2(scr):
                     neighbors_count += 1
                     visible_neighbors.append((nb, dist))
 
+            eprint('L:', neighbors_count)
+            exit()
+
             body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
             body.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
 
@@ -239,6 +242,9 @@ def main(scr):
                     b1.l += 1
                     b1.avg_vel += b2.vel
                     b1.avg_dist += dist
+
+            eprint('L:', b1.l)
+            exit()
 
         for b1 in bodies:
             b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
@@ -377,4 +383,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main2)
