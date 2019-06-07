@@ -277,26 +277,13 @@ def main(scr):
             if math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) > MAX_VEL:
                 b1.vel = 0.75 * b1.vel
 
-        for b in bodies:
-            b.pos += b.vel * DT
-            if b.vel[0] == 0:
-                b.vel[0] = MAX_VEL / 1000
-            if b.vel[1] == 0:
-                b.vel[1] = MAX_VEL / 1000
+            b1.pos += b1.vel * DT
+            b1.vel = adjust_vel(b1.vel)
+            b1.pos = adjust_pos(b1.pos, screen_size)
 
-            if b.pos[1] < 0:
-                b.pos[1] = b.pos[1] % -screen_size[1] + screen_size[1]
-            elif b.pos[1] > screen_size[1]:
-                b.pos[1] = b.pos[1] % screen_size[1]
-
-            if b.pos[0] < 0:
-                b.pos[0] = b.pos[0] % -screen_size[0] + screen_size[0]
-            elif b.pos[0] > screen_size[0]:
-                b.pos[0] = b.pos[0] % screen_size[0]
-
-            b.avg_vel = np.copy(b.vel)
-            b.avg_dist = 0
-            b.l = 1
+            b1.avg_vel = np.copy(b1.vel)
+            b1.avg_dist = 0
+            b1.l = 1
 
         draw(scr, bodies)
 
@@ -331,6 +318,29 @@ def view_angle(body1, body2, dist):
     angle = math.fabs(180*math.acos(k)) / math.pi
 
     return angle
+
+
+def adjust_vel(vel):
+    if vel[0] == 0:
+        vel[0] = MAX_VEL / 1000
+    if vel[1] == 0:
+        vel[1] = MAX_VEL / 1000
+
+    return vel
+
+
+def adjust_pos(pos, screen_size):
+    if pos[1] < 0:
+        pos[1] = pos[1] % -screen_size[1] + screen_size[1]
+    elif pos[1] > screen_size[1]:
+        pos[1] = pos[1] % screen_size[1]
+
+    if pos[0] < 0:
+        pos[0] = pos[0] % -screen_size[0] + screen_size[0]
+    elif pos[0] > screen_size[0]:
+        pos[0] = pos[0] % screen_size[0]
+
+    return pos
 
 
 def draw(scr, bodies):
