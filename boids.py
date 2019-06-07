@@ -221,7 +221,7 @@ class Rect:
 
 
 def main2(scr):
-    setup_stderr()
+    setup_stderr('/dev/pts/3')
     setup_curses(scr)
 
     np.random.seed(3145)
@@ -244,12 +244,13 @@ def main2(scr):
                     body.avg_dist += dist
                     body.neighb_count += 1
                     body.neighbors.append((neighb_body, dist))
-                    eprint('neighb_body.pos', neighb_body.pos)
+        #           eprint('neighb_body.pos', neighb_body.pos)
 
-            eprint('body.pos', body.pos)
+        #     eprint('body.pos', body.pos)
 
-            eprint('L:', body.neighb_count)
-            # exit()
+        #     eprint('L:', body.neighb_count)
+        #     # exit()
+
 
         eprint('-----')
         for body in bodies:
@@ -262,12 +263,15 @@ def main2(scr):
             for neighb_body, dist in body.neighbors:
                 if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                     body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
+                    eprint('vel', body.vel)
                 else:
                     body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
             if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
 
+
+        eprint('====')
         for body in bodies:
             body.pos += body.vel * DT
             body.adjust(screen_size)
@@ -276,7 +280,7 @@ def main2(scr):
 
 
 def main(scr):
-    setup_stderr()
+    setup_stderr('/dev/pts/1')
     setup_curses(scr)
 
     np.random.seed(3145)
@@ -295,20 +299,24 @@ def main(scr):
 
                 dist = distance(body.pos, neighb_body.pos)
                 angle = view_angle(body, neighb_body, dist)
+                eprint(' dist, ang: ', dist, angle)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
+                    eprint(' ENTER')
                     body.neighb_count += 1
                     body.avg_vel += neighb_body.vel
                     body.avg_dist += dist
-                    eprint('neighb_body.pos', neighb_body.pos)
+            #         eprint('neighb_body.pos', neighb_body.pos)
 
-            eprint('body.pos', body.pos)
-            eprint('L:', body.neighb_count)
+            # eprint('body.pos', body.pos)
+            # eprint('L:', body.neighb_count)
             # exit()
+
 
         eprint('-----')
         for body in bodies:
             body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
             # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
+
             if body.neighb_count > 1:
                 body.avg_dist /= body.neighb_count - 1
 
@@ -318,15 +326,19 @@ def main(scr):
 
                 dist = distance(body.pos, neighb_body.pos)
                 angle = view_angle(body, neighb_body, dist)
+                eprint(' dist, ang: ', dist, angle)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
+                        eprint('vel', body.vel)
                     else:
                         body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
             if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
 
+
+        eprint('====')
         for body in bodies:
             body.pos += body.vel * DT
             body.adjust(screen_size)
@@ -342,9 +354,9 @@ def setup_curses(scr):
     scr.clear()
 
 
-def setup_stderr():
+def setup_stderr(f):
     """Hard-coded console for debug prints (stderr)."""
-    sys.stderr = open('/dev/pts/3', 'w')
+    sys.stderr = open(f, 'w')
 
 
 def eprint(*args, **kwargs):
@@ -371,7 +383,7 @@ def view_angle(body1, body2, dist):
         k = -1
     elif k > 1:
         k = 1
-    angle = math.fabs(180*math.acos(k)) / math.pi
+    angle = math.fabs((180 * math.acos(k)) / math.pi)
 
     return angle
 
@@ -417,4 +429,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main2)
+    curses.wrapper(main)
