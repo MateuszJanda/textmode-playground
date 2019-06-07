@@ -15,7 +15,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 50
+BODY_COUNT = 13
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -92,7 +92,7 @@ class KdTree:
 
         if not parent:
             new_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
-            root = new_node
+            self.root = new_node
         else:
             new_node.rect = self._create_rect(parent, new_node.body.pos, parent_dim)
             if (parent_dim == KdTree.Y_AXIS and new_node.body.pos[0] < parent.body.pos[0]) or \
@@ -125,7 +125,7 @@ class KdTree:
         result = []
         radius_squared = radius**2
 
-        stack = [Task(self.root, KdTree.Y_AXIS)]
+        stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
         while stack:
             task = stack.pop()
             if task.node == None or task.node.body is body or \
@@ -139,11 +139,11 @@ class KdTree:
             next_dim = self._next_dimension(task.dim)
             if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
                (task.dim == KdTree.X_AXIS and body.pos[1] < task.node.body.pos[1]):
-                stack.append(Task(task.node.rt, next_dim))
-                stack.append(Task(task.node.lb, next_dim))
+                stack.append(KdTree.Task(task.node.rt, next_dim))
+                stack.append(KdTree.Task(task.node.lb, next_dim))
             else:
-                stack.append(Task(task.node.lb, next_dim))
-                stack.append(Task(task.node.rt, next_dim))
+                stack.append(KdTree.Task(task.node.lb, next_dim))
+                stack.append(KdTree.Task(task.node.rt, next_dim))
 
         return result
 
@@ -178,18 +178,19 @@ class Rect:
 
 
 def main2(scr):
-    setup_stderr()
-    setup_curses(scr)
+    # setup_stderr()
+    # setup_curses(scr)
 
     np.random.seed(3145)
-    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    screen_size = np.array([128, 238])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
         tree = KdTree(bodies, screen_size)
 
         for body in bodies:
-            neighbors = tree.nearest(body.pos, NEIGHB_RADIUS)
+            neighbors = tree.nearest(body, NEIGHB_RADIUS)
             avg_vel = 0
             avg_dist = 0
             neighbors_count = 1
@@ -225,15 +226,18 @@ def main2(scr):
             body.pos = adjust_pos(body.pos, screen_size)
             body.vel = adjust_vel(body.vel)
 
-        draw(scr, bodies)
+        # draw(scr, bodies)
 
 
 def main(scr):
-    setup_stderr()
-    setup_curses(scr)
+    # setup_stderr()
+    # setup_curses(scr)
 
     np.random.seed(3145)
-    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    screen_size = np.array([128, 238])
+    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    eprint(screen_size)
 
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
@@ -249,7 +253,9 @@ def main(scr):
                     b1.l += 1
                     b1.avg_vel += b2.vel
                     b1.avg_dist += dist
+                    eprint('b2.pos', b2.pos)
 
+            eprint('b1.pos', b1.pos)
             eprint('L:', b1.l)
             exit()
 
@@ -282,7 +288,7 @@ def main(scr):
             b1.avg_dist = 0
             b1.l = 1
 
-        draw(scr, bodies)
+        # draw(scr, bodies)
 
 
 def setup_curses(scr):
@@ -390,5 +396,6 @@ def draw(scr, bodies):
 
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main2)
+    # locale.setlocale(locale.LC_ALL, '')
+    # curses.wrapper(main2)
+    main2(None)
