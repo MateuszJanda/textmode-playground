@@ -125,9 +125,9 @@ class KdTree:
               task.node.rect.distance_squared(body.pos) > radius_squared:
                 continue
 
-            dist = distance(body.pos, task.node.body.pos)
-            if dist < radius:
-                result.append((task.node.body, dist))
+            dist = distance_squared(body.pos, task.node.body.pos)
+            if dist < radius_squared:
+                result.append((task.node.body, math.sqrt(dist)))
 
             next_dim = self._next_dimension(task.dim)
             if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
@@ -293,6 +293,10 @@ def eprint(*args, **kwargs):
 
 def distance(pos1, pos2):
     return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
+
+
+def distance_squared(pos1, pos2):
+    return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2
 
 
 def view_angle(body1, body2, dist):
