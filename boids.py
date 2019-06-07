@@ -24,6 +24,7 @@ WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
 WEIGHT_NOISE = 0.1
 MAX_VEL = 4
+MAX_VEL_SQUARED = MAX_VEL**2
 DT = 1
 TONE_SYMBOLS = '@%#x+=:-. '
 
@@ -36,6 +37,9 @@ class Body:
         self.avg_vel = np.copy(self.vel)
         self.avg_dist = 0
         self.l = 1
+
+    def mag_vel_squared(self):
+        return self.vel[0]**2 + self.vel[1]**2
 
 
 class KdTree:
@@ -200,7 +204,7 @@ def main2(scr):
             exit()
 
             body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
-            body.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
+            body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
 
             if neighbors_count > 1:
                 avg_dist /= neighbors_count - 1
@@ -211,7 +215,7 @@ def main2(scr):
                 else:
                     body.vel -= (WEIGHT_MIN_DIST / neighbors_count) * (((nb.pos - body.pos) * MIN_DIST) / dist) - (nb.pos - body.pos)
 
-            if math.sqrt(body.vel[1]**2 + body.vel[0]**2) > MAX_VEL:
+            if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
 
             body.pos += body.vel * DT
@@ -248,7 +252,7 @@ def main(scr):
 
         for b1 in bodies:
             b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
-            b1.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
+            b1.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
             if b1.l > 1:
                 b1.avg_dist /= b1.l - 1
 
@@ -264,7 +268,7 @@ def main(scr):
                     else:
                         b1.vel -= (WEIGHT_MIN_DIST / b1.l) * (((b2.pos - b1.pos) * MIN_DIST) / dist) - (b2.pos - b1.pos)
 
-            if math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) > MAX_VEL:
+            if b1.mag_vel_squared() > MAX_VEL_SQUARED:
                 b1.vel = 0.75 * b1.vel
 
             b1.pos += b1.vel * DT
@@ -383,4 +387,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main2)
+    curses.wrapper(main)
