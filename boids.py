@@ -54,48 +54,50 @@ class KdTree:
             self.node = node
             self.dim = dim
 
-    def __init__(self):
+    def __init__(self, bodies, screen_size):
         self.root = None
 
-    def insert(self, points, screen_size):
-        for point in points:
-            insert_node = Node(point)
+        for body in bodies:
+            self.insert(body.pos, screen_size)
 
-            pointer = root
-            dim = Y_AXIS
+    def insert(self, point, screen_size):
+        insert_node = KdTree.Node(point)
 
-            parent = None
-            parent_dim = None
+        pointer = self.root
+        dim = KdTree.Y_AXIS
 
-            while pointer:
-                parent = pointer
-                parent_dim = dim
+        parent = None
+        parent_dim = None
 
-                if np.all(parent.point == insert_node.point):
-                    return
+        while pointer:
+            parent = pointer
+            parent_dim = dim
 
-                if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
-                   (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
-                    pointer = pointer.lb
-                else:
-                    pointer = pointer.rt
-                dim = self._next_dimension(dim)
+            if np.all(parent.point == insert_node.point):
+                return
 
-            if parent:
-                insert_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
-                root = insert_node
+            if (parent_dim == KdTree.Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+               (parent_dim == KdTree.X_AXIS and insert_node.point[1] < parent.point[1]):
+                pointer = pointer.lb
             else:
-                insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
-                if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
-                   (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
-                    parent.lb = insert_node
-                else:
-                    parent.rt = insert_node
+                pointer = pointer.rt
+            dim = self._next_dimension(dim)
+
+        if not parent:
+            insert_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
+            root = insert_node
+        else:
+            insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
+            if (parent_dim == KdTree.Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+               (parent_dim == KdTree.X_AXIS and insert_node.point[1] < parent.point[1]):
+                parent.lb = insert_node
+            else:
+                parent.rt = insert_node
 
     def _create_rect(self, parent, insert_pt, parent_dim):
         rect = copy.copy(parent.rect)
 
-        if parent_dim == Y_AXIS:
+        if parent_dim == KdTree.Y_AXIS:
             if insert_pt[0] < parent.point[0]:
                 rect.ymax = parent.point[0]
             else:
@@ -116,7 +118,7 @@ class KdTree:
         result = []
         radius_squared = radius**2
 
-        stack = [Task(self.root, Y_AXIS)]
+        stack = [Task(self.root, KdTree.Y_AXIS)]
         while stack:
             task = stack.pop()
             if task.node == None or task.node.rect.distance_squared(point) > radius_squared:
@@ -125,8 +127,8 @@ class KdTree:
             result.append(task.node.point)
 
             next_dim = self._next_dimension(task.dim)
-            if (task.dim == Y_AXIS and point[0] < task.node.point[0]) or \
-               (task.dim == X_AXIS and point[1] < task.node.point[1]):
+            if (task.dim == KdTree.Y_AXIS and point[0] < task.node.point[0]) or \
+               (task.dim == KdTree.X_AXIS and point[1] < task.node.point[1]):
                 stack.append(Task(task.node.rt, next_dim))
                 stack.append(Task(task.node.lb, next_dim))
             else:
@@ -136,9 +138,9 @@ class KdTree:
         return result
 
     def _next_dimension(self, dim):
-        if dim == Y_AXIS:
-            return X_AXIS
-        return Y_AXIS
+        if dim == KdTree.Y_AXIS:
+            return KdTree.X_AXIS
+        return KdTree.Y_AXIS
 
 
 class Rect:
@@ -174,6 +176,8 @@ def main(scr):
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
 
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
+    tree = KdTree(bodies, screen_size)
+
 
     while True:
         for b1 in bodies:
