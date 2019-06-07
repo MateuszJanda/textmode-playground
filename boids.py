@@ -10,6 +10,7 @@ import sys
 import curses
 import locale
 import time
+import copy
 import math
 import numpy as np
 
@@ -36,6 +37,7 @@ class Body:
         self.avg_dist = 0
         self.l = 1
 
+
 class KdTree:
     Y_AXIS = 0
     X_AXIS = 1
@@ -43,7 +45,7 @@ class KdTree:
     class Node:
         def __init__(self, point):
             self.point = point
-            self.rect = (0, 0, 0, 0)
+            self.rect = None
             self.lb = None
             self.rt = None
 
@@ -53,107 +55,74 @@ class KdTree:
             self.dim = dim
 
     def __init__(self):
-        self.node_counter = 0
         self.root = None
 
-    def insert(self, point):
-        insert_node = Node(point)
+    def insert(self, points, screen_size):
+        for point in points:
+            insert_node = Node(point)
 
-        pointer = root
-        dim = Y_AXIS
+            pointer = root
+            dim = Y_AXIS
 
-        parent = None
-        parent_dim = None
+            parent = None
+            parent_dim = None
 
-        while pointer:
-            parent = pointer
-            parent_dim = dim
+            while pointer:
+                parent = pointer
+                parent_dim = dim
 
-            if np.all(parent.point == insert_node.point):
-                return
+                if np.all(parent.point == insert_node.point):
+                    return
 
-            if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
-               (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
-                pointer = pointer.lb
+                if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+                   (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
+                    pointer = pointer.lb
+                else:
+                    pointer = pointer.rt
+                dim = self._next_dimension(dim)
+
+            if parent:
+                insert_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
+                root = insert_node
             else:
-                pointer = pointer.rt
-            dim = self._next_dimension(dim)
-
-        if parent:
-            insert_node.rect = RectHV(0.0, 0.0, 1.0, 1.0)
-            root = insert_node
-        else:
-            insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
-            if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
-               (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
-                parent.lb = insert_node
-            else:
-                parent.rt = insert_node
-
-        self.node_counter += 1
+                insert_node.rect = self._create_rect(parent, insert_node.point, parent_dim)
+                if (parent_dim == Y_AXIS and insert_node.point[0] < parent.point[0]) or \
+                   (parent_dim == X_AXIS and insert_node.point[1] < parent.point[1]):
+                    parent.lb = insert_node
+                else:
+                    parent.rt = insert_node
 
     def _create_rect(self, parent, insert_pt, parent_dim):
+        rect = copy.copy(parent.rect)
+
         if parent_dim == Y_AXIS:
             if insert_pt[0] < parent.point[0]:
-                return RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.rect.xmax(), parent.point[0])
+                rect.ymax = parent.point[0]
             else:
-                return RectHV(parent.rect.xmin(), parent.point[0], parent.rect.xmax(), parent.rect.ymax())
+                rect.ymin = parent.point[0]
         else:
             if insert_pt[1] < parent.point[1]:
-                return RectHV(parent.rect.xmin(), parent.rect.ymin(), parent.point[1], parent.rect.ymax())
+                rect.xmax = parent.point[1]
             else:
-                return RectHV(parent.point[1], parent.rect.ymin(), parent.rect.xmax(), parent.rect.ymax())
+                rect.xmin = parent.point[1]
 
-    def contains(self, point):
-        pointer = root
-        dim = Y_AXIS
-        while pointer:
-            if np.all(pointer.point == point):
-                return True
+        return rect
 
-            if (dim == Y_AXIS and point[0] < pointer.point[0]) or \
-               (dim == X_AXIS and point[1] < pointer.point[1]):
-                pointer = pointer.lb
-            else:
-                pointer = pointer.rt
-            dim = self._next_dimension(dim)
-
-        return False
-
-    def range(self, rect):
-        result = []
-        stack = [self.root]
-        while stack:
-            node = stack.pop()
-            if node == None or rect.intersects(node.rect):
-                continue
-
-            if rect.contains(node.point):
-                result.append(node.point)
-
-            stack.append(node.rt)
-            stack.append(node.lb)
-
-        return result
-
-    def nearest(self, point):
+    def nearest(self, point, radius):
         # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
         if root == None:
-            return None
+            return []
 
-        best_point = self.root.point
-        best_dist = self.root.point.distanceSquaredTo(point)
+        result = []
+        radius = radius**2
 
         stack = [Task(self.root, Y_AXIS)]
         while stack:
             task = stack.pop()
-            if task.node == None or task.node.rect.distanceSquaredTo(p) > best_dist:
+            if task.node == None or task.node.rect.distance_squared(point) > radius:
                 continue
 
-            dist = task.node.point.distanceSquaredTo(point)
-            if dist < best_dist:
-                bestDist = dist
-                bestPoint = task.node.point
+            result.append(task.node.point)
 
             next_dim = self._next_dimension(task.dim)
             if (task.dim == Y_AXIS and point[0] < task.node.point[0]) or \
@@ -164,12 +133,36 @@ class KdTree:
                 stack.append(Task(task.node.lb, next_dim))
                 stack.append(Task(task.node.rt, next_dim))
 
-        return best_dist
+        return result
 
     def _next_dimension(self, dim):
         if dim == Y_AXIS:
             return X_AXIS
         return Y_AXIS
+
+
+class Rect:
+    def __init__(self, ymin, xmin, ymax, xmax):
+        self.ymin = ymin
+        self.xmin = xmin
+        self.ymax = ymax
+        self.xmax = xmax
+
+    def distance_squared(self, point):
+        dx = 0
+        dy = 0
+
+        if point[0] < self.ymin:
+            dy = point[0] - self.ymin
+        elif point[0] > self.ymax:
+            dy = point[0] - self.ymax
+
+        if point[1] < self.xmin:
+            dx = point[1] - self.xmin
+        elif point[1] > self.xmax:
+            dx = point[1] - self.xmax
+
+        return dx**2 + dy**2
 
 
 def main(scr):
