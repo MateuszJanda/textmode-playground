@@ -36,7 +36,7 @@ class Body:
         self.vel = np.random.uniform(-2, 2, size=[2])
         self.avg_vel = np.copy(self.vel)
         self.avg_dist = 0
-        self.l = 1
+        self.neighb_count = 1
 
     def mag_vel_squared(self):
         return self.vel[0]**2 + self.vel[1]**2
@@ -216,9 +216,9 @@ def main2(scr):
                     body.avg_dist += dist
                     body.neighb_count += 1
                     body.neighbors.append((neighb_body, dist))
-                    eprint('b2.pos', neighb_body.pos)
+                    eprint('neighb_body.pos', neighb_body.pos)
 
-            eprint('b1.pos', body.pos)
+            eprint('body.pos', body.pos)
 
             eprint('L:', body.neighb_count)
             # exit()
@@ -258,43 +258,43 @@ def main(scr):
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
-        for b1 in bodies:
-            for b2 in bodies:
-                if b1 is b2:
+        for body in bodies:
+            for neighb_body in bodies:
+                if body is neighb_body:
                     continue
 
-                dist = distance(b1.pos, b2.pos)
-                angle = view_angle(b1, b2, dist)
+                dist = distance(body.pos, neighb_body.pos)
+                angle = view_angle(body, neighb_body, dist)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
-                    b1.l += 1
-                    b1.avg_vel += b2.vel
-                    b1.avg_dist += dist
-                    eprint('b2.pos', b2.pos)
+                    body.neighb_count += 1
+                    body.avg_vel += neighb_body.vel
+                    body.avg_dist += dist
+                    eprint('neighb_body.pos', neighb_body.pos)
 
-            eprint('b1.pos', b1.pos)
-            eprint('L:', b1.l)
+            eprint('body.pos', body.pos)
+            eprint('L:', body.neighb_count)
             # exit()
 
-        for b1 in bodies:
-            b1.vel += WEIGHT_VEL * ((b1.avg_vel / b1.l) - b1.vel)
-            b1.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
-            if b1.l > 1:
-                b1.avg_dist /= b1.l - 1
+        for body in bodies:
+            body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
+            body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
+            if body.neighb_count > 1:
+                body.avg_dist /= body.neighb_count - 1
 
-            for b2 in bodies:
-                if b1 is b2:
+            for neighb_body in bodies:
+                if body is neighb_body:
                     continue
 
-                dist = distance(b1.pos, b2.pos)
-                angle = view_angle(b1, b2, dist)
+                dist = distance(body.pos, neighb_body.pos)
+                angle = view_angle(body, neighb_body, dist)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
-                    if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DIST:
-                        b1.vel += (WEIGHT_NEIGHB_DIST / b1.l) * (((b2.pos - b1.pos) * (dist - b1.avg_dist)) / dist)
+                    if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
+                        body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                     else:
-                        b1.vel -= (WEIGHT_MIN_DIST / b1.l) * (((b2.pos - b1.pos) * MIN_DIST) / dist) - (b2.pos - b1.pos)
+                        body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
-            if b1.mag_vel_squared() > MAX_VEL_SQUARED:
-                b1.vel = 0.75 * b1.vel
+            if body.mag_vel_squared() > MAX_VEL_SQUARED:
+                body.vel = 0.75 * body.vel
 
         for body in bodies:
             body.pos += body.vel * DT
@@ -303,7 +303,7 @@ def main(scr):
 
             body.avg_vel = np.copy(body.vel)
             body.avg_dist = 0
-            body.l = 1
+            body.neighb_count = 1
 
         draw(scr, bodies)
 
@@ -414,4 +414,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main2)
+    curses.wrapper(main)
