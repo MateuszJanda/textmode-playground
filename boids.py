@@ -22,7 +22,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 50
+BODY_COUNT = 13
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
