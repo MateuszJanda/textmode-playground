@@ -125,7 +125,9 @@ class KdTree:
               task.node.rect.distance_squared(body.pos) > radius_squared:
                 continue
 
-            result.append(task.node.body)
+            dist = distance(body.pos, task.node.body.pos)
+            if dist < radius:
+                result.append((task.node.body, dist))
 
             next_dim = self._next_dimension(task.dim)
             if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
@@ -182,18 +184,18 @@ def main2(scr):
     while True:
         for body in bodies:
             neighbors = tree.nearest(body.pos, NEIGHB_RADIUS)
-
             avg_vel = 0
             avg_dist = 0
             neighbors_count = 1
-            for nb in neighbors:
-                dist = math.sqrt((body.pos[1] - nb.pos[1])**2 + (body.pos[0] - nb.pos[0])**2)
 
+            visible_neighbors = []
+            for nb, dist in neighbors:
                 angle = view_angle(body, nb, dist)
-                if angle < VIEWING_ANGLE:
+                if angle > VIEWING_ANGLE:
                     avg_vel += nb.vel
                     avg_dist += dist
                     neighbors_count += 1
+                    visible_neighbors.append((nb, dist))
 
             body.vel += WEIGHT_VEL * ((avg_vel / neighbors_count) - body.vel)
             body.vel += WEIGHT_NOISE * (np.random.uniform(0, 0.5, size=[2]) * MAX_VEL)
@@ -201,34 +203,18 @@ def main2(scr):
             if neighbors_count > 1:
                 avg_dist /= neighbors_count - 1
 
-            for nb in neighbors:
-                dist = math.sqrt((body.pos[1] - nb.pos[1])**2 + (body.pos[0] - nb.pos[0])**2)
-                angle = view_angle(body, nb, dist)
-                if angle < VIEWING_ANGLE:
-                    if math.fabs(nb.pos[1] - body.pos[1]) > MIN_DIST:
-                        body.vel += (WEIGHT_NEIGHB_DIST / neighbors_count) * (((nb.pos - body.pos) * (dist - avg_dist)) / dist)
-                    else:
-                        body.vel -= (WEIGHT_MIN_DIST / neighbors_count) * (((nb.pos - body.pos) * MIN_DIST) / dist) - (nb.pos - body.pos)
+            for nb, dist in visible_neighbors:
+                if math.fabs(nb.pos[1] - body.pos[1]) > MIN_DIST:
+                    body.vel += (WEIGHT_NEIGHB_DIST / neighbors_count) * (((nb.pos - body.pos) * (dist - avg_dist)) / dist)
+                else:
+                    body.vel -= (WEIGHT_MIN_DIST / neighbors_count) * (((nb.pos - body.pos) * MIN_DIST) / dist) - (nb.pos - body.pos)
 
             if math.sqrt(body.vel[1]**2 + body.vel[0]**2) > MAX_VEL:
                 body.vel = 0.75 * body.vel
 
-        for b in bodies:
-            b.pos += b.vel * DT
-            if b.vel[0] == 0:
-                b.vel[0] = MAX_VEL / 1000
-            if b.vel[1] == 0:
-                b.vel[1] = MAX_VEL / 1000
-
-            if b.pos[1] < 0:
-                b.pos[1] = b.pos[1] % -screen_size[1] + screen_size[1]
-            elif b.pos[1] > screen_size[1]:
-                b.pos[1] = b.pos[1] % screen_size[1]
-
-            if b.pos[0] < 0:
-                b.pos[0] = b.pos[0] % -screen_size[0] + screen_size[0]
-            elif b.pos[0] > screen_size[0]:
-                b.pos[0] = b.pos[0] % screen_size[0]
+            body.pos += body.vel * DT
+            body.vel = adjust_vel(body.vel)
+            body.pos = adjust_pos(body.pos, screen_size)
 
         draw(scr, bodies)
 
@@ -249,7 +235,7 @@ def main(scr):
                 if b1 is b2:
                     continue
 
-                dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
+                dist = distance(b1.pos, b2.pos)
                 angle = view_angle(b1, b2, dist)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
                     b1.l += 1
@@ -266,7 +252,7 @@ def main(scr):
                 if b1 is b2:
                     continue
 
-                dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
+                dist = distance(b1.pos, b2.pos)
                 angle = view_angle(b1, b2, dist)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
                     if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DIST:
@@ -303,6 +289,10 @@ def setup_stderr():
 def eprint(*args, **kwargs):
     """Debug print function (on std err)"""
     print(*args, file=sys.stderr)
+
+
+def distance(pos1, pos2):
+    return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
 
 def view_angle(body1, body2, dist):
