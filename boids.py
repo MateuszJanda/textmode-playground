@@ -128,22 +128,34 @@ class KdTree:
         stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
         while stack:
             task = stack.pop()
-            if task.node == None or task.node.body is body or \
-              task.node.rect.distance_squared(body.pos) > radius_squared:
+
+            if task.node != None and task.node.body is body:
+                stack.extend(self._new_tasks(task, body))
                 continue
 
-            dist = distance_squared(body.pos, task.node.body.pos)
-            if dist < radius_squared:
-                result.append((task.node.body, math.sqrt(dist)))
+            if task.node == None or \
+              task.node.rect.distance_squared(body.pos) >= radius_squared:
+                continue
 
-            next_dim = self._next_dimension(task.dim)
-            if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
-               (task.dim == KdTree.X_AXIS and body.pos[1] < task.node.body.pos[1]):
-                stack.append(KdTree.Task(task.node.rt, next_dim))
-                stack.append(KdTree.Task(task.node.lb, next_dim))
-            else:
-                stack.append(KdTree.Task(task.node.lb, next_dim))
-                stack.append(KdTree.Task(task.node.rt, next_dim))
+            dist_squared = distance_squared(body.pos, task.node.body.pos)
+            if dist_squared < radius_squared:
+                result.append((task.node.body, math.sqrt(dist_squared)))
+
+            stack.extend(self._new_tasks(task, body))
+
+        return result
+
+    def _new_tasks(self, task, body):
+        result = []
+        next_dim = self._next_dimension(task.dim)
+
+        if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
+           (task.dim == KdTree.X_AXIS and body.pos[1] < task.node.body.pos[1]):
+            result.append(KdTree.Task(task.node.rt, next_dim))
+            result.append(KdTree.Task(task.node.lb, next_dim))
+        else:
+            result.append(KdTree.Task(task.node.lb, next_dim))
+            result.append(KdTree.Task(task.node.rt, next_dim))
 
         return result
 
@@ -203,6 +215,10 @@ def main2(scr):
                     avg_dist += dist
                     neighbors_count += 1
                     visible_neighbors.append((nb, dist))
+                    eprint('nb.pos', nb.pos)
+
+            eprint('body.pos', body.pos)
+
 
             eprint('L:', neighbors_count)
             exit()
