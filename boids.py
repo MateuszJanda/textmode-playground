@@ -203,7 +203,7 @@ def main2(scr):
 
         for body in bodies:
             candidates = tree.nearest(body, NEIGHB_RADIUS)
-            body.avg_vel = 0
+            body.avg_vel = np.copy(body.vel)
             body.avg_dist = 0
             body.neighb_count = 1
             body.neighbors = []
@@ -223,9 +223,10 @@ def main2(scr):
             eprint('L:', body.neighb_count)
             # exit()
 
+        eprint('-----')
         for body in bodies:
             body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
-            body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
+            # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
 
             if body.neighb_count > 1:
                 body.avg_dist /= body.neighb_count - 1
@@ -275,9 +276,10 @@ def main(scr):
             eprint('L:', body.neighb_count)
             # exit()
 
+        eprint('-----')
         for body in bodies:
             body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
-            body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
+            # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
             if body.neighb_count > 1:
                 body.avg_dist /= body.neighb_count - 1
 
