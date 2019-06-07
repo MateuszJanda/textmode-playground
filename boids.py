@@ -250,17 +250,8 @@ def main(scr):
                     continue
 
                 dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
-                k = b1.vel[1] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
-                    ((b2.pos[1] - b1.pos[1]) / dist) + \
-                    b1.vel[0] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
-                    ((b2.pos[0] - b1.pos[0]) / dist)
-
-                if k < -1:
-                    k = -1
-                elif k > 1:
-                    k = 1
-                k = math.fabs(180*math.acos(k)) / math.pi
-                if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
+                angle = view_angle(b1, b2, dist)
+                if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
                     b1.l += 1
                     b1.avg_vel += b2.vel
                     b1.avg_dist += dist
@@ -276,17 +267,8 @@ def main(scr):
                     continue
 
                 dist = math.sqrt((b1.pos[1] - b2.pos[1])**2 + (b1.pos[0] - b2.pos[0])**2)
-                k = b1.vel[1] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
-                    ((b2.pos[1] - b1.pos[1]) / dist) + \
-                    b1.vel[0] / math.sqrt(b1.vel[1]**2 + b1.vel[0]**2) * \
-                    ((b2.pos[0] - b1.pos[0]) / dist)
-
-                if k < -1:
-                    k = -1
-                elif k > 1:
-                    k = 1
-                k = math.fabs(180*math.acos(k)) / math.pi
-                if dist < NEIGHB_RADIUS and k > VIEWING_ANGLE:
+                angle = view_angle(b1, b2, dist)
+                if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
                     if math.fabs(b2.pos[1] - b1.pos[1]) > MIN_DIST:
                         b1.vel += (WEIGHT_NEIGHB_DIST / b1.l) * (((b2.pos - b1.pos) * (dist - b1.avg_dist)) / dist)
                     else:
