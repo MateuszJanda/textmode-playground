@@ -6,6 +6,13 @@ Site: github.com/MateuszJanda
 Ad maiorem Dei gloriam
 """
 
+"""
+Boids algorithm:
+http://www.red3d.com/cwr/boids/
+
+http://www.algorytm.org/sztuczna-inteligencja/boidy.html
+"""
+
 import sys
 import curses
 import locale
@@ -15,7 +22,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 13
+BODY_COUNT = 200
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -37,6 +44,7 @@ class Body:
         self.avg_vel = np.copy(self.vel)
         self.avg_dist = 0
         self.neighb_count = 1
+        self.neighbors = []
 
     def reset(self):
         self.avg_vel = np.copy(self.vel)
@@ -220,6 +228,63 @@ class Rect:
         return dx**2 + dy**2
 
 
+def main3(scr):
+    setup_stderr('/dev/pts/1')
+    setup_curses(scr)
+
+    np.random.seed(3145)
+    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    screen_size = np.array([128, 238])
+    bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
+
+    while True:
+        tree = KdTree(bodies, screen_size)
+
+        for body in bodies:
+            body.reset()
+            candidates = tree.nearest(body, NEIGHB_RADIUS)
+
+            for neighb_body, dist in candidates:
+                angle = view_angle2(body, neighb_body)
+                if angle < math.radians(VIEWING_ANGLE):
+                    body.neighbors.append((neighb_body, dist))
+
+            if len(body.neighbors):
+                # import pdb; pdb.set_trace()
+                pass
+
+            body.v1 = rule1(body)
+            body.v2 = rule2(body)
+            body.v3 = rule3(body)
+
+        for body in bodies:
+            body.vel += body.v1 + body.v2 + body.v3
+            body.pos += body.vel * DT
+            body.adjust(screen_size)
+
+        draw(scr, bodies)
+
+
+def rule1(body):
+    avg_dist = sum([neighb_body.pos for neighb_body, _ in body.neighbors])
+    if len(body.neighbors):
+        avg_dist /= len(body.neighbors)
+
+    return (avg_dist - body.pos) * 0.1
+
+
+def rule2(body):
+    c = -sum([dist for _, dist in body.neighbors if dist < MIN_DIST])
+    return c
+
+
+def rule3(body):
+    avg_vel = sum([neighb_body.vel for neighb_body, _ in body.neighbors])
+    if len(body.neighbors):
+        avg_vel /= len(body.neighbors)
+    return (avg_vel - body.vel) * (1/8)
+
+
 def main2(scr):
     setup_stderr('/dev/pts/2')
     setup_curses(scr)
@@ -358,9 +423,9 @@ def setup_curses(scr):
     scr.clear()
 
 
-def setup_stderr(f):
+def setup_stderr(output):
     """Hard-coded console for debug prints (stderr)."""
-    sys.stderr = open(f, 'w')
+    sys.stderr = open(output, 'w')
 
 
 def eprint(*args, **kwargs):
@@ -390,6 +455,14 @@ def view_angle(body1, body2, dist):
     angle = math.fabs((180 * math.acos(k)) / math.pi)
 
     return angle
+
+
+def view_angle2(body1, body2):
+    k1 = math.atan2(body1.vel[0], body1.vel[1])
+    k2 = math.atan2(body1.pos[0] - body2.pos[0], body1.pos[1] - body2.pos[1])
+
+    diff = math.fabs(k1 - k2)
+    return diff
 
 
 def draw(scr, bodies):
@@ -433,4 +506,5 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main2)
+    curses.wrapper(main)
+    # main3(None)
