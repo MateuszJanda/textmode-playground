@@ -221,7 +221,7 @@ class Rect:
 
 
 def main2(scr):
-    setup_stderr('/dev/pts/3')
+    setup_stderr('/dev/pts/2')
     setup_curses(scr)
 
     np.random.seed(3145)
@@ -261,11 +261,14 @@ def main2(scr):
                 body.avg_dist /= body.neighb_count - 1
 
             for neighb_body, dist in body.neighbors:
-                if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
-                    body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
-                    eprint('vel', body.vel)
-                else:
-                    body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
+                angle = view_angle(body, neighb_body, dist)
+                eprint(' dist, ang: ', dist, angle)
+                if angle > VIEWING_ANGLE:
+                    if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
+                        body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
+                        eprint('vel', body.vel)
+                    else:
+                        body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
             if body.mag_vel_squared() > MAX_VEL_SQUARED:
                 body.vel = 0.75 * body.vel
@@ -299,9 +302,9 @@ def main(scr):
 
                 dist = distance(body.pos, neighb_body.pos)
                 angle = view_angle(body, neighb_body, dist)
-                eprint(' dist, ang: ', dist, angle)
+                # eprint(' dist, ang: ', dist, angle)
                 if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
-                    eprint(' ENTER')
+                    # eprint(' ENTER')
                     body.neighb_count += 1
                     body.avg_vel += neighb_body.vel
                     body.avg_dist += dist
@@ -344,6 +347,7 @@ def main(scr):
             body.adjust(screen_size)
 
         draw(scr, bodies)
+        # time.sleep(0.1)
 
 
 def setup_curses(scr):
@@ -429,4 +433,4 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main2)
