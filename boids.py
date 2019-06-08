@@ -22,7 +22,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 200
+BODY_COUNT = 50
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -303,8 +303,9 @@ def main2(scr):
 
             # visible_neighbors = []
             for neighb_body, dist in candidates:
-                angle = view_angle(body, neighb_body, dist)
-                if angle > VIEWING_ANGLE:
+                # angle = view_angle(body, neighb_body, dist)
+                angle = view_angle2(body, neighb_body)
+                if angle < math.radians(VIEWING_ANGLE):
                     body.avg_vel += neighb_body.vel
                     body.avg_dist += dist
                     body.neighb_count += 1
@@ -326,9 +327,10 @@ def main2(scr):
                 body.avg_dist /= body.neighb_count - 1
 
             for neighb_body, dist in body.neighbors:
-                angle = view_angle(body, neighb_body, dist)
+                # angle = view_angle(body, neighb_body, dist)
+                angle = view_angle2(body, neighb_body)
                 eprint(' dist, ang: ', dist, angle)
-                if angle > VIEWING_ANGLE:
+                if angle < VIEWING_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                         eprint('vel', body.vel)
@@ -366,9 +368,10 @@ def main(scr):
                     continue
 
                 dist = distance(body.pos, neighb_body.pos)
-                angle = view_angle(body, neighb_body, dist)
+                # angle = view_angle(body, neighb_body, dist)
+                angle = view_angle2(body, neighb_body)
                 # eprint(' dist, ang: ', dist, angle)
-                if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
+                if dist < NEIGHB_RADIUS and angle < math.radians(VIEWING_ANGLE):
                     # eprint(' ENTER')
                     body.neighb_count += 1
                     body.avg_vel += neighb_body.vel
@@ -393,9 +396,10 @@ def main(scr):
                     continue
 
                 dist = distance(body.pos, neighb_body.pos)
-                angle = view_angle(body, neighb_body, dist)
+                # angle = view_angle(body, neighb_body, dist)
+                angle = view_angle2(body, neighb_body)
                 eprint(' dist, ang: ', dist, angle)
-                if dist < NEIGHB_RADIUS and angle > VIEWING_ANGLE:
+                if dist < NEIGHB_RADIUS and angle < math.radians(VIEWING_ANGLE):
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                         eprint('vel', body.vel)
