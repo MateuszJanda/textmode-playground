@@ -23,9 +23,9 @@ import numpy as np
 
 
 BODY_COUNT = 50
-VIEWING_ANGLE = 120
+VIEW_ANGLE = math.radians(120)
 MIN_DIST = 20
-NEIGHB_RADIUS = 50
+VIEW_RADIUS = 50
 WEIGHT_VEL = 0.1
 WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
@@ -33,6 +33,7 @@ WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 DT = 1
+
 TONE_SYMBOLS = '@%#x+=:-. '
 
 
@@ -233,8 +234,8 @@ def main3(scr):
     setup_curses(scr)
 
     np.random.seed(3145)
-    # screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    screen_size = np.array([128, 238])
+    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
+    # screen_size = np.array([128, 238])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
@@ -242,16 +243,12 @@ def main3(scr):
 
         for body in bodies:
             body.reset()
-            candidates = tree.nearest(body, NEIGHB_RADIUS)
+            candidates = tree.nearest(body, VIEW_RADIUS)
 
             for neighb_body, dist in candidates:
                 angle = view_angle2(body, neighb_body)
-                if angle < math.radians(VIEWING_ANGLE):
+                if angle < VIEW_ANGLE:
                     body.neighbors.append((neighb_body, dist))
-
-            if len(body.neighbors):
-                # import pdb; pdb.set_trace()
-                pass
 
             body.v1 = rule1_fly_to_center(body)
             body.v2 = rule2_keep_save_dist(body)
@@ -315,13 +312,13 @@ def main2(scr):
 
         for body in bodies:
             body.reset()
-            candidates = tree.nearest(body, NEIGHB_RADIUS)
+            candidates = tree.nearest(body, VIEW_RADIUS)
 
             # visible_neighbors = []
             for neighb_body, dist in candidates:
                 # angle = view_angle(body, neighb_body, dist)
                 angle = view_angle2(body, neighb_body)
-                if angle < math.radians(VIEWING_ANGLE):
+                if angle < VIEW_ANGLE:
                     body.avg_vel += neighb_body.vel
                     body.avg_dist += dist
                     body.neighb_count += 1
@@ -346,7 +343,7 @@ def main2(scr):
                 # angle = view_angle(body, neighb_body, dist)
                 angle = view_angle2(body, neighb_body)
                 eprint(' dist, ang: ', dist, angle)
-                if angle < VIEWING_ANGLE:
+                if angle < VIEW_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                         eprint('vel', body.vel)
@@ -387,7 +384,7 @@ def main(scr):
                 # angle = view_angle(body, neighb_body, dist)
                 angle = view_angle2(body, neighb_body)
                 # eprint(' dist, ang: ', dist, angle)
-                if dist < NEIGHB_RADIUS and angle < math.radians(VIEWING_ANGLE):
+                if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
                     # eprint(' ENTER')
                     body.neighb_count += 1
                     body.avg_vel += neighb_body.vel
@@ -415,7 +412,7 @@ def main(scr):
                 # angle = view_angle(body, neighb_body, dist)
                 angle = view_angle2(body, neighb_body)
                 eprint(' dist, ang: ', dist, angle)
-                if dist < NEIGHB_RADIUS and angle < math.radians(VIEWING_ANGLE):
+                if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
                         eprint('vel', body.vel)
@@ -492,8 +489,6 @@ def draw(scr, bodies):
     count = np.zeros(shape=shape)
 
     for b in bodies:
-        if b.pos[0]//4 >= curses.LINES or b.pos[1]//2 >= curses.COLS - 1:
-            continue
         count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
 
     buf = np.full(shape=shape, fill_value=' ')
