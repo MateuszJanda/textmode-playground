@@ -23,7 +23,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 50
+BODY_COUNT = 100
 VIEW_ANGLE = math.radians(120)
 MIN_DIST = 20
 VIEW_RADIUS = 50
@@ -113,8 +113,8 @@ class KdTree:
         def __init__(self, body):
             self.body = body
             self.rect = None
-            self.lb = None
-            self.rt = None
+            self.left = None
+            self.right = None
 
     class Task:
         def __init__(self, node, dim):
@@ -145,11 +145,10 @@ class KdTree:
             if np.all(parent.body.pos == new_node.body.pos):
                 return
 
-            if (parent_dim == KdTree.Y_AXIS and new_node.body.pos[0] < parent.body.pos[0]) or \
-               (parent_dim == KdTree.X_AXIS and new_node.body.pos[1] < parent.body.pos[1]):
-                pointer = pointer.lb
+            if new_node.body.pos[parent_dim] < parent.body.pos[parent_dim]:
+                pointer = pointer.left
             else:
-                pointer = pointer.rt
+                pointer = pointer.right
             dim = self._next_dimension(dim)
             new_node_height += 1
 
@@ -158,11 +157,10 @@ class KdTree:
             self.root = new_node
         else:
             new_node.rect = self._create_rect(parent, new_node.body.pos, parent_dim)
-            if (parent_dim == KdTree.Y_AXIS and new_node.body.pos[0] < parent.body.pos[0]) or \
-               (parent_dim == KdTree.X_AXIS and new_node.body.pos[1] < parent.body.pos[1]):
-                parent.lb = new_node
+            if new_node.body.pos[parent_dim] < parent.body.pos[parent_dim]:
+                parent.left = new_node
             else:
-                parent.rt = new_node
+                parent.right = new_node
 
         if new_node_height > self.height:
             self.height = new_node_height
@@ -192,8 +190,10 @@ class KdTree:
         radius_squared = radius**2
 
         stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
+        self.n = 0
         while stack:
             task = stack.pop()
+            self.n += 1
 
             if task.node != None and task.node.body is body:
                 stack.extend(self._new_tasks(task, body))
@@ -215,13 +215,12 @@ class KdTree:
         result = []
         next_dim = self._next_dimension(task.dim)
 
-        if (task.dim == KdTree.Y_AXIS and body.pos[0] < task.node.body.pos[0]) or \
-           (task.dim == KdTree.X_AXIS and body.pos[1] < task.node.body.pos[1]):
-            result.append(KdTree.Task(task.node.rt, next_dim))
-            result.append(KdTree.Task(task.node.lb, next_dim))
+        if body.pos[task.dim] < task.node.body.pos[task.dim]:
+            result.append(KdTree.Task(task.node.right, next_dim))
+            result.append(KdTree.Task(task.node.left, next_dim))
         else:
-            result.append(KdTree.Task(task.node.lb, next_dim))
-            result.append(KdTree.Task(task.node.rt, next_dim))
+            result.append(KdTree.Task(task.node.left, next_dim))
+            result.append(KdTree.Task(task.node.right, next_dim))
 
         return result
 
@@ -285,7 +284,7 @@ def main3(scr):
             body.pos += body.vel * DT
             body.adjust(screen_size)
 
-        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)))
+        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)), tree.n)
 
 
 def rule1_fly_to_center(body):
@@ -444,15 +443,15 @@ def view_angle2(body1, body2):
     return diff
 
 
-def draw(scr, bodies, tree_height, optimal_height):
+def draw(scr, bodies, tree_height, optimal_height, n):
     buf = symbol_array(bodies)
 
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
         scr.addstr(num, 0, line.view(dtype)[0])
 
-    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d' %
-        (len(bodies), tree_height, optimal_height))
+    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp %d' %
+        (len(bodies), tree_height, optimal_height, n))
     scr.refresh()
 
 
