@@ -34,7 +34,39 @@ MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 DT = 1
 
-TONE_SYMBOLS = '@%#x+=:-. '
+# TONE_SYMBOLS2 = '@%#x+=:-. '
+
+
+# TONE_SYMBOLS = [
+#     (50, '@'),
+#     (40, '%'),
+#     (30, '#'),
+#     (20, 'x'),
+#     (10, '+'),
+#     (5, '='),
+#     (3, ":"),
+#     (1, '-'),
+#     (0, '.'),
+# ]
+
+
+TONE_SYMBOLS = [
+    (14, '@'),
+    (13, '%'),
+    (12, '$'),
+    (11, '#'),
+    (10, 'x'),
+    (9, '?'),
+    (8, '*'),
+    (7, '!'),
+    (6, '+'),
+    (5, ';'),
+    (4, '='),
+    (3, ':'),
+    (2, '-'),
+    (1, ","),
+    (0, '.'),
+]
 
 
 class Body:
@@ -494,24 +526,13 @@ def draw(scr, bodies):
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
         for x in range(count.shape[1]):
-            if count[y][x] > 50:
-                buf[y][x] = TONE_SYMBOLS[0]
-            elif count[y][x] > 40:
-                buf[y][x] = TONE_SYMBOLS[1]
-            elif count[y][x] > 30:
-                buf[y][x] = TONE_SYMBOLS[2]
-            elif count[y][x] > 20:
-                buf[y][x] = TONE_SYMBOLS[3]
-            elif count[y][x] > 10:
-                buf[y][x] = TONE_SYMBOLS[4]
-            elif count[y][x] > 5:
-                buf[y][x] = TONE_SYMBOLS[5]
-            elif count[y][x] > 3:
-                buf[y][x] = TONE_SYMBOLS[6]
-            elif count[y][x] > 1:
-                buf[y][x] = TONE_SYMBOLS[7]
-            elif count[y][x] != 0:
-                buf[y][x] = TONE_SYMBOLS[8]
+            if count[y][x] == 0:
+                continue
+
+            for threshold, symbol in TONE_SYMBOLS:
+                if count[y][x] > threshold:
+                    buf[y][x] = symbol
+                    break
 
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
@@ -521,5 +542,5 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main3)
+    curses.wrapper(main)
     # main3(None)
