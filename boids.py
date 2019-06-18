@@ -11,6 +11,7 @@ Boids algorithm:
 http://www.red3d.com/cwr/boids/
 
 http://www.algorytm.org/sztuczna-inteligencja/boidy.html
+http://www.kfish.org/boids/pseudocode.html
 """
 
 import sys
@@ -34,22 +35,9 @@ MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 DT = 1
 
-# TONE_SYMBOLS2 = '@%#x+=:-. '
 
-
-# TONE_SYMBOLS = [
-#     (50, '@'),
-#     (40, '%'),
-#     (30, '#'),
-#     (20, 'x'),
-#     (10, '+'),
-#     (5, '='),
-#     (3, ":"),
-#     (1, '-'),
-#     (0, '.'),
-# ]
-
-
+# https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
+# http://mkweb.bcgsc.ca/asciiart/
 TONE_SYMBOLS = [
     (14, '@'),
     (13, '%'),
@@ -330,70 +318,6 @@ def rule3_adjust_velocity(body):
     return WEIGHT_VEL * (avg_vel - body.vel)
 
 
-def main2(scr):
-    setup_stderr('/dev/pts/2')
-    setup_curses(scr)
-
-    np.random.seed(3145)
-    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    # screen_size = np.array([128, 238])
-    bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
-
-    while True:
-        tree = KdTree(bodies, screen_size)
-
-        for body in bodies:
-            body.reset()
-            candidates = tree.nearest(body, VIEW_RADIUS)
-
-            # visible_neighbors = []
-            for neighb_body, dist in candidates:
-                # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle2(body, neighb_body)
-                if angle < VIEW_ANGLE:
-                    body.avg_vel += neighb_body.vel
-                    body.avg_dist += dist
-                    body.neighb_count += 1
-                    body.neighbors.append((neighb_body, dist))
-        #           eprint('neighb_body.pos', neighb_body.pos)
-
-        #     eprint('body.pos', body.pos)
-
-        #     eprint('L:', body.neighb_count)
-        #     # exit()
-
-
-        eprint('-----')
-        for body in bodies:
-            body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
-            # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
-
-            if body.neighb_count > 1:
-                body.avg_dist /= body.neighb_count - 1
-
-            for neighb_body, dist in body.neighbors:
-                # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle2(body, neighb_body)
-                eprint(' dist, ang: ', dist, angle)
-                if angle < VIEW_ANGLE:
-                    if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
-                        body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
-                        eprint('vel', body.vel)
-                    else:
-                        body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
-
-            if body.mag_vel_squared() > MAX_VEL_SQUARED:
-                body.vel = 0.75 * body.vel
-
-
-        eprint('====')
-        for body in bodies:
-            body.pos += body.vel * DT
-            body.adjust(screen_size)
-
-        draw(scr, bodies)
-
-
 def main(scr):
     setup_stderr('/dev/pts/1')
     setup_curses(scr)
@@ -515,8 +439,6 @@ def view_angle2(body1, body2):
 
 
 def draw(scr, bodies):
-    # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
-    # http://mkweb.bcgsc.ca/asciiart/
     shape = [curses.LINES, curses.COLS - 1]
     count = np.zeros(shape=shape)
 
@@ -537,10 +459,12 @@ def draw(scr, bodies):
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
         scr.addstr(num, 0, line.view(dtype)[0])
+
+    scr.addstr(0, 0, 'Tree high')
     scr.refresh()
 
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main3)
     # main3(None)
