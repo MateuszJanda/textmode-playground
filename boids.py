@@ -123,6 +123,7 @@ class KdTree:
 
     def __init__(self, bodies, screen_size):
         self.root = None
+        self.height = 0
 
         for body in bodies:
             self.insert(body, screen_size)
@@ -132,6 +133,7 @@ class KdTree:
 
         pointer = self.root
         dim = KdTree.Y_AXIS
+        new_node_height = 1
 
         parent = None
         parent_dim = None
@@ -149,6 +151,7 @@ class KdTree:
             else:
                 pointer = pointer.rt
             dim = self._next_dimension(dim)
+            new_node_height += 1
 
         if not parent:
             new_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
@@ -160,6 +163,9 @@ class KdTree:
                 parent.lb = new_node
             else:
                 parent.rt = new_node
+
+        if new_node_height > self.height:
+            self.height = new_node_height
 
     def _create_rect(self, parent, insert_pt, parent_dim):
         rect = copy.copy(parent.rect)
@@ -279,7 +285,7 @@ def main3(scr):
             body.pos += body.vel * DT
             body.adjust(screen_size)
 
-        draw(scr, bodies)
+        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)))
 
 
 def rule1_fly_to_center(body):
@@ -384,7 +390,7 @@ def main(scr):
             body.pos += body.vel * DT
             body.adjust(screen_size)
 
-        draw(scr, bodies)
+        draw(scr, bodies, 0, 0)
         # time.sleep(0.1)
 
 
@@ -438,7 +444,19 @@ def view_angle2(body1, body2):
     return diff
 
 
-def draw(scr, bodies):
+def draw(scr, bodies, tree_height, optimal_height):
+    buf = symbol_array(bodies)
+
+    dtype = np.dtype('U' + str(buf.shape[1]))
+    for num, line in enumerate(buf):
+        scr.addstr(num, 0, line.view(dtype)[0])
+
+    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d' %
+        (len(bodies), tree_height, optimal_height))
+    scr.refresh()
+
+
+def symbol_array(bodies):
     shape = [curses.LINES, curses.COLS - 1]
     count = np.zeros(shape=shape)
 
@@ -455,13 +473,7 @@ def draw(scr, bodies):
                 if count[y][x] > threshold:
                     buf[y][x] = symbol
                     break
-
-    dtype = np.dtype('U' + str(buf.shape[1]))
-    for num, line in enumerate(buf):
-        scr.addstr(num, 0, line.view(dtype)[0])
-
-    scr.addstr(0, 0, 'Tree high')
-    scr.refresh()
+    return buf
 
 
 if __name__ == '__main__':
