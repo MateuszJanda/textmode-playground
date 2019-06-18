@@ -22,7 +22,7 @@ import math
 import numpy as np
 
 
-BODY_COUNT = 13
+BODY_COUNT = 50
 VIEWING_ANGLE = 120
 MIN_DIST = 20
 NEIGHB_RADIUS = 50
@@ -253,9 +253,9 @@ def main3(scr):
                 # import pdb; pdb.set_trace()
                 pass
 
-            body.v1 = rule1(body)
-            body.v2 = rule2(body)
-            body.v3 = rule3(body)
+            body.v1 = rule1_fly_to_center(body)
+            body.v2 = rule2_keep_save_dist(body)
+            body.v3 = rule3_adjust_velocity(body)
 
         for body in bodies:
             body.vel += body.v1 + body.v2 + body.v3
@@ -265,24 +265,40 @@ def main3(scr):
         draw(scr, bodies)
 
 
-def rule1(body):
-    avg_dist = sum([neighb_body.pos for neighb_body, _ in body.neighbors])
+def rule1_fly_to_center(body):
+    avg_dist = sum([dist for neighb_body, dist in body.neighbors])
     if len(body.neighbors):
         avg_dist /= len(body.neighbors)
+        weight = WEIGHT_MIN_DIST/len(body.neighbors)
 
-    return (avg_dist - body.pos) * 0.1
+    # return (avg_dist - body.pos) * 0.1
+    v = 0
+    for neighb_body, dist in body.neighbors:
+        if dist > MIN_DIST:
+            v += weight * (((neighb_body.pos - body.pos) * (dist - avg_dist)) / dist)
+
+    return v
 
 
-def rule2(body):
-    c = -sum([dist for _, dist in body.neighbors if dist < MIN_DIST])
-    return c
+def rule2_keep_save_dist(body):
+    # c = -sum([dist for _, dist in body.neighbors if dist < MIN_DIST])
+    if len(body.neighbors):
+        weight = WEIGHT_NEIGHB_DIST/len(body.neighbors)
+
+    v = 0
+    for neighb_body, dist in body.neighbors:
+        v += -weight * ((((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos))
+
+    return v
 
 
-def rule3(body):
+def rule3_adjust_velocity(body):
     avg_vel = sum([neighb_body.vel for neighb_body, _ in body.neighbors])
     if len(body.neighbors):
         avg_vel /= len(body.neighbors)
-    return (avg_vel - body.vel) * (1/8)
+    # return (avg_vel - body.vel) * (1/8)
+
+    return WEIGHT_VEL * (avg_vel - body.vel)
 
 
 def main2(scr):
@@ -510,5 +526,5 @@ def draw(scr, bodies):
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main3)
     # main3(None)
