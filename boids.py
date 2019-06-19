@@ -34,7 +34,7 @@ WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 
-DIM = 2
+NUM_AXIS = 2
 DT = 1
 
 
@@ -60,7 +60,7 @@ TONE_SYMBOLS = [
 
 
 class Body:
-    EPSILONE = 0.1
+    EPSILON = 0.1
     def __init__(self, screen_size):
         self.screen_size = screen_size
         self.pos = np.array([np.random.uniform(0, screen_size[0]),
@@ -82,18 +82,18 @@ class Body:
         self.adjust_pos()
 
     def adjust_vel(self):
-        if np.any(np.absolute(self.vel) > Body.EPSILONE):
+        if np.any(np.absolute(self.vel) > Body.EPSILON):
             return
 
-        for dim in range(DIM):
-            self.vel[dim] = max(self.vel[dim], MAX_VEL / 1000)
+        for axis in range(NUM_AXIS):
+            self.vel[axis] = max(self.vel[axis], MAX_VEL / 1000)
 
     def adjust_pos(self):
-        for dim in range(DIM):
-            if self.pos[dim] < 0:
-                self.pos[dim] = self.pos[dim] % -self.screen_size[dim] + self.screen_size[dim]
-            elif self.pos[dim] > self.screen_size[dim]:
-                self.pos[dim] = self.pos[dim] % self.screen_size[dim]
+        for axis in range(NUM_AXIS):
+            if self.pos[axis] < 0:
+                self.pos[axis] = self.pos[axis] % -self.screen_size[axis] + self.screen_size[axis]
+            elif self.pos[axis] > self.screen_size[axis]:
+                self.pos[axis] = self.pos[axis] % self.screen_size[axis]
 
     def mag_vel_squared(self):
         return self.vel[0]**2 + self.vel[1]**2
@@ -167,12 +167,12 @@ class KdTree:
 
         result = []
         radius_squared = radius**2
+        self.compares = 0
 
         stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
-        self.n = 0
         while stack:
             task = stack.pop()
-            self.n += 1
+            self.compares += 1
 
             if task.node == None:
                 continue
@@ -206,7 +206,7 @@ class KdTree:
         return result
 
     def _next_axis(self, axis):
-        return (axis + 1) % DIM
+        return (axis + 1) % NUM_AXIS
 
 
 def main3(scr):
@@ -239,7 +239,7 @@ def main3(scr):
             body.pos += body.vel * DT
             body.adjust()
 
-        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)), tree.n)
+        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)), tree.compares)
 
 
 def rule1_fly_to_center(body):
@@ -395,7 +395,11 @@ def view_angle2(body1, body2):
     return diff
 
 
-def draw(scr, bodies, tree_height, optimal_height, n):
+def view_angle3(body1, body2):
+    pass
+
+
+def draw(scr, bodies, tree_height, optimal_height, compares):
     buf = symbol_array(bodies)
 
     dtype = np.dtype('U' + str(buf.shape[1]))
@@ -403,7 +407,7 @@ def draw(scr, bodies, tree_height, optimal_height, n):
         scr.addstr(num, 0, line.view(dtype)[0])
 
     scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp %d' %
-        (len(bodies), tree_height, optimal_height, n))
+        (len(bodies), tree_height, optimal_height, compares))
     scr.refresh()
 
 
@@ -439,7 +443,7 @@ def main_test():
     b.pos = np.array([53,75])
     for b, d in tree.nearest(b, 2):
         print(b.pos)
-    print(tree.n)
+    print(tree.compares)
 
     left = tree.root
     while left:
