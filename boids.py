@@ -65,7 +65,7 @@ class Body:
         self.screen_size = screen_size
         self.pos = np.array([np.random.uniform(0, screen_size[0]),
                              np.random.uniform(0, screen_size[1])])
-        self.vel = np.random.uniform(-2, 2, size=[2])
+        self.vel = np.random.uniform(-2, 2, size=[NUM_AXIS])
         self.avg_vel = np.copy(self.vel)
         self.avg_dist = 0
         self.neighb_count = 1
@@ -120,6 +120,7 @@ class KdTree:
     def __init__(self, bodies):
         self.root = None
         self.height = 0
+        self.compares = 0
 
         for body in bodies:
             self.insert(body)
@@ -167,7 +168,6 @@ class KdTree:
 
         result = []
         radius_squared = radius**2
-        self.compares = 0
 
         stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
         while stack:
@@ -213,7 +213,7 @@ def main3(scr):
     setup_stderr('/dev/pts/1')
     setup_curses(scr)
 
-    np.random.seed(3145)
+    # np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
     # screen_size = np.array([128, 238])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
@@ -226,7 +226,7 @@ def main3(scr):
             candidates = tree.nearest(body, VIEW_RADIUS)
 
             for neighb_body, dist in candidates:
-                angle = view_angle2(body, neighb_body)
+                angle = view_angle3(body, neighb_body)
                 if angle < VIEW_ANGLE:
                     body.neighbors.append((neighb_body, dist))
 
@@ -295,7 +295,7 @@ def main(scr):
 
                 dist = distance(body.pos, neighb_body.pos)
                 # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle2(body, neighb_body)
+                angle = view_angle3(body, neighb_body)
                 # eprint(' dist, ang: ', dist, angle)
                 if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
                     # eprint(' ENTER')
@@ -396,7 +396,9 @@ def view_angle2(body1, body2):
 
 
 def view_angle3(body1, body2):
-    pass
+    unit_vec1 = body1.vel / np.linalg.norm(body1.vel)
+    unit_vec2 = body2.pos / np.linalg.norm(body2.pos)
+    return np.arccos(np.clip(np.dot(unit_vec1, unit_vec2), -1.0, 1.0))
 
 
 def draw(scr, bodies, tree_height, optimal_height, compares):
@@ -432,12 +434,22 @@ def symbol_array(bodies):
 
 def main_test():
     screen_size = [100, 100]
-    tree = KdTree([], screen_size)
+
+    b1 = Body(screen_size)
+    b1.pos = np.array([0,0])
+    b1.vel = np.array([0,1])
+    b2 = Body(screen_size)
+    b2.pos = np.array([1,-1])
+    print(math.degrees(view_angle2(b1, b2)), math.degrees(view_angle3(b1, b2)))
+    print(math.degrees(view_angle3(b1, b2)))
+    print('---')
+
+    tree = KdTree([])
 
     for pos in [(51,75), (25,40), (70,70), (10,30), (35,90), (55,1), (60,80), (1,10), (50,50) ]:
         b = Body(screen_size)
         b.pos = np.array(pos)
-        tree.insert(b, screen_size)
+        tree.insert(b)
 
     b = Body(screen_size)
     b.pos = np.array([53,75])
@@ -459,6 +471,6 @@ def main_test():
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main3)
+    curses.wrapper(main)
     # main3(None)
     # main_test()
