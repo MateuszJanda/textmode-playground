@@ -109,7 +109,6 @@ class KdTree:
     class Node:
         def __init__(self, body):
             self.body = body
-            self.rect = None
             self.left = None
             self.right = None
 
@@ -118,14 +117,14 @@ class KdTree:
             self.node = node
             self.axis = axis
 
-    def __init__(self, bodies, screen_size):
+    def __init__(self, bodies):
         self.root = None
         self.height = 0
 
         for body in bodies:
-            self.insert(body, screen_size)
+            self.insert(body)
 
-    def insert(self, body, screen_size):
+    def insert(self, body):
         new_node = KdTree.Node(body)
 
         pointer = self.root
@@ -150,10 +149,8 @@ class KdTree:
             new_node_height += 1
 
         if not parent:
-            new_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
             self.root = new_node
         else:
-            new_node.rect = self._create_rect(parent, new_node.body.pos, parent_axis)
             if new_node.body.pos[parent_axis] < parent.body.pos[parent_axis]:
                 parent.left = new_node
             else:
@@ -161,22 +158,6 @@ class KdTree:
 
         if new_node_height > self.height:
             self.height = new_node_height
-
-    def _create_rect(self, parent, insert_pt, parent_axis):
-        rect = copy.copy(parent.rect)
-
-        if parent_axis == KdTree.Y_AXIS:
-            if insert_pt[0] < parent.body.pos[0]:
-                rect.ymax = parent.body.pos[0]
-            else:
-                rect.ymin = parent.body.pos[0]
-        else:
-            if insert_pt[1] < parent.body.pos[1]:
-                rect.xmax = parent.body.pos[1]
-            else:
-                rect.xmin = parent.body.pos[1]
-
-        return rect
 
     def nearest(self, body, radius):
         # http://web.stanford.edu/class/cs106l/handouts/005_assignment_3_kdtree.pdf
@@ -228,30 +209,6 @@ class KdTree:
         return (axis + 1) % DIM
 
 
-class Rect:
-    def __init__(self, ymin, xmin, ymax, xmax):
-        self.ymin = ymin
-        self.xmin = xmin
-        self.ymax = ymax
-        self.xmax = xmax
-
-    def distance_squared(self, pos):
-        dx = 0
-        dy = 0
-
-        if pos[0] < self.ymin:
-            dy = pos[0] - self.ymin
-        elif pos[0] > self.ymax:
-            dy = pos[0] - self.ymax
-
-        if pos[1] < self.xmin:
-            dx = pos[1] - self.xmin
-        elif pos[1] > self.xmax:
-            dx = pos[1] - self.xmax
-
-        return dx**2 + dy**2
-
-
 def main3(scr):
     setup_stderr('/dev/pts/1')
     setup_curses(scr)
@@ -262,7 +219,7 @@ def main3(scr):
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
-        tree = KdTree(bodies, screen_size)
+        tree = KdTree(bodies)
 
         for body in bodies:
             body.reset()
