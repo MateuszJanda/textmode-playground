@@ -33,6 +33,8 @@ WEIGHT_MIN_DIST = 0.15
 WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
+
+DIM = 2
 DT = 1
 
 
@@ -195,44 +197,40 @@ class KdTree:
         while stack:
             task = stack.pop()
             self.n += 1
-            if task.node:
-                print('cmp ', task.node.body.pos)
-            else:
-                print('cmp None')
 
-            if task.node == None or \
-              task.node.rect.distance_squared(body.pos) >= radius_squared:
+            if task.node == None:
                 continue
 
-            if task.node != None and task.node.body is body:
-                stack.extend(self._new_tasks(task, body))
+            if task.node.body is body:
+                stack.extend(self._new_tasks(task, body, radius))
                 continue
 
             dist_squared = distance_squared(body.pos, task.node.body.pos)
             if dist_squared < radius_squared:
                 result.append((task.node.body, math.sqrt(dist_squared)))
 
-            stack.extend(self._new_tasks(task, body))
+            stack.extend(self._new_tasks(task, body, radius))
 
         return result
 
-    def _new_tasks(self, task, body):
+    def _new_tasks(self, task, body, radius):
         result = []
-        next_dim = self._next_axis(task.axis)
+        next_axis = self._next_axis(task.axis)
 
         if body.pos[task.axis] < task.node.body.pos[task.axis]:
-            result.append(KdTree.Task(task.node.right, next_dim))
-            result.append(KdTree.Task(task.node.left, next_dim))
+            result.append(KdTree.Task(task.node.left, next_axis))
+            other_subtree = task.node.right
         else:
-            result.append(KdTree.Task(task.node.left, next_dim))
-            result.append(KdTree.Task(task.node.right, next_dim))
+            result.append(KdTree.Task(task.node.right, next_axis))
+            other_subtree = task.node.left
+
+        if math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < radius:
+            result.append(KdTree.Task(other_subtree, next_axis))
 
         return result
 
     def _next_axis(self, axis):
-        if axis == KdTree.Y_AXIS:
-            return KdTree.X_AXIS
-        return KdTree.Y_AXIS
+        return (axis + 1) % DIM
 
 
 class Rect:
@@ -281,7 +279,7 @@ def main3(scr):
                     body.neighbors.append((neighb_body, dist))
 
             body.v1 = rule1_fly_to_center(body)
-            body.v2 = rule2_keep_save_dist(body)
+            body.v2 = rule2_keep_safe_dist(body)
             body.v3 = rule3_adjust_velocity(body)
 
         for body in bodies:
@@ -298,7 +296,6 @@ def rule1_fly_to_center(body):
         avg_dist /= len(body.neighbors)
         weight = WEIGHT_MIN_DIST/len(body.neighbors)
 
-    # return (avg_dist - body.pos) * 0.1
     v = 0
     for neighb_body, dist in body.neighbors:
         if dist > MIN_DIST:
@@ -308,7 +305,6 @@ def rule1_fly_to_center(body):
 
 
 def rule2_keep_safe_dist(body):
-    # c = -sum([dist for _, dist in body.neighbors if dist < MIN_DIST])
     if len(body.neighbors):
         weight = WEIGHT_NEIGHB_DIST/len(body.neighbors)
 
@@ -323,7 +319,6 @@ def rule3_adjust_velocity(body):
     avg_vel = sum([neighb_body.vel for neighb_body, _ in body.neighbors])
     if len(body.neighbors):
         avg_vel /= len(body.neighbors)
-    # return (avg_vel - body.vel) * (1/8)
 
     return WEIGHT_VEL * (avg_vel - body.vel)
 
@@ -489,7 +484,7 @@ def main_test():
         tree.insert(b, screen_size)
 
     b = Body(screen_size)
-    b.pos = np.array([52,75])
+    b.pos = np.array([53,75])
     for b, d in tree.nearest(b, 2):
         print(b.pos)
     print(tree.n)
@@ -507,7 +502,7 @@ def main_test():
 
 
 if __name__ == '__main__':
-    # locale.setlocale(locale.LC_ALL, '')
-    # curses.wrapper(main3)
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(main3)
     # main3(None)
-    main_test()
+    # main_test()
