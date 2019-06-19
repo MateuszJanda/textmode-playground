@@ -39,21 +39,21 @@ DT = 1
 # https://dboikliev.wordpress.com/2013/04/20/image-to-ascii-conversion/
 # http://mkweb.bcgsc.ca/asciiart/
 TONE_SYMBOLS = [
-    (14, '@'),
-    (13, '%'),
-    (12, '$'),
-    (11, '#'),
-    (10, 'x'),
-    (9, '?'),
-    (8, '*'),
-    (7, '!'),
-    (6, '+'),
-    (5, ';'),
-    (4, '='),
-    (3, ':'),
-    (2, '-'),
-    (1, ","),
-    (0, '.'),
+    (15, '@'),
+    (14, '%'),
+    (13, '$'),
+    (12, '#'),
+    (11, 'x'),
+    (10, '?'),
+    (9, '*'),
+    (8, '!'),
+    (7, '+'),
+    (6, ';'),
+    (5, '='),
+    (4, ':'),
+    (3, '-'),
+    (2, ","),
+    (1, '.'),
 ]
 
 
@@ -117,9 +117,9 @@ class KdTree:
             self.right = None
 
     class Task:
-        def __init__(self, node, dim):
+        def __init__(self, node, axis):
             self.node = node
-            self.dim = dim
+            self.axis = axis
 
     def __init__(self, bodies, screen_size):
         self.root = None
@@ -132,32 +132,32 @@ class KdTree:
         new_node = KdTree.Node(body)
 
         pointer = self.root
-        dim = KdTree.Y_AXIS
+        axis = KdTree.Y_AXIS
         new_node_height = 1
 
         parent = None
-        parent_dim = None
+        parent_axis = None
 
         while pointer:
             parent = pointer
-            parent_dim = dim
+            parent_axis = axis
 
             if np.all(parent.body.pos == new_node.body.pos):
                 return
 
-            if new_node.body.pos[parent_dim] < parent.body.pos[parent_dim]:
+            if new_node.body.pos[parent_axis] < parent.body.pos[parent_axis]:
                 pointer = pointer.left
             else:
                 pointer = pointer.right
-            dim = self._next_dimension(dim)
+            axis = self._next_axis(axis)
             new_node_height += 1
 
         if not parent:
             new_node.rect = Rect(0, 0, screen_size[0], screen_size[1])
             self.root = new_node
         else:
-            new_node.rect = self._create_rect(parent, new_node.body.pos, parent_dim)
-            if new_node.body.pos[parent_dim] < parent.body.pos[parent_dim]:
+            new_node.rect = self._create_rect(parent, new_node.body.pos, parent_axis)
+            if new_node.body.pos[parent_axis] < parent.body.pos[parent_axis]:
                 parent.left = new_node
             else:
                 parent.right = new_node
@@ -165,10 +165,10 @@ class KdTree:
         if new_node_height > self.height:
             self.height = new_node_height
 
-    def _create_rect(self, parent, insert_pt, parent_dim):
+    def _create_rect(self, parent, insert_pt, parent_axis):
         rect = copy.copy(parent.rect)
 
-        if parent_dim == KdTree.Y_AXIS:
+        if parent_axis == KdTree.Y_AXIS:
             if insert_pt[0] < parent.body.pos[0]:
                 rect.ymax = parent.body.pos[0]
             else:
@@ -200,12 +200,12 @@ class KdTree:
             else:
                 print('cmp None')
 
-            if task.node != None and task.node.body is body:
-                stack.extend(self._new_tasks(task, body))
-                continue
-
             if task.node == None or \
               task.node.rect.distance_squared(body.pos) >= radius_squared:
+                continue
+
+            if task.node != None and task.node.body is body:
+                stack.extend(self._new_tasks(task, body))
                 continue
 
             dist_squared = distance_squared(body.pos, task.node.body.pos)
@@ -218,9 +218,9 @@ class KdTree:
 
     def _new_tasks(self, task, body):
         result = []
-        next_dim = self._next_dimension(task.dim)
+        next_dim = self._next_axis(task.axis)
 
-        if body.pos[task.dim] < task.node.body.pos[task.dim]:
+        if body.pos[task.axis] < task.node.body.pos[task.axis]:
             result.append(KdTree.Task(task.node.right, next_dim))
             result.append(KdTree.Task(task.node.left, next_dim))
         else:
@@ -229,8 +229,8 @@ class KdTree:
 
         return result
 
-    def _next_dimension(self, dim):
-        if dim == KdTree.Y_AXIS:
+    def _next_axis(self, axis):
+        if axis == KdTree.Y_AXIS:
             return KdTree.X_AXIS
         return KdTree.Y_AXIS
 
@@ -307,7 +307,7 @@ def rule1_fly_to_center(body):
     return v
 
 
-def rule2_keep_save_dist(body):
+def rule2_keep_safe_dist(body):
     # c = -sum([dist for _, dist in body.neighbors if dist < MIN_DIST])
     if len(body.neighbors):
         weight = WEIGHT_NEIGHB_DIST/len(body.neighbors)
@@ -474,7 +474,7 @@ def symbol_array(bodies):
                 continue
 
             for threshold, symbol in TONE_SYMBOLS:
-                if count[y][x] > threshold:
+                if count[y][x] >= threshold:
                     buf[y][x] = symbol
                     break
     return buf
