@@ -26,7 +26,7 @@ import numpy as np
 BODY_COUNT = 100
 VIEW_ANGLE = math.radians(120)
 MIN_DIST = 20
-VIEW_RADIUS = 50
+VIEW_RADIUS = 30
 WEIGHT_VEL = 0.1
 WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
@@ -182,6 +182,7 @@ class KdTree:
         return rect
 
     def nearest(self, body, radius):
+        # http://web.stanford.edu/class/cs106l/handouts/005_assignment_3_kdtree.pdf
         # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
         if self.root == None:
             return []
@@ -194,6 +195,10 @@ class KdTree:
         while stack:
             task = stack.pop()
             self.n += 1
+            if task.node:
+                print('cmp ', task.node.body.pos)
+            else:
+                print('cmp None')
 
             if task.node != None and task.node.body is body:
                 stack.extend(self._new_tasks(task, body))
@@ -474,8 +479,35 @@ def symbol_array(bodies):
                     break
     return buf
 
+def main_test():
+    screen_size = [100, 100]
+    tree = KdTree([], screen_size)
+
+    for pos in [(51,75), (25,40), (70,70), (10,30), (35,90), (55,1), (60,80), (1,10), (50,50) ]:
+        b = Body(screen_size)
+        b.pos = np.array(pos)
+        tree.insert(b, screen_size)
+
+    b = Body(screen_size)
+    b.pos = np.array([52,75])
+    for b, d in tree.nearest(b, 2):
+        print(b.pos)
+    print(tree.n)
+
+    left = tree.root
+    while left:
+        print(left.body.pos)
+        left = left.left
+    print('---')
+
+    right = tree.root
+    while right:
+        print(right.body.pos)
+        right = right.right
+
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main3)
+    # locale.setlocale(locale.LC_ALL, '')
+    # curses.wrapper(main3)
     # main3(None)
+    main_test()
