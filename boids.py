@@ -323,7 +323,7 @@ def main(scr):
 
                 dist = distance(body.pos, neighb_body.pos)
                 # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle2(body, neighb_body)
+                angle = view_angle3(body, neighb_body)
                 # eprint(' dist, ang: ', dist, angle)
                 if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
@@ -396,8 +396,10 @@ def view_angle2(body1, body2):
 
 
 def view_angle3(body1, body2):
-    unit_vec1 = body1.vel / np.linalg.norm(body1.vel)
-    unit_vec2 = body2.pos / np.linalg.norm(body2.pos)
+    # unit_vec1 = body1.vel / np.linalg.norm(body1.vel)
+    # unit_vec2 = body2.pos / np.linalg.norm(body2.pos)
+    unit_vec1 = body1.vel / np.sqrt(np.sum(body1.vel**2))
+    unit_vec2 = body2.pos / np.sqrt(np.sum(body2.pos**2))
     return np.arccos(np.clip(np.dot(unit_vec1, unit_vec2), -1.0, 1.0))
 
 
