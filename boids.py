@@ -60,7 +60,9 @@ TONE_SYMBOLS = [
 
 
 class Body:
+    EPSILONE = 0.1
     def __init__(self, screen_size):
+        self.screen_size = screen_size
         self.pos = np.array([np.random.uniform(0, screen_size[0]),
                              np.random.uniform(0, screen_size[1])])
         self.vel = np.random.uniform(-2, 2, size=[2])
@@ -75,30 +77,23 @@ class Body:
         self.neighb_count = 1
         self.neighbors = []
 
-    def adjust(self, screen_size):
+    def adjust(self):
         self.adjust_vel()
-        self.adjust_pos(screen_size)
+        self.adjust_pos()
 
     def adjust_vel(self):
-        if self.vel[0] == 0:
-            self.vel[0] = MAX_VEL / 1000
-        if self.vel[1] == 0:
-            self.vel[1] = MAX_VEL / 1000
+        if np.any(np.absolute(self.vel) > Body.EPSILONE):
+            return
 
-        return self.vel
+        for dim in range(DIM):
+            self.vel[dim] = max(self.vel[dim], MAX_VEL / 1000)
 
-    def adjust_pos(self, screen_size):
-        if self.pos[0] < 0:
-            self.pos[0] = self.pos[0] % -screen_size[0] + screen_size[0]
-        elif self.pos[0] > screen_size[0]:
-            self.pos[0] = self.pos[0] % screen_size[0]
-
-        if self.pos[1] < 0:
-            self.pos[1] = self.pos[1] % -screen_size[1] + screen_size[1]
-        elif self.pos[1] > screen_size[1]:
-            self.pos[1] = self.pos[1] % screen_size[1]
-
-        return self.pos
+    def adjust_pos(self):
+        for dim in range(DIM):
+            if self.pos[dim] < 0:
+                self.pos[dim] = self.pos[dim] % -self.screen_size[dim] + self.screen_size[dim]
+            elif self.pos[dim] > self.screen_size[dim]:
+                self.pos[dim] = self.pos[dim] % self.screen_size[dim]
 
     def mag_vel_squared(self):
         return self.vel[0]**2 + self.vel[1]**2
@@ -285,7 +280,7 @@ def main3(scr):
         for body in bodies:
             body.vel += body.v1 + body.v2 + body.v3
             body.pos += body.vel * DT
-            body.adjust(screen_size)
+            body.adjust()
 
         draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)), tree.n)
 
@@ -357,7 +352,7 @@ def main(scr):
             # exit()
 
 
-        eprint('-----')
+        # eprint('-----')
         for body in bodies:
             body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
             # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
@@ -372,11 +367,11 @@ def main(scr):
                 dist = distance(body.pos, neighb_body.pos)
                 # angle = view_angle(body, neighb_body, dist)
                 angle = view_angle2(body, neighb_body)
-                eprint(' dist, ang: ', dist, angle)
+                # eprint(' dist, ang: ', dist, angle)
                 if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
                     if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
                         body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
-                        eprint('vel', body.vel)
+                        # eprint('vel', body.vel)
                     else:
                         body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
 
@@ -384,12 +379,12 @@ def main(scr):
                 body.vel = 0.75 * body.vel
 
 
-        eprint('====')
+        # eprint('====')
         for body in bodies:
             body.pos += body.vel * DT
-            body.adjust(screen_size)
+            body.adjust()
 
-        draw(scr, bodies, 0, 0)
+        draw(scr, bodies, 0, 0, 0)
         # time.sleep(0.1)
 
 
