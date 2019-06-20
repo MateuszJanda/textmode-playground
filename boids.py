@@ -226,7 +226,7 @@ def main3(scr):
             candidates = tree.nearest(body, VIEW_RADIUS)
 
             for neighb_body, dist in candidates:
-                angle = view_angle3(body, neighb_body)
+                angle = view_angle2(body, neighb_body)
                 if angle < VIEW_ANGLE:
                     body.neighbors.append((neighb_body, dist))
 
@@ -396,11 +396,10 @@ def view_angle2(body1, body2):
 
 
 def view_angle3(body1, body2):
-    # unit_vec1 = body1.vel / np.linalg.norm(body1.vel)
-    # unit_vec2 = body2.pos / np.linalg.norm(body2.pos)
-    unit_vec1 = body1.vel / np.sqrt(np.sum(body1.vel**2))
-    unit_vec2 = body2.pos / np.sqrt(np.sum(body2.pos**2))
-    return np.arccos(np.clip(np.dot(unit_vec1, unit_vec2), -1.0, 1.0))
+    mag_vec1 = np.sum(body1.vel**2)**0.5
+    mag_vec2 = np.sum(body2.pos**2)**0.5
+    angle = np.arccos(np.dot(body1.vel, body2.pos) / (mag_vec1 * mag_vec2))
+    return angle
 
 
 def draw(scr, bodies, tree_height, optimal_height, compares):
@@ -473,6 +472,6 @@ def main_test():
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    curses.wrapper(main3)
     # main3(None)
     # main_test()
