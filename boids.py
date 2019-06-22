@@ -266,7 +266,7 @@ def main(scr):
             for dist_squared, neighb_body in candidates:
                 angle = view_angle_2d(body, neighb_body)
                 if angle < VIEW_ANGLE:
-                    body.neighbors.append((neighb_body, math.sqrt(dist_squared)))
+                    body.neighbors.append((math.sqrt(dist_squared), neighb_body))
 
             body.v1 = rule1_fly_to_center(body)
             body.v2 = rule2_keep_safe_dist(body)
@@ -303,13 +303,13 @@ def eprint(*args, **kwargs):
 
 
 def rule1_fly_to_center(body):
-    avg_dist = sum([dist for _, dist in body.neighbors])
+    avg_dist = sum([dist for dist, _ in body.neighbors])
     if len(body.neighbors):
         avg_dist /= len(body.neighbors)
         weight = WEIGHT_MIN_DIST/len(body.neighbors)
 
     v = 0
-    for neighb_body, dist in body.neighbors:
+    for dist, neighb_body in body.neighbors:
         if dist > MIN_DIST:
             v += weight * (((neighb_body.pos - body.pos) * (dist - avg_dist)) / dist)
 
@@ -321,14 +321,14 @@ def rule2_keep_safe_dist(body):
         weight = WEIGHT_NEIGHB_DIST/len(body.neighbors)
 
     v = 0
-    for neighb_body, dist in body.neighbors:
+    for dist, neighb_body in body.neighbors:
         v += -weight * ((((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos))
 
     return v
 
 
 def rule3_adjust_velocity(body):
-    avg_vel = sum([neighb_body.vel for neighb_body, _ in body.neighbors])
+    avg_vel = sum([neighb_body.vel for _, neighb_body in body.neighbors])
     if len(body.neighbors):
         avg_vel /= len(body.neighbors)
 
@@ -337,10 +337,6 @@ def rule3_adjust_velocity(body):
 
 def distance_squared(pos1, pos2):
     return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2
-
-
-def distance(pos1, pos2):
-    return math.sqrt(distance_squared(pos1, pos2))
 
 
 def view_angle_2d(body1, body2):
