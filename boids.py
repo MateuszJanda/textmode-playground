@@ -110,6 +110,7 @@ class KdTree:
     def __init__(self, bodies, k=55):
         self.root = None
         self.k = k
+
         self.height = 0
         self.compares_count = 0
 
@@ -152,7 +153,7 @@ class KdTree:
             self.height = new_node_height
 
     def nearest(self, body, radius):
-        if self.root == None:
+        if not self.root:
             return []
 
         neighbors = []
@@ -163,7 +164,7 @@ class KdTree:
             task = stack.pop()
             self.compares_count += 1
 
-            if task.node == None:
+            if not task.node:
                 continue
 
             if task.node.body is body:
@@ -195,7 +196,7 @@ class KdTree:
         return tasks
 
     def k_nearest(self, body, radius):
-        if self.root == None:
+        if not self.root:
             return []
 
         neighbors = []
@@ -206,7 +207,7 @@ class KdTree:
             task = stack.pop()
             self.compares_count += 1
 
-            if task.node == None:
+            if not task.node:
                 continue
 
             if task.node.body is body:
@@ -217,12 +218,12 @@ class KdTree:
             if dist_squared < radius_squared:
                 if len(neighbors) < self.k:
                     heapq.heappush(neighbors, (-dist_squared, task.node.body))
-                elif dist_squared < -neighbors[0][0]:
+                elif dist_squared < self._bpq_max(neighbors):
                     heapq.heapreplace(neighbors, (-dist_squared, task.node.body))
 
             stack.extend(self._new_knn_tasks(task, body, radius, neighbors))
 
-        return neighbors
+        return [(-d, n) for d, n in neighbors]
 
     def _new_knn_tasks(self, task, body, radius, neighbors):
         tasks = []
@@ -238,10 +239,14 @@ class KdTree:
         if len(neighbors) < self.k:
             if math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < radius:
                 tasks.append(KdTree.Task(other_subtree, next_axis))
-        elif math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < -neighbors[0][0]:
+        elif math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < self._bpq_max(neighbors):
             tasks.append(KdTree.Task(other_subtree, next_axis))
 
         return tasks
+
+    def _bpq_max(self, bqp):
+        """Bounded priority queue maximal element."""
+        return -bqp[0][0]
 
     def _next_axis(self, axis):
         return (axis + 1) % NUM_AXIS
@@ -260,7 +265,7 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            candidates = tree.nearest(body, VIEW_RADIUS)
+            candidates = tree.k_nearest(body, VIEW_RADIUS)
 
             body.neighbors = []
             for dist_squared, neighb_body in candidates:
@@ -429,4 +434,3 @@ def main_test():
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
     curses.wrapper(main)
-    # main_test()
