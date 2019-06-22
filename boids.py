@@ -219,6 +219,7 @@ def main3(scr):
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
+        tic = time.time()
         tree = KdTree(bodies)
 
         for body in bodies:
@@ -239,7 +240,11 @@ def main3(scr):
             body.pos += body.vel * DT
             body.adjust()
 
-        draw(scr, bodies, tree.height, math.ceil(math.log(len(bodies), 2)), tree.compares)
+        calc_time = time.time() - tic
+
+        draw(scr=scr, bodies=bodies, tree_height=tree.height,
+            optimal_height=math.ceil(math.log(len(bodies), 2)),
+            compares=tree.compares, calc_time=calc_time)
 
 
 def rule1_fly_to_center(body):
@@ -402,15 +407,15 @@ def view_angle3(body1, body2):
     return angle
 
 
-def draw(scr, bodies, tree_height, optimal_height, compares):
+def draw(scr, bodies, tree_height, optimal_height, compares, calc_time):
     buf = symbol_array(bodies)
 
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
         scr.addstr(num, 0, line.view(dtype)[0])
 
-    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp %d' %
-        (len(bodies), tree_height, optimal_height, compares))
+    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp: %d. Calc time: %.4f sec' %
+        (len(bodies), tree_height, optimal_height, compares, calc_time))
     scr.refresh()
 
 
