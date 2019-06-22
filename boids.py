@@ -265,7 +265,7 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            candidates = tree.k_nearest(body, VIEW_RADIUS)
+            candidates = tree.nearest(body, VIEW_RADIUS)
 
             body.neighbors = []
             for dist_squared, neighb_body in candidates:
@@ -346,7 +346,7 @@ def distance_squared(pos1, pos2):
 
 def view_angle_2d(body1, body2):
     k1 = math.atan2(body1.vel[0], body1.vel[1])
-    k2 = math.atan2(body1.pos[0] - body2.pos[0], body1.pos[1] - body2.pos[1])
+    k2 = math.atan2(body2.pos[0] - body1.pos[0], body2.pos[1] - body1.pos[1])
 
     diff = math.fabs(k1 - k2)
     return diff
