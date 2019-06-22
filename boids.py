@@ -35,6 +35,8 @@ MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 
 NUM_AXIS = 2
+Y_AXIS = 0
+X_AXIS = 1
 DT = 1
 
 
@@ -66,15 +68,9 @@ class Body:
         self.pos = np.array([np.random.uniform(0, screen_size[0]),
                              np.random.uniform(0, screen_size[1])])
         self.vel = np.random.uniform(-2, 2, size=[NUM_AXIS])
-        self.avg_vel = np.copy(self.vel)
-        self.avg_dist = 0
-        self.neighb_count = 1
         self.neighbors = []
 
     def reset(self):
-        self.avg_vel = np.copy(self.vel)
-        self.avg_dist = 0
-        self.neighb_count = 1
         self.neighbors = []
 
     def adjust(self):
@@ -95,17 +91,8 @@ class Body:
             elif self.pos[axis] > self.screen_size[axis]:
                 self.pos[axis] = self.pos[axis] % self.screen_size[axis]
 
-    def mag_vel_squared(self):
-        return self.vel[0]**2 + self.vel[1]**2
-
-    def mag_vel(self):
-        return math.sqrt(self.mag_vel_squared())
-
 
 class KdTree:
-    Y_AXIS = 0
-    X_AXIS = 1
-
     class Node:
         def __init__(self, body):
             self.body = body
@@ -120,7 +107,7 @@ class KdTree:
     def __init__(self, bodies):
         self.root = None
         self.height = 0
-        self.compares = 0
+        self.compares_count = 0
 
         for body in bodies:
             self.insert(body)
@@ -129,7 +116,7 @@ class KdTree:
         new_node = KdTree.Node(body)
 
         pointer = self.root
-        axis = KdTree.Y_AXIS
+        axis = Y_AXIS
         new_node_height = 1
 
         parent = None
@@ -169,10 +156,10 @@ class KdTree:
         result = []
         radius_squared = radius**2
 
-        stack = [KdTree.Task(self.root, KdTree.Y_AXIS)]
+        stack = [KdTree.Task(self.root, Y_AXIS)]
         while stack:
             task = stack.pop()
-            self.compares += 1
+            self.compares_count += 1
 
             if task.node == None:
                 continue
@@ -209,13 +196,12 @@ class KdTree:
         return (axis + 1) % NUM_AXIS
 
 
-def main3(scr):
+def main(scr):
     setup_stderr('/dev/pts/1')
     setup_curses(scr)
 
-    # np.random.seed(3145)
+    np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    # screen_size = np.array([128, 238])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
     while True:
@@ -227,7 +213,7 @@ def main3(scr):
             candidates = tree.nearest(body, VIEW_RADIUS)
 
             for neighb_body, dist in candidates:
-                angle = view_angle2(body, neighb_body)
+                angle = view_angle_2d(body, neighb_body)
                 if angle < VIEW_ANGLE:
                     body.neighbors.append((neighb_body, dist))
 
@@ -244,11 +230,29 @@ def main3(scr):
 
         draw(scr=scr, bodies=bodies, tree_height=tree.height,
             optimal_height=math.ceil(math.log(len(bodies), 2)),
-            compares=tree.compares, calc_time=calc_time)
+            compares_count=tree.compares_count, calc_time=calc_time)
+
+
+def setup_curses(scr):
+    curses.start_color()
+    curses.use_default_colors()
+    curses.halfdelay(1)
+    curses.curs_set(False)
+    scr.clear()
+
+
+def setup_stderr(output):
+    """Hard-coded console for debug prints (stderr)."""
+    sys.stderr = open(output, 'w')
+
+
+def eprint(*args, **kwargs):
+    """Debug print function (on std err)."""
+    print(*args, file=sys.stderr)
 
 
 def rule1_fly_to_center(body):
-    avg_dist = sum([dist for neighb_body, dist in body.neighbors])
+    avg_dist = sum([dist for _, dist in body.neighbors])
     if len(body.neighbors):
         avg_dist /= len(body.neighbors)
         weight = WEIGHT_MIN_DIST/len(body.neighbors)
@@ -280,94 +284,6 @@ def rule3_adjust_velocity(body):
     return WEIGHT_VEL * (avg_vel - body.vel)
 
 
-def main(scr):
-    setup_stderr('/dev/pts/1')
-    setup_curses(scr)
-
-    np.random.seed(3145)
-    screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
-    # screen_size = np.array([128, 238])
-
-    bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
-
-    while True:
-        for body in bodies:
-            body.reset()
-
-            for neighb_body in bodies:
-                if body is neighb_body:
-                    continue
-
-                dist = distance(body.pos, neighb_body.pos)
-                # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle3(body, neighb_body)
-                # eprint(' dist, ang: ', dist, angle)
-                if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
-                    # eprint(' ENTER')
-                    body.neighb_count += 1
-                    body.avg_vel += neighb_body.vel
-                    body.avg_dist += dist
-            #         eprint('neighb_body.pos', neighb_body.pos)
-
-            # eprint('body.pos', body.pos)
-            # eprint('L:', body.neighb_count)
-            # exit()
-
-
-        # eprint('-----')
-        for body in bodies:
-            body.vel += WEIGHT_VEL * ((body.avg_vel / body.neighb_count) - body.vel)
-            # body.vel += WEIGHT_NOISE * np.random.uniform(0, 0.5, size=[2]) * MAX_VEL
-
-            if body.neighb_count > 1:
-                body.avg_dist /= body.neighb_count - 1
-
-            for neighb_body in bodies:
-                if body is neighb_body:
-                    continue
-
-                dist = distance(body.pos, neighb_body.pos)
-                # angle = view_angle(body, neighb_body, dist)
-                angle = view_angle3(body, neighb_body)
-                # eprint(' dist, ang: ', dist, angle)
-                if dist < VIEW_RADIUS and angle < VIEW_ANGLE:
-                    if math.fabs(neighb_body.pos[1] - body.pos[1]) > MIN_DIST:
-                        body.vel += (WEIGHT_NEIGHB_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * (dist - body.avg_dist)) / dist)
-                        # eprint('vel', body.vel)
-                    else:
-                        body.vel -= (WEIGHT_MIN_DIST / body.neighb_count) * (((neighb_body.pos - body.pos) * MIN_DIST) / dist) - (neighb_body.pos - body.pos)
-
-            if body.mag_vel_squared() > MAX_VEL_SQUARED:
-                body.vel = 0.75 * body.vel
-
-
-        # eprint('====')
-        for body in bodies:
-            body.pos += body.vel * DT
-            body.adjust()
-
-        draw(scr, bodies, 0, 0, 0)
-        # time.sleep(0.1)
-
-
-def setup_curses(scr):
-    curses.start_color()
-    curses.use_default_colors()
-    curses.halfdelay(1)
-    curses.curs_set(False)
-    scr.clear()
-
-
-def setup_stderr(output):
-    """Hard-coded console for debug prints (stderr)."""
-    sys.stderr = open(output, 'w')
-
-
-def eprint(*args, **kwargs):
-    """Debug print function (on std err)."""
-    print(*args, file=sys.stderr)
-
-
 def distance_squared(pos1, pos2):
     return (pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2
 
@@ -376,23 +292,7 @@ def distance(pos1, pos2):
     return math.sqrt(distance_squared(pos1, pos2))
 
 
-def view_angle(body1, body2, dist):
-    mag_vel = body1.mag_vel()
-    k = body1.vel[1] / mag_vel * \
-        ((body2.pos[1] - body1.pos[1]) / dist) + \
-        body1.vel[0] / mag_vel * \
-        ((body2.pos[0] - body1.pos[0]) / dist)
-
-    if k < -1:
-        k = -1
-    elif k > 1:
-        k = 1
-    angle = math.fabs((180 * math.acos(k)) / math.pi)
-
-    return angle
-
-
-def view_angle2(body1, body2):
+def view_angle_2d(body1, body2):
     k1 = math.atan2(body1.vel[0], body1.vel[1])
     k2 = math.atan2(body1.pos[0] - body2.pos[0], body1.pos[1] - body2.pos[1])
 
@@ -400,14 +300,15 @@ def view_angle2(body1, body2):
     return diff
 
 
-def view_angle3(body1, body2):
+def view_angle_nd(body1, body2):
+    """Terrible, terrible slows."""
     mag_vec1 = np.sum(body1.vel**2)**0.5
     mag_vec2 = np.sum(body2.pos**2)**0.5
     angle = np.arccos(np.dot(body1.vel, body2.pos) / (mag_vec1 * mag_vec2))
     return angle
 
 
-def draw(scr, bodies, tree_height, optimal_height, compares, calc_time):
+def draw(scr, bodies, tree_height, optimal_height, compares_count, calc_time):
     buf = symbol_array(bodies)
 
     dtype = np.dtype('U' + str(buf.shape[1]))
@@ -415,7 +316,7 @@ def draw(scr, bodies, tree_height, optimal_height, compares, calc_time):
         scr.addstr(num, 0, line.view(dtype)[0])
 
     scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp: %d. Calc time: %.4f sec' %
-        (len(bodies), tree_height, optimal_height, compares, calc_time))
+        (len(bodies), tree_height, optimal_height, compares_count, calc_time))
     scr.refresh()
 
 
@@ -438,6 +339,7 @@ def symbol_array(bodies):
                     break
     return buf
 
+
 def main_test():
     screen_size = [100, 100]
 
@@ -446,8 +348,8 @@ def main_test():
     b1.vel = np.array([0,1])
     b2 = Body(screen_size)
     b2.pos = np.array([1,-1])
-    print(math.degrees(view_angle2(b1, b2)), math.degrees(view_angle3(b1, b2)))
-    print(math.degrees(view_angle3(b1, b2)))
+    print(math.degrees(view_angle_2d(b1, b2)), math.degrees(view_angle_nd(b1, b2)))
+    print(math.degrees(view_angle_nd(b1, b2)))
     print('---')
 
     tree = KdTree([])
@@ -461,7 +363,7 @@ def main_test():
     b.pos = np.array([53,75])
     for b, d in tree.nearest(b, 2):
         print(b.pos)
-    print(tree.compares)
+    print(tree.compares_count)
 
     left = tree.root
     while left:
@@ -477,6 +379,4 @@ def main_test():
 
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main3)
-    # main3(None)
-    # main_test()
+    curses.wrapper(main)
