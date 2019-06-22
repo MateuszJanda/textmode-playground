@@ -20,6 +20,7 @@ import locale
 import time
 import copy
 import math
+import heapq
 import numpy as np
 
 
@@ -70,9 +71,6 @@ class Body:
         self.vel = np.random.uniform(-2, 2, size=[NUM_AXIS])
         self.neighbors = []
 
-    def reset(self):
-        self.neighbors = []
-
     def adjust(self):
         self.adjust_vel()
         self.adjust_pos()
@@ -93,6 +91,11 @@ class Body:
 
 
 class KdTree:
+    """
+    http://web.stanford.edu/class/cs106l/handouts/005_assignment_3_kdtree.pdf
+    https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
+    """
+
     class Node:
         def __init__(self, body):
             self.body = body
@@ -104,8 +107,9 @@ class KdTree:
             self.node = node
             self.axis = axis
 
-    def __init__(self, bodies):
+    def __init__(self, bodies, k=55):
         self.root = None
+        self.k = k
         self.height = 0
         self.compares_count = 0
 
@@ -148,12 +152,10 @@ class KdTree:
             self.height = new_node_height
 
     def nearest(self, body, radius):
-        # http://web.stanford.edu/class/cs106l/handouts/005_assignment_3_kdtree.pdf
-        # https://www.cs.cmu.edu/~ckingsf/bioinfo-lectures/kdtrees.pdf
         if self.root == None:
             return []
 
-        result = []
+        neighbors = []
         radius_squared = radius**2
 
         stack = [KdTree.Task(self.root, Y_AXIS)]
@@ -170,27 +172,76 @@ class KdTree:
 
             dist_squared = distance_squared(body.pos, task.node.body.pos)
             if dist_squared < radius_squared:
-                result.append((task.node.body, math.sqrt(dist_squared)))
+                neighbors.append((dist_squared, task.node.body))
 
             stack.extend(self._new_tasks(task, body, radius))
 
-        return result
+        return neighbors
 
     def _new_tasks(self, task, body, radius):
-        result = []
+        tasks = []
         next_axis = self._next_axis(task.axis)
 
         if body.pos[task.axis] < task.node.body.pos[task.axis]:
-            result.append(KdTree.Task(task.node.left, next_axis))
+            tasks.append(KdTree.Task(task.node.left, next_axis))
             other_subtree = task.node.right
         else:
-            result.append(KdTree.Task(task.node.right, next_axis))
+            tasks.append(KdTree.Task(task.node.right, next_axis))
             other_subtree = task.node.left
 
         if math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < radius:
-            result.append(KdTree.Task(other_subtree, next_axis))
+            tasks.append(KdTree.Task(other_subtree, next_axis))
 
-        return result
+        return tasks
+
+    def k_nearest(self, body, radius):
+        if self.root == None:
+            return []
+
+        neighbors = []
+        radius_squared = radius**2
+
+        stack = [KdTree.Task(self.root, Y_AXIS)]
+        while stack:
+            task = stack.pop()
+            self.compares_count += 1
+
+            if task.node == None:
+                continue
+
+            if task.node.body is body:
+                stack.extend(self._new_knn_tasks(task, body, radius, neighbors))
+                continue
+
+            dist_squared = distance_squared(body.pos, task.node.body.pos)
+            if dist_squared < radius_squared:
+                if len(neighbors) < self.k:
+                    heapq.heappush(neighbors, (-dist_squared, task.node.body))
+                elif dist_squared < -neighbors[0][0]:
+                    heapq.heapreplace(neighbors, (-dist_squared, task.node.body))
+
+            stack.extend(self._new_knn_tasks(task, body, radius, neighbors))
+
+        return neighbors
+
+    def _new_knn_tasks(self, task, body, radius, neighbors):
+        tasks = []
+        next_axis = self._next_axis(task.axis)
+
+        if body.pos[task.axis] < task.node.body.pos[task.axis]:
+            tasks.append(KdTree.Task(task.node.left, next_axis))
+            other_subtree = task.node.right
+        else:
+            tasks.append(KdTree.Task(task.node.right, next_axis))
+            other_subtree = task.node.left
+
+        if len(neighbors) < self.k:
+            if math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < radius:
+                tasks.append(KdTree.Task(other_subtree, next_axis))
+        elif math.fabs(body.pos[task.axis] - task.node.body.pos[task.axis]) < -neighbors[0][0]:
+            tasks.append(KdTree.Task(other_subtree, next_axis))
+
+        return tasks
 
     def _next_axis(self, axis):
         return (axis + 1) % NUM_AXIS
@@ -209,13 +260,13 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            body.reset()
             candidates = tree.nearest(body, VIEW_RADIUS)
 
-            for neighb_body, dist in candidates:
+            body.neighbors = []
+            for dist_squared, neighb_body in candidates:
                 angle = view_angle_2d(body, neighb_body)
                 if angle < VIEW_ANGLE:
-                    body.neighbors.append((neighb_body, dist))
+                    body.neighbors.append((neighb_body, math.sqrt(dist_squared)))
 
             body.v1 = rule1_fly_to_center(body)
             body.v2 = rule2_keep_safe_dist(body)
@@ -315,7 +366,7 @@ def draw(scr, bodies, tree_height, optimal_height, compares_count, calc_time):
     for num, line in enumerate(buf):
         scr.addstr(num, 0, line.view(dtype)[0])
 
-    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp: %d. Calc time: %.4f sec' %
+    scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp: %5d. Calc time: %.4f sec' %
         (len(bodies), tree_height, optimal_height, compares_count, calc_time))
     scr.refresh()
 
@@ -355,15 +406,17 @@ def main_test():
     tree = KdTree([])
 
     for pos in [(51,75), (25,40), (70,70), (10,30), (35,90), (55,1), (60,80), (1,10), (50,50) ]:
+    # for pos in [(1,9), (2,3),(4,1),(3,7),(5,4),(6,8),(7,2),(8,8),(7,9),(9,6)]:
         b = Body(screen_size)
         b.pos = np.array(pos)
         tree.insert(b)
 
     b = Body(screen_size)
     b.pos = np.array([53,75])
-    for b, d in tree.nearest(b, 2):
-        print(b.pos)
-    print(tree.compares_count)
+    # b.pos = np.array([7,4])
+    for d, b in tree.nearest(b, 3):
+        print('Found', b.pos)
+    print('compares_count', tree.compares_count)
 
     left = tree.root
     while left:
@@ -380,3 +433,4 @@ def main_test():
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
     curses.wrapper(main)
+    # main_test()
