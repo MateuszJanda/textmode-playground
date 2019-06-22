@@ -30,7 +30,7 @@ VIEW_RADIUS = 30
 WEIGHT_VEL = 0.1
 WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
-WEIGHT_NOISE = 0.1
+# WEIGHT_NOISE = 0.1
 MAX_VEL = 4
 MAX_VEL_SQUARED = MAX_VEL**2
 
@@ -65,8 +65,8 @@ class Body:
     EPSILON = 0.1
     def __init__(self, screen_size):
         self.screen_size = screen_size
-        self.pos = np.array([np.random.uniform(0, screen_size[0]),
-                             np.random.uniform(0, screen_size[1])])
+        self.pos = np.array([np.random.uniform(0, screen_size[Y_AXIS]),
+                             np.random.uniform(0, screen_size[X_AXIS])])
         self.vel = np.random.uniform(-2, 2, size=[NUM_AXIS])
         self.neighbors = []
 
@@ -247,7 +247,7 @@ def setup_stderr(output):
 
 
 def eprint(*args, **kwargs):
-    """Debug print function (on std err)."""
+    """Debug print function (on stderr)."""
     print(*args, file=sys.stderr)
 
 
