@@ -26,14 +26,12 @@ import numpy as np
 
 BODY_COUNT = 100
 VIEW_ANGLE = math.radians(120)
-MIN_DIST = 20
-VIEW_RADIUS = 30
+MIN_DIST = 5
+VIEW_RADIUS = 10
 WEIGHT_VEL = 0.1
 WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
-# WEIGHT_NOISE = 0.1
 MAX_VEL = 4
-MAX_VEL_SQUARED = MAX_VEL**2
 
 NUM_AXIS = 2
 Y_AXIS = 0
@@ -68,12 +66,12 @@ class Body:
         self.screen_size = screen_size
         self.pos = np.array([np.random.uniform(0, screen_size[Y_AXIS]),
                              np.random.uniform(0, screen_size[X_AXIS])])
-        self.vel = np.random.uniform(-2, 2, size=[NUM_AXIS])
+        self.vel = np.random.uniform(-MAX_VEL/2, MAX_VEL/2, size=[NUM_AXIS])
         self.neighbors = []
 
     def adjust(self):
         self.adjust_vel()
-        self.adjust_pos()
+        self.adjust_pos2()
 
     def adjust_vel(self):
         if np.any(np.absolute(self.vel) > Body.EPSILON):
@@ -88,6 +86,13 @@ class Body:
                 self.pos[axis] = self.pos[axis] % -self.screen_size[axis] + self.screen_size[axis]
             elif self.pos[axis] > self.screen_size[axis]:
                 self.pos[axis] = self.pos[axis] % self.screen_size[axis]
+
+    def adjust_pos2(self):
+        for axis in range(NUM_AXIS):
+            if self.pos[axis] < 0:
+                self.vel[axis] = MAX_VEL / 2
+            elif self.pos[axis] > self.screen_size[axis]:
+                self.vel[axis] = -MAX_VEL / 2
 
 
 class KdTree:
@@ -284,7 +289,7 @@ def main(scr):
 
         calc_time = time.time() - tic
 
-        draw(scr=scr, bodies=bodies, tree_height=tree.height,
+        draw(scr, screen_size, bodies, tree_height=tree.height,
             optimal_height=math.ceil(math.log(len(bodies), 2)),
             compares_count=tree.compares_count, calc_time=calc_time)
 
@@ -360,8 +365,8 @@ def view_angle_nd(body1, body2):
     return angle
 
 
-def draw(scr, bodies, tree_height, optimal_height, compares_count, calc_time):
-    buf = symbol_array(bodies)
+def draw(scr, screen_size, bodies, tree_height, optimal_height, compares_count, calc_time):
+    buf = symbol_array(bodies, screen_size)
 
     dtype = np.dtype('U' + str(buf.shape[1]))
     for num, line in enumerate(buf):
@@ -372,12 +377,13 @@ def draw(scr, bodies, tree_height, optimal_height, compares_count, calc_time):
     scr.refresh()
 
 
-def symbol_array(bodies):
+def symbol_array(bodies, screen_size):
     shape = [curses.LINES, curses.COLS - 1]
     count = np.zeros(shape=shape)
 
     for b in bodies:
-        count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
+        if 0 <= b.pos[0] < screen_size[0] and 0 <= b.pos[1] < screen_size[1]:
+            count[int(b.pos[0]//4), int(b.pos[1]//2)] += 1
 
     buf = np.full(shape=shape, fill_value=' ')
     for y in range(count.shape[0]):
@@ -389,6 +395,7 @@ def symbol_array(bodies):
                 if count[y][x] >= threshold:
                     buf[y][x] = symbol
                     break
+
     return buf
 
 
