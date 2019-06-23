@@ -2,7 +2,7 @@
 
 import locale
 import sys
-import ctypes
+import ctypes as ct
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import signal
@@ -16,7 +16,7 @@ BLACK = 0
 
 def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
-    setup(telemetry=True, terminal='/dev/pts/2')
+    setup(telemetry=True, terminal='/dev/pts/1')
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
@@ -39,7 +39,10 @@ def main():
     screen = Screen()
     screen.refresh()
 
-    # screen.endwin()
+    while True:
+        pass
+
+    screen.endwin()
 
 
 def setup(telemetry=False, terminal='/dev/pts/1'):
@@ -98,6 +101,7 @@ def NCURSES_BITS(mask, shift):
 
 
 A_COLOR = NCURSES_BITS((1 << 8) - 1, 0)
+A_NORMAL = 0
 
 
 def COLOR_PAIR(n):
@@ -106,7 +110,7 @@ def COLOR_PAIR(n):
 
 class Screen:
     def __init__(self):
-        self._ncurses = ctypes.CDLL('libncursesw.so.6.1')
+        self._ncurses = ct.CDLL('libncursesw_g.so.6.1')
 
         # if not self._ncurses.can_change_color():
         #     log('Color change not supported in this terminal!')
@@ -165,7 +169,14 @@ class Screen:
         # self._ncurses.mvprintw(3, 1, LOWER_HALF_BLOCK)
         # self._ncurses.attroff(COLOR_PAIR(1))
 
+        # pair_num = 5
+        # short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
+        # i = ct.c_int(pair_num)
+        # self._ncurses.attr_set(ct.c_int(A_NORMAL), short, ct.pointer(i))
+        self._ncurses.mvprintw(2, 0, 'asdf')
+
         log('tutaj')
+        return
 
         for y in range(self.LINES):
             for x in range(self.COLS-1):
@@ -177,10 +188,14 @@ class Screen:
                 log(fg)
                 log(pair_num)
 
+
                 # self._ncurses.attron(COLOR_PAIR(pair_num))
-                self._ncurses.attron(self._ncurses.COLOR_PAIR(pair_num))
+                # self._ncurses.attron(self._ncurses.COLOR_PAIR(pair_num))
+                short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
+                i = ct.c_int(pair_num)
+                self._ncurses.attr_set(ct.c_int(A_NORMAL), short, ct.pointer(i))
                 self._ncurses.mvprintw(2, 0, LOWER_HALF_BLOCK)
-                self._ncurses.attroff(COLOR_PAIR(pair_num))
+                # self._ncurses.attroff(COLOR_PAIR(pair_num))
 
         self._ncurses.refresh()
         log('po refresh')
