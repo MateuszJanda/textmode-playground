@@ -81,6 +81,7 @@ class Body:
             self.vel[axis] = max(self.vel[axis], MAX_VEL / 10)
 
     def adjust_pos(self):
+        """Screen wrapping."""
         for axis in range(NUM_AXIS):
             if self.pos[axis] < 0:
                 self.pos[axis] = self.pos[axis] % -self.screen_size[axis] + self.screen_size[axis]
@@ -88,6 +89,7 @@ class Body:
                 self.pos[axis] = self.pos[axis] % self.screen_size[axis]
 
     def adjust_pos2(self):
+        """Bouncing off walls."""
         for axis in range(NUM_AXIS):
             if self.pos[axis] < 0:
                 self.vel[axis] = MAX_VEL / 2
@@ -398,45 +400,6 @@ def symbol_array(bodies, screen_size):
                     break
 
     return buf
-
-
-def main_test():
-    screen_size = [100, 100]
-
-    b1 = Body(screen_size)
-    b1.pos = np.array([0,0])
-    b1.vel = np.array([0,1])
-    b2 = Body(screen_size)
-    b2.pos = np.array([1,-1])
-    print(math.degrees(view_angle_2d(b1, b2)), math.degrees(view_angle_nd(b1, b2)))
-    print(math.degrees(view_angle_nd(b1, b2)))
-    print('---')
-
-    tree = KdTree([])
-
-    for pos in [(51,75), (25,40), (70,70), (10,30), (35,90), (55,1), (60,80), (1,10), (50,50) ]:
-    # for pos in [(1,9), (2,3),(4,1),(3,7),(5,4),(6,8),(7,2),(8,8),(7,9),(9,6)]:
-        b = Body(screen_size)
-        b.pos = np.array(pos)
-        tree.insert(b)
-
-    b = Body(screen_size)
-    b.pos = np.array([53,75])
-    # b.pos = np.array([7,4])
-    for d, b in tree.nearest(b, 3):
-        print('Found', b.pos)
-    print('compares_count', tree.compares_count)
-
-    left = tree.root
-    while left:
-        print(left.body.pos)
-        left = left.left
-    print('---')
-
-    right = tree.root
-    while right:
-        print(right.body.pos)
-        right = right.right
 
 
 if __name__ == '__main__':
