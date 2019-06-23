@@ -24,14 +24,14 @@ import heapq
 import numpy as np
 
 
-BODY_COUNT = 100
+BODY_COUNT = 150
 VIEW_ANGLE = math.radians(120)
 MIN_DIST = 5
 VIEW_RADIUS = 10
 WEIGHT_VEL = 0.1
 WEIGHT_NEIGHB_DIST = 0.15
 WEIGHT_MIN_DIST = 0.15
-MAX_VEL = 4
+MAX_VEL = 8
 
 NUM_AXIS = 2
 Y_AXIS = 0
@@ -71,14 +71,14 @@ class Body:
 
     def adjust(self):
         self.adjust_vel()
-        self.adjust_pos2()
+        self.adjust_pos()
 
     def adjust_vel(self):
         if np.any(np.absolute(self.vel) > Body.EPSILON):
             return
 
         for axis in range(NUM_AXIS):
-            self.vel[axis] = max(self.vel[axis], MAX_VEL / 1000)
+            self.vel[axis] = max(self.vel[axis], MAX_VEL / 10)
 
     def adjust_pos(self):
         for axis in range(NUM_AXIS):
@@ -261,7 +261,7 @@ def main(scr):
     setup_stderr('/dev/pts/1')
     setup_curses(scr)
 
-    np.random.seed(3145)
+    # np.random.seed(3145)
     screen_size = np.array([curses.LINES*4, (curses.COLS-1)*2])
     bodies = [Body(screen_size) for _ in range(BODY_COUNT)]
 
@@ -270,7 +270,7 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            candidates = tree.nearest(body, VIEW_RADIUS)
+            candidates = tree.k_nearest(body, VIEW_RADIUS)
 
             body.neighbors = []
             for dist_squared, neighb_body in candidates:
@@ -374,6 +374,7 @@ def draw(scr, screen_size, bodies, tree_height, optimal_height, compares_count, 
 
     scr.addstr(0, 0, 'Total bodies: %d. Tree height: %2d, optimal: %d. Cmp: %5d. Calc time: %.4f sec' %
         (len(bodies), tree_height, optimal_height, compares_count, calc_time))
+
     scr.refresh()
 
 
