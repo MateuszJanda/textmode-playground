@@ -112,7 +112,7 @@ class KdTree:
             self.node = node
             self.axis = axis
 
-    def __init__(self, bodies, k=55):
+    def __init__(self, bodies, k=25):
         self.root = None
         self.k = k
 
@@ -270,7 +270,7 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            candidates = tree.k_nearest(body, VIEW_RADIUS)
+            candidates = tree.nearest(body, VIEW_RADIUS)
 
             body.neighbors = []
             for dist_squared, neighb_body in candidates:
