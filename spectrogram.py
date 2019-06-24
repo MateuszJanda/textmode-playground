@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+Author: Mateusz Janda <mateusz janda at gmail com>
+Site: github.com/MateuszJanda
+Ad maiorem Dei gloriam
+"""
+
 import locale
 import sys
 import itertools as it
@@ -11,13 +17,9 @@ from scipy.io import wavfile
 import numpy as np
 
 
-TELEMETRY_MODE = False
-BLACK = 0
-
-
 def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
-    setup(telemetry=True, terminal='/dev/pts/1')
+    setup_stderr(terminal='/dev/pts/1')
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
@@ -32,47 +34,32 @@ def main():
     # plt.show()
 
     log('Inferno colors data:')
-    log(type(cm.inferno))
-    log(dir(cm.inferno))
-    log(cm.inferno.N)
-    log('Inferno colors:', len(cm.inferno.colors))  # of RGB
+    log('Inferno colors:', cm.inferno.N)  # of RGB
 
     screen = Screen()
-    # screen.render()
-    screen._print(1, 0, 67, 'a')
-    screen._print(2, 0, 257, 'b')
-    screen._print(3, 0, 3567, 'c')
-    screen._print(4, 0, 32994, 'd')
-    screen._ncurses.refresh()
-
-    while True:
-        pass
+    screen.render()
+    # screen._print(1, 0, 67, 'a')
+    # screen._print(2, 0, 257, 'b')
+    # screen._print(3, 0, 3567, 'c')
+    # screen._print(4, 0, 32994, 'd')
+    # screen._ncurses.refresh()
 
     screen.endwin()
 
 
-def setup(telemetry=False, terminal='/dev/pts/1'):
-    """Main setup function."""
-    setup_telemetry(telemetry, terminal)
-
-
-def setup_telemetry(telemetry=False, terminal='/dev/pts/1'):
+def setup_stderr(terminal='/dev/pts/1'):
     """
     Redirect stderr to other terminal. Run tty command, to get terminal id.
 
     $ tty
     /dev/pts/1
     """
-    global TELEMETRY_MODE
-    TELEMETRY_MODE = telemetry
-    if TELEMETRY_MODE:
-        sys.stderr = open(terminal, 'w')
+    sys.stderr = open(terminal, 'w')
 
 
 def log(*args, **kwargs):
     """log on stderr."""
-    if TELEMETRY_MODE:
-        print(*args, file=sys.stderr)
+    print(*args, file=sys.stderr)
 
 
 def sci_spectogram(samples, sample_rate):
@@ -98,23 +85,11 @@ def plt_spectogram(samples, sample_rate):
     plt.xlabel('Time [sec]')
 
 
-# Macros and definitions from curses.h
-NCURSES_ATTR_SHIFT = 8
-
-
-def NCURSES_BITS(mask, shift):
-    return mask << (shift + NCURSES_ATTR_SHIFT)
-
-
-A_COLOR = NCURSES_BITS((1 << 8) - 1, 0)
-A_NORMAL = 0
-
-
-# def COLOR_PAIR(self._ncurses):
-#     return NCURSES_BITS(self._ncurses, 0) & A_COLOR
-
-
 class Screen:
+    A_NORMAL = 0
+    # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
+    LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
+
     def __init__(self):
         self._ncurses = ct.CDLL('libncursesw_g.so.6.1')
 
@@ -125,7 +100,7 @@ class Screen:
         self._setup_ncurses()
         self._init_colors()
 
-        self._buf = np.ones(shape=(self.LINES*2, self.COLS-1), dtype=np.int32)
+        self._buf = np.ones(shape=(self.LINES*2, self.COLS), dtype=np.int32)
 
     def _setup_ncurses(self):
         """Setup ncurses screen."""
@@ -135,11 +110,12 @@ class Screen:
         self._ncurses.noecho()
         self._ncurses.curs_set(0)
         self.LINES, self.COLS = self._getmaxyx()
+        log('LINES, COLS = (%d, %d)' % (self.LINES, self.COLS))
 
     def _getmaxyx(self):
        y = self._ncurses.getmaxy(self._win)
        x = self._ncurses.getmaxx(self._win)
-       return y, x
+       return y-1, x-1
 
     def _init_colors(self):
         for color_num in range(cm.inferno.N):
@@ -148,6 +124,8 @@ class Screen:
             if ret != 0:
                 log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
+
+        assert cm.inferno.N == 256
 
         for bg, fg in it.product(range(cm.inferno.N), range(cm.inferno.N)):
             pair_num = bg * cm.inferno.N + fg
@@ -190,31 +168,31 @@ class Screen:
 
     def render(self):
         """Draw buffer content on screen."""
-        # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
-        LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
-
-        for y, x in it.product(range(self.LINES), range(self.COLS-1)):
+        for y, x in it.product(range(self.LINES), range(self.COLS)):
             bg, fg = self._buf[y*2:y*2+2, x]
             pair_num = bg * cm.inferno.N + fg
-            pair_num = 257
+            pair_num = 25
 
-            self._print(y, x, pair_num, 'asdf')
+            self.print(y, x, pair_num, 'x')
 
-        self._ncurses.refresh()
-        log('po refresh')
+        self.refresh()
 
-    def _print(self, y, x, pair_num, text):
+    def print(self, y, x, pair_num, text):
         pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
         pair_num_pt = ct.c_int(pair_num)
-        ret = self._ncurses.attr_set(ct.c_int(A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
+        ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
         if ret != 0:
             log('attr_set error %d, pair_num: %d' % (ret, pair_num))
             raise RuntimeError
 
         ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
         if ret != 0:
-            log('mvprintw error: %d, pair_num: %d' % (ret, pair_num))
+            log('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
             raise RuntimeError
+
+    def refresh(self):
+        self._ncurses.refresh()
+        log('po refresh')
 
     def endwin(self):
         ch = self._ncurses.getch()
