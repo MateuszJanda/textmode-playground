@@ -2,6 +2,7 @@
 
 import locale
 import sys
+import itertools as it
 import ctypes as ct
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -37,7 +38,12 @@ def main():
     log('Inferno colors:', len(cm.inferno.colors))  # of RGB
 
     screen = Screen()
-    screen.refresh()
+    # screen.render()
+    screen._print(1, 0, 67, 'a')
+    screen._print(2, 0, 257, 'b')
+    screen._print(3, 0, 3567, 'c')
+    screen._print(4, 0, 32994, 'd')
+    screen._ncurses.refresh()
 
     while True:
         pass
@@ -104,8 +110,8 @@ A_COLOR = NCURSES_BITS((1 << 8) - 1, 0)
 A_NORMAL = 0
 
 
-def COLOR_PAIR(n):
-    return NCURSES_BITS(n, 0) & A_COLOR
+# def COLOR_PAIR(self._ncurses):
+#     return NCURSES_BITS(self._ncurses, 0) & A_COLOR
 
 
 class Screen:
@@ -119,12 +125,7 @@ class Screen:
         self._setup_ncurses()
         self._init_colors()
 
-        self.LINES, self.COLS = self._getmaxyx()
-
-        buf_shape = (self.LINES*2, self.COLS-1)
-        # self._buf = np.zeros(shape=buf_shape, dtype=np.int32)
-        self._buf = np.ones(shape=buf_shape, dtype=np.int32)
-
+        self._buf = np.ones(shape=(self.LINES*2, self.COLS-1), dtype=np.int32)
 
     def _setup_ncurses(self):
         """Setup ncurses screen."""
@@ -133,6 +134,7 @@ class Screen:
         self._ncurses.halfdelay(5)
         self._ncurses.noecho()
         self._ncurses.curs_set(0)
+        self.LINES, self.COLS = self._getmaxyx()
 
     def _getmaxyx(self):
        y = self._ncurses.getmaxy(self._win)
@@ -142,16 +144,42 @@ class Screen:
     def _init_colors(self):
         for color_num in range(cm.inferno.N):
             r, g, b = cm.inferno.colors[color_num]
-            self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
+            ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
+            if ret != 0:
+                log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+                raise RuntimeError
 
-        for bg in range(cm.inferno.N):
-            for fg in range(cm.inferno.N):
-                pair_num = bg * cm.inferno.N + fg
-                # if pair_num == 0:
-                #     continue
-                r = self._ncurses.init_extended_pair(pair_num, fg, bg)
-                if r < 0:
-                    log(r, pair_num)
+        for bg, fg in it.product(range(cm.inferno.N), range(cm.inferno.N)):
+            pair_num = bg * cm.inferno.N + fg
+
+            if pair_num == 0:
+                continue
+
+            ret = self._ncurses.init_extended_pair(pair_num, fg, bg)
+            if ret != 0:
+                log('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
+                raise RuntimeError
+
+    def _init_colors_basic(self):
+        r, g, b = 0.99, 0.21, 0.17
+        color_num1 = 1
+        ret = self._ncurses.init_extended_color(color_num1, int(r*1000), int(g*1000), int(b*1000))
+        if ret != 0:
+            log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+            raise RuntimeError
+
+        r, g, b = 0.32, 0.01, 0.73
+        color_num2 = 2
+        ret = self._ncurses.init_extended_color(color_num2, int(r*1000), int(g*1000), int(b*1000))
+        if ret != 0:
+            log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+            raise RuntimeError
+
+        pair_num = 1
+        ret = self._ncurses.init_extended_pair(pair_num, color_num1, color_num2)
+        if ret != 0:
+            log('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
+            raise RuntimeError
 
     def draw_point(self, pos, color):
         # Don't draw point when they are out of the screen
@@ -160,48 +188,38 @@ class Screen:
 
         self._buf[pos[0], pos[1]] = color
 
-    def refresh(self):
+    def render(self):
         """Draw buffer content on screen."""
         # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
         LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
 
-        # self._ncurses.attron(COLOR_PAIR(1))
-        # self._ncurses.mvprintw(3, 1, LOWER_HALF_BLOCK)
-        # self._ncurses.attroff(COLOR_PAIR(1))
+        for y, x in it.product(range(self.LINES), range(self.COLS-1)):
+            bg, fg = self._buf[y*2:y*2+2, x]
+            pair_num = bg * cm.inferno.N + fg
+            pair_num = 257
 
-        # pair_num = 5
-        # short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
-        # i = ct.c_int(pair_num)
-        # self._ncurses.attr_set(ct.c_int(A_NORMAL), short, ct.pointer(i))
-        self._ncurses.mvprintw(2, 0, 'asdf')
-
-        log('tutaj')
-        return
-
-        for y in range(self.LINES):
-            for x in range(self.COLS-1):
-                bg, fg = self._buf[y*2:y*2+2, x]
-                pair_num = bg * cm.inferno.N + fg
-                # log(pair_num)
-                log(self._buf[y*2:y*2+2, x])
-                log(bg)
-                log(fg)
-                log(pair_num)
-
-
-                # self._ncurses.attron(COLOR_PAIR(pair_num))
-                # self._ncurses.attron(self._ncurses.COLOR_PAIR(pair_num))
-                short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
-                i = ct.c_int(pair_num)
-                self._ncurses.attr_set(ct.c_int(A_NORMAL), short, ct.pointer(i))
-                self._ncurses.mvprintw(2, 0, LOWER_HALF_BLOCK)
-                # self._ncurses.attroff(COLOR_PAIR(pair_num))
+            self._print(y, x, pair_num, 'asdf')
 
         self._ncurses.refresh()
         log('po refresh')
 
+    def _print(self, y, x, pair_num, text):
+        pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
+        pair_num_pt = ct.c_int(pair_num)
+        ret = self._ncurses.attr_set(ct.c_int(A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
+        if ret != 0:
+            log('attr_set error %d, pair_num: %d' % (ret, pair_num))
+            raise RuntimeError
+
+        ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
+        if ret != 0:
+            log('mvprintw error: %d, pair_num: %d' % (ret, pair_num))
+            raise RuntimeError
+
     def endwin(self):
-        self._ncurses.getch()
+        ch = self._ncurses.getch()
+        while ch != ord('q'):
+            ch = self._ncurses.getch()
         self._ncurses.endwin()
 
 
