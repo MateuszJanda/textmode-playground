@@ -24,7 +24,7 @@ import heapq
 import numpy as np
 
 
-BODY_COUNT = 150
+BODY_COUNT = 250
 VIEW_ANGLE = math.radians(120)
 MIN_DIST = 5
 VIEW_RADIUS = 10
@@ -228,6 +228,9 @@ class KdTree:
                 elif dist_squared < self._bpq_max(neighbors):
                     heapq.heapreplace(neighbors, (-dist_squared, task.node.body))
 
+            if len(neighbors) >= self.k:
+                break
+
             stack.extend(self._new_knn_tasks(task, body, radius, neighbors))
 
         return [(-d, n) for d, n in neighbors]
@@ -272,7 +275,7 @@ def main(scr):
         tree = KdTree(bodies)
 
         for body in bodies:
-            candidates = tree.nearest(body, VIEW_RADIUS)
+            candidates = tree.k_nearest(body, VIEW_RADIUS)
 
             body.neighbors = []
             for dist_squared, neighb_body in candidates:
