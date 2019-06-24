@@ -29,21 +29,14 @@ def main():
     log('Shape:', samples.shape)
     log('Time:', samples.shape[0]/sample_rate, '[sec]')
 
-    # sci_spectogram(samples, sample_rate)
-    # plt_spectogram(samples, sample_rate)
-    # plt.show()
-
-    log('Inferno colors data:')
     log('Inferno colors:', cm.inferno.N)  # of RGB
 
-    screen = Screen()
-    screen.render()
-    # screen._print(1, 0, 67, 'a')
-    # screen._print(2, 0, 257, 'b')
-    # screen._print(3, 0, 3567, 'c')
-    # screen._print(4, 0, 32994, 'd')
-    # screen._ncurses.refresh()
+    sci_spectogram(samples, sample_rate)
+    plt_spectogram(samples, sample_rate)
+    plt.show()
 
+    screen = Screen()
+    screen.render(samples, sample_rate)
     screen.endwin()
 
 
@@ -68,7 +61,7 @@ def sci_spectogram(samples, sample_rate):
     log('frequencies.shape', frequencies.shape)
     log('times.shape', times.shape)
     log('spectrogram.shape', spectrogram.shape)
-    log('spectrogram value', 10*np.log10(spectrogram[0][1]))
+    log('spectrogram value [0][1]', 10*np.log10(spectrogram[0][1]))
 
     plt.figure(2)
     plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap=cm.inferno)
@@ -166,11 +159,14 @@ class Screen:
 
         self._buf[pos[0], pos[1]] = color
 
-    def render(self):
+    def render(self, samples, sample_rate):
         """Draw buffer content on screen."""
+        _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+        spectrogram = 10*np.log10(spectrogram)
+
         for y, x in it.product(range(self.LINES), range(self.COLS)):
-            # bg, fg = self._buf[y*2:y*2+2, x]
-            # pair_num = bg * cm.inferno.N + fg
+            bg, fg = self._buf[y*2:y*2+2, x]
+            pair_num = bg * cm.inferno.N + fg
             pair_num = 25
 
             self.print(y, x, pair_num, 'x')
