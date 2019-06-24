@@ -115,7 +115,7 @@ class Screen:
     def _getmaxyx(self):
        y = self._ncurses.getmaxy(self._win)
        x = self._ncurses.getmaxx(self._win)
-       return y-1, x-1
+       return y, x-1
 
     def _init_colors(self):
         for color_num in range(cm.inferno.N):
@@ -169,8 +169,8 @@ class Screen:
     def render(self):
         """Draw buffer content on screen."""
         for y, x in it.product(range(self.LINES), range(self.COLS)):
-            bg, fg = self._buf[y*2:y*2+2, x]
-            pair_num = bg * cm.inferno.N + fg
+            # bg, fg = self._buf[y*2:y*2+2, x]
+            # pair_num = bg * cm.inferno.N + fg
             pair_num = 25
 
             self.print(y, x, pair_num, 'x')
