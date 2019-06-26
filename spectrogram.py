@@ -164,15 +164,17 @@ class Screen:
         lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
         last_row = (self.LINES * 2) * lines_per_block
         spectrogram = spectrogram[0:last_row, :]
-        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).mean(1).reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
+        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).mean(1) \
+            .reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
 
-        for y, x in it.product(range(self.LINES-2), range(self.COLS)):
-            bg, fg = spectrogram[y*2:y*2+2, x]
-            pair_num = int(bg) * cm.inferno.N + int(fg)
+        for shift in range(spectrogram.shape[1] - self.COLS):
+            for y, x in it.product(range(self.LINES-2), range(self.COLS)):
+                bg, fg = spectrogram[y*2:y*2+2, x+shift]
+                pair_num = int(bg) * cm.inferno.N + int(fg)
 
-            self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
+                self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
 
-        self.refresh()
+            self.refresh()
 
     def print(self, y, x, pair_num, text):
         pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
@@ -189,13 +191,14 @@ class Screen:
 
     def refresh(self):
         self._ncurses.refresh()
-        log('po refresh')
 
     def endwin(self):
         ch = self._ncurses.getch()
         while ch != ord('q'):
             ch = self._ncurses.getch()
         self._ncurses.endwin()
+
+        log('The end.')
 
 
 if __name__ == '__main__':
