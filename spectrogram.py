@@ -31,9 +31,9 @@ def main():
 
     log('Inferno colors:', cm.inferno.N)  # of RGB
 
-    sci_spectogram(samples, sample_rate)
-    plt_spectogram(samples, sample_rate)
-    plt.show()
+    # sci_spectogram(samples, sample_rate)
+    # plt_spectogram(samples, sample_rate)
+    # plt.show()
 
     screen = Screen()
     screen.render(samples, sample_rate)
@@ -84,7 +84,7 @@ class Screen:
     LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
 
     def __init__(self):
-        self._ncurses = ct.CDLL('libncursesw_g.so.6.1')
+        self._ncurses = ct.CDLL('./libncursesw_g.so.6.1')
 
         # if not self._ncurses.can_change_color():
         #     log('Color change not supported in this terminal!')
