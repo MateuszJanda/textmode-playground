@@ -81,7 +81,7 @@ def plt_spectogram(samples, sample_rate):
 class Screen:
     A_NORMAL = 0
     # https://en.wikipedia.org/wiki/List_of_Unicode_characters#Block_Elements
-    LOWER_HALF_BLOCK = u'\u2584'.encode('utf-8')
+    LOWER_HALF_BLOCK = u'\u2584'
 
     def __init__(self):
         self._ncurses = ct.CDLL('./libncursesw_g.so.6.1')
@@ -93,8 +93,6 @@ class Screen:
         self._setup_ncurses()
         self._init_colors()
 
-        self._buf = np.ones(shape=(self.LINES*2, self.COLS), dtype=np.int32)
-
     def _setup_ncurses(self):
         """Setup ncurses screen."""
         self._win = self._ncurses.initscr()
@@ -103,7 +101,6 @@ class Screen:
         self._ncurses.noecho()
         self._ncurses.curs_set(0)
         self.LINES, self.COLS = self._getmaxyx()
-        log('LINES, COLS = (%d, %d)' % (self.LINES, self.COLS))
 
     def _getmaxyx(self):
        y = self._ncurses.getmaxy(self._win)
@@ -161,15 +158,19 @@ class Screen:
 
     def render(self, samples, sample_rate):
         """Draw buffer content on screen."""
-        _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+        t, t, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
         spectrogram = 10*np.log10(spectrogram)
 
-        for y, x in it.product(range(self.LINES), range(self.COLS)):
-            bg, fg = self._buf[y*2:y*2+2, x]
-            pair_num = bg * cm.inferno.N + fg
-            pair_num = 25
+        lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
+        last_row = (self.LINES * 2) * lines_per_block
+        spectrogram = spectrogram[0:last_row, :]
+        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).mean(1).reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
 
-            self.print(y, x, pair_num, 'x')
+        for y, x in it.product(range(self.LINES-2), range(self.COLS)):
+            bg, fg = spectrogram[y*2:y*2+2, x]
+            pair_num = int(bg) * cm.inferno.N + int(fg)
+
+            self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
 
         self.refresh()
 
