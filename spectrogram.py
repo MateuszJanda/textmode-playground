@@ -6,7 +6,6 @@ Site: github.com/MateuszJanda
 Ad maiorem Dei gloriam
 """
 
-import locale
 import sys
 import itertools as it
 import ctypes as ct
@@ -85,11 +84,6 @@ class Screen:
 
     def __init__(self):
         self._ncurses = ct.CDLL('./libncursesw_g.so.6.1')
-
-        # if not self._ncurses.can_change_color():
-        #     log('Color change not supported in this terminal!')
-        #     exit()
-
         self._setup_ncurses()
         self._init_colors()
 
@@ -128,47 +122,21 @@ class Screen:
                 log('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
 
-    def _init_colors_basic(self):
-        r, g, b = 0.99, 0.21, 0.17
-        color_num1 = 1
-        ret = self._ncurses.init_extended_color(color_num1, int(r*1000), int(g*1000), int(b*1000))
-        if ret != 0:
-            log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
-            raise RuntimeError
-
-        r, g, b = 0.32, 0.01, 0.73
-        color_num2 = 2
-        ret = self._ncurses.init_extended_color(color_num2, int(r*1000), int(g*1000), int(b*1000))
-        if ret != 0:
-            log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
-            raise RuntimeError
-
-        pair_num = 1
-        ret = self._ncurses.init_extended_pair(pair_num, color_num1, color_num2)
-        if ret != 0:
-            log('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
-            raise RuntimeError
-
-    def draw_point(self, pos, color):
-        # Don't draw point when they are out of the screen
-        if not (0 <= pos[1] < self._buf[1] and 0 <= pos[0] < self._buf[0]):
-            return
-
-        self._buf[pos[0], pos[1]] = color
-
     def render(self, samples, sample_rate):
         """Draw buffer content on screen."""
         t, t, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
         spectrogram = 10*np.log10(spectrogram)
+        np.flip(spectrogram, 1)
 
         lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
         last_row = (self.LINES * 2) * lines_per_block
-        spectrogram = spectrogram[0:last_row, :]
-        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).mean(1) \
+        spectrogram = spectrogram[:last_row, :]
+
+        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).max(1) \
             .reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
 
         for shift in range(spectrogram.shape[1] - self.COLS):
-            for y, x in it.product(range(self.LINES-2), range(self.COLS)):
+            for y, x in it.product(range(self.LINES-2), range(self.COLS-1)):
                 bg, fg = spectrogram[y*2:y*2+2, x+shift]
                 pair_num = int(bg) * cm.inferno.N + int(fg)
 
@@ -202,5 +170,4 @@ class Screen:
 
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
     main()
