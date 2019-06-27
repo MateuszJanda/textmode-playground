@@ -124,8 +124,11 @@ class Screen:
 
     def render(self, samples, sample_rate):
         """Draw buffer content on screen."""
-        t, t, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+        frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
         spectrogram = 10*np.log10(spectrogram)
+
+        spectrogram = self._normalize(spectrogram)
+
         np.flip(spectrogram, 1)
 
         lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
@@ -136,13 +139,20 @@ class Screen:
             .reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
 
         for shift in range(spectrogram.shape[1] - self.COLS):
-            for y, x in it.product(range(self.LINES-2), range(self.COLS-1)):
+            for y, x in it.product(range(self.LINES), range(self.COLS)):
                 bg, fg = spectrogram[y*2:y*2+2, x+shift]
                 pair_num = int(bg) * cm.inferno.N + int(fg)
 
                 self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
 
             self.refresh()
+
+    def _normalize(self, spectrogram):
+        shift = 0 - spectrogram.min()
+        spectrogram = spectrogram + shift
+        spectrogram = (spectrogram * cm.inferno.N) / spectrogram.max()
+
+        return spectrogram
 
     def print(self, y, x, pair_num, text):
         pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
