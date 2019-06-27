@@ -60,7 +60,6 @@ def sci_spectogram(samples, sample_rate):
     log('frequencies.shape', frequencies.shape)
     log('times.shape', times.shape)
     log('spectrogram.shape', spectrogram.shape)
-    log('spectrogram value [0][1]', 10*np.log10(spectrogram[0][1]))
 
     plt.figure(2)
     plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap=cm.inferno)
