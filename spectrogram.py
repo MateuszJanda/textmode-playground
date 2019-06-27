@@ -124,19 +124,7 @@ class Screen:
 
     def render(self, samples, sample_rate):
         """Draw buffer content on screen."""
-        frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
-        spectrogram = 10*np.log10(spectrogram)
-
-        spectrogram = self._normalize(spectrogram)
-
-        np.flip(spectrogram, 1)
-
-        lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
-        last_row = (self.LINES * 2) * lines_per_block
-        spectrogram = spectrogram[:last_row, :]
-
-        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).max(1) \
-            .reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
+        spectrogram = self._spectogram(samples, sample_rate)
 
         for shift in range(spectrogram.shape[1] - self.COLS):
             for y, x in it.product(range(self.LINES), range(self.COLS)):
@@ -147,10 +135,26 @@ class Screen:
 
             self.refresh()
 
-    def _normalize(self, spectrogram):
+    def _spectogram(self, samples, sample_rate):
+        _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+        spectrogram = 10*np.log10(spectrogram)
+
+        # Normalize data
         shift = 0 - spectrogram.min()
         spectrogram = spectrogram + shift
         spectrogram = (spectrogram * cm.inferno.N) / spectrogram.max()
+
+        # Flip array
+        np.flip(spectrogram, axis=1)
+
+        # Cut few last rows - they don't fit on screen
+        lines_per_block = spectrogram.shape[0] // (self.LINES * 2)
+        last_row = (self.LINES * 2) * lines_per_block
+        spectrogram = spectrogram[:last_row, :]
+
+        # Reduce size of rows in array (calculate mean value for each group)
+        spectrogram = spectrogram.transpose().reshape(-1, lines_per_block).mean(1) \
+            .reshape(spectrogram.shape[1], spectrogram.shape[0]//lines_per_block).transpose()
 
         return spectrogram
 
