@@ -1,14 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
-|     .-.
-|    /   \         .-.
-|   /     \       /   \       .-.     .-.     _   _
-+--/-------\-----/-----\-----/---\---/---\---/-\-/-\/\/---
-| /         \   /       \   /     '-'     '-'
-|/           '-'         '-'
-
-unknown
+Author: Mateusz Janda <mateusz janda at gmail com>
+Site: github.com/MateuszJanda
+Ad maiorem Dei gloriam
 """
 
 import sys
