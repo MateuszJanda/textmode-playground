@@ -16,6 +16,9 @@ from scipy.io import wavfile
 import numpy as np
 
 
+DEBUG = False
+
+
 def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
     setup_stderr(terminal='/dev/pts/1')
@@ -46,17 +49,19 @@ def setup_stderr(terminal='/dev/pts/1'):
     $ tty
     /dev/pts/1
     """
-    sys.stderr = open(terminal, 'w')
+    if DEBUG:
+        sys.stderr = open(terminal, 'w')
 
 
 def log(*args, **kwargs):
     """log on stderr."""
-    print(*args, file=sys.stderr)
+    if DEBUG:
+        print(*args, file=sys.stderr)
 
 
 def sci_spectogram(samples, sample_rate):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
-    frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+    frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1024)
     log('frequencies.shape', frequencies.shape)
     log('times.shape', times.shape)
     log('spectrogram.shape', spectrogram.shape)
@@ -70,7 +75,7 @@ def sci_spectogram(samples, sample_rate):
 
 def plt_spectogram(samples, sample_rate):
     plt.figure(3)
-    plt.specgram(samples, Fs=sample_rate, cmap=cm.inferno, NFFT=1028)
+    plt.specgram(samples, Fs=sample_rate, cmap=cm.inferno, NFFT=1024)
     plt.title('matplotlib sectrogram')
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
@@ -135,7 +140,7 @@ class Screen:
             self.refresh()
 
     def _spectogram(self, samples, sample_rate):
-        _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1028)
+        _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1024)
         spectrogram = 10*np.log10(spectrogram)
 
         # Normalize data
