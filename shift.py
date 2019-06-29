@@ -80,15 +80,15 @@ def create_braille(arr):
         by = y % 4
 
         if bx == 0:
-            if by == 0:
+            if by == 3:
                 relative |= 0x40
             else:
-                relative |= 0x4 >> (by - 1)
+                relative |= 0x1 << by
         else:
-            if by == 0:
+            if by == 3:
                 relative |= 0x80
             else:
-                relative |= 0x20 >> (by -1)
+                relative |= 0x8 << by
 
     return chr(ord(EMPTY_BRAILLE) | relative)
 
