@@ -73,6 +73,9 @@ def log(*args, **kwargs):
 def create_braille(arr):
     relative = 0
     for y, x in it.product(range(arr.shape[0]), range(arr.shape[1])):
+        if arr[y, x] == 0:
+            continue
+
         bx = x % 2
         by = y % 4
 
@@ -107,4 +110,3 @@ def is_exit_key(scr):
 if __name__ == '__main__':
     locale.setlocale(locale.LC_ALL, '')
     curses.wrapper(main)
-
