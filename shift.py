@@ -25,6 +25,8 @@ import numpy as np
 
 
 EMPTY_BRAILLE = u'\u2800'
+BLUE = (0, 247, 239)
+RED  = (255, 0, 79)
 
 
 def main(scr):
@@ -60,9 +62,17 @@ def setup_stderr(terminal='/dev/pts/1'):
 
 def setup_curses(scr):
     curses.use_default_colors()
+    curses.start_color()
     curses.halfdelay(1)
     curses.curs_set(False)
     scr.clear()
+
+    curses.init_color(1, *BLUE)
+    curses.init_color(2, *RED)
+
+    curses.init_pair(1, curses.COLOR_WHITE, -1)
+    curses.init_pair(2, 1, -1)
+    curses.init_pair(3, 2, -1)
 
 
 def log(*args, **kwargs):
@@ -97,7 +107,7 @@ def draw(scr, arr):
     """Draw buffer content to screen."""
     dtype = np.dtype('U' + str(arr.shape[1]))
     for num, line in enumerate(arr):
-        scr.addstr(num, 0, line.view(dtype)[0])
+        scr.addstr(num, 0, line.view(dtype)[0], curses.color_pair(3))
     scr.refresh()
 
 
