@@ -25,8 +25,15 @@ import numpy as np
 
 
 EMPTY_BRAILLE = u'\u2800'
-BLUE = (0, 247, 239)
-RED  = (255, 0, 79)
+BLUE_RGB = (0, 247, 239)
+RED_RGB  = (255, 0, 79)
+
+HEIGHT = 4
+WIDTH  = 2
+
+BACKGROUND_ID = 1
+BLUE_ID = 2
+RED_ID  = 3
 
 
 def main(scr):
@@ -35,17 +42,16 @@ def main(scr):
 
     arr = np.loadtxt('./shift.dot')
 
-    assert arr.shape[0] % 4 == 0
-    assert arr.shape[1] % 2 == 0
+    assert arr.shape[0] % HEIGHT == 0
+    assert arr.shape[1] % WIDTH == 0
 
-    dots_arr = np.full(shape=(arr.shape[0] // 4, arr.shape[1] // 2), fill_value=EMPTY_BRAILLE)
+    dots_arr = np.full(shape=(arr.shape[0] // HEIGHT, arr.shape[1] // WIDTH), fill_value=EMPTY_BRAILLE)
 
     for y, x in it.product(range(dots_arr.shape[0]), range(dots_arr.shape[1])):
-        braille = create_braille(arr[y*4:y*4+4, x*2:x*2+2])
+        braille = create_braille(arr[y*HEIGHT:y*HEIGHT+HEIGHT, x*WIDTH:x*WIDTH+WIDTH])
         dots_arr[y, x] = braille
 
     draw(scr, dots_arr)
-
     while not is_exit_key(scr):
         pass
 
@@ -67,12 +73,12 @@ def setup_curses(scr):
     curses.curs_set(False)
     scr.clear()
 
-    curses.init_color(1, *BLUE)
-    curses.init_color(2, *RED)
+    curses.init_color(1, *BLUE_RGB)
+    curses.init_color(2, *RED_RGB)
 
-    curses.init_pair(1, curses.COLOR_WHITE, -1)
-    curses.init_pair(2, 1, -1)
-    curses.init_pair(3, 2, -1)
+    curses.init_pair(BACKGROUND_ID, curses.COLOR_WHITE, -1)
+    curses.init_pair(BLUE_ID, 1, -1)
+    curses.init_pair(RED_ID, 2, -1)
 
 
 def log(*args, **kwargs):
@@ -86,8 +92,8 @@ def create_braille(arr):
         if arr[y, x] == 0:
             continue
 
-        bx = x % 2
-        by = y % 4
+        bx = x % WIDTH
+        by = y % HEIGHT
 
         if bx == 0:
             if by == 3:
@@ -107,7 +113,7 @@ def draw(scr, arr):
     """Draw buffer content to screen."""
     dtype = np.dtype('U' + str(arr.shape[1]))
     for num, line in enumerate(arr):
-        scr.addstr(num, 0, line.view(dtype)[0], curses.color_pair(3))
+        scr.addstr(num, 0, line.view(dtype)[0], curses.color_pair(BLUE_ID))
     scr.refresh()
 
 
