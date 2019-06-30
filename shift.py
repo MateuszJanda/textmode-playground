@@ -88,10 +88,7 @@ def log(*args, **kwargs):
 
 def create_braille(arr):
     relative = 0
-    for y, x in it.product(range(arr.shape[0]), range(arr.shape[1])):
-        if arr[y, x] == 0:
-            continue
-
+    for y, x in np.argwhere(arr != 0):
         bx = x % WIDTH
         by = y % HEIGHT
 
@@ -111,9 +108,8 @@ def create_braille(arr):
 
 def draw(scr, arr):
     """Draw buffer content to screen."""
-    dtype = np.dtype('U' + str(arr.shape[1]))
-    for num, line in enumerate(arr):
-        scr.addstr(num, 0, line.view(dtype)[0], curses.color_pair(BLUE_ID))
+    for y, x in np.argwhere(arr != EMPTY_BRAILLE):
+        scr.addstr(y, x, arr[y, x], curses.color_pair(BLUE_ID))
     scr.refresh()
 
 
