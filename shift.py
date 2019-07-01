@@ -24,16 +24,24 @@ import locale
 import numpy as np
 
 
-EMPTY_BRAILLE = u'\u2800'
-BLUE_RGB = (0, 247, 239)
-RED_RGB  = (255, 0, 79)
+def rgb(r, g, b):
+    return (r*1000)//255, (g*1000)//255, (b*1000)//255
 
-HEIGHT = 4
-WIDTH  = 2
+
+EMPTY_BRAILLE = u'\u2800'
+
+BLACK_RGB = rgb(0, 0, 0)
+WHITE_RGB = rgb(255, 255, 255)
+BLUE_RGB = rgb(0, 247, 239)
+RED_RGB = rgb(255, 0, 79)
 
 WHITE_ID = 1
 BLUE_ID = 2
-RED_ID  = 3
+RED_ID = 3
+BACKGROUND_ID = 4
+
+HEIGHT = 4
+WIDTH = 2
 
 
 def main(scr):
@@ -48,11 +56,13 @@ def main(scr):
     arr1 = create_shift_arr(orig_arr, shift_x=2, shift_y=2)
     arr2 = create_shift_arr(orig_arr, shift_x=-2, shift_y=-2)
 
-    dots_arr1 = create_dots_arr(arr1)
-    dots_arr2 = create_dots_arr(arr2)
+    dots_arr1 = create_dots_arr(orig_arr)
+    dots_arr2 = create_dots_arr(arr1)
+    dots_arr3 = create_dots_arr(arr2)
 
     draw(scr, dots_arr1, curses.color_pair(WHITE_ID))
-    draw(scr, dots_arr2, curses.color_pair(BLUE_ID))
+    draw(scr, dots_arr2, curses.color_pair(RED_ID))
+    draw(scr, dots_arr3, curses.color_pair(BLUE_ID))
 
     while not is_exit_key(scr):
         pass
@@ -69,18 +79,22 @@ def setup_stderr(terminal='/dev/pts/1'):
 
 
 def setup_curses(scr):
-    curses.use_default_colors()
     curses.start_color()
     curses.halfdelay(1)
     curses.curs_set(False)
+
+    curses.init_color(0, *BLACK_RGB)
+    curses.init_color(1, *WHITE_RGB)
+    curses.init_color(2, *BLUE_RGB)
+    curses.init_color(3, *RED_RGB)
+
+    curses.init_pair(WHITE_ID, 1, 0)
+    curses.init_pair(BLUE_ID, 2, 0)
+    curses.init_pair(RED_ID, 3, 0)
+    curses.init_pair(BACKGROUND_ID, 0, 0)
+
+    scr.bkgd(' ', curses.color_pair(BACKGROUND_ID))
     scr.clear()
-
-    curses.init_color(1, *BLUE_RGB)
-    curses.init_color(2, *RED_RGB)
-
-    curses.init_pair(WHITE_ID, curses.COLOR_WHITE, -1)
-    curses.init_pair(BLUE_ID, 1, -1)
-    curses.init_pair(RED_ID, 2, -1)
 
 
 def log(*args, **kwargs):
@@ -119,6 +133,7 @@ def create_dots_arr(arr):
 
 
 def create_braille(arr):
+    """Create braille character from 8x4 array."""
     relative = 0
     for y, x in np.argwhere(arr != 0):
         bx = x % WIDTH
