@@ -40,15 +40,13 @@ def main(scr):
     setup_stderr(terminal='/dev/pts/1')
     setup_curses(scr)
 
-    arr1 = np.loadtxt('./shift.dot')
-    arr2 = np.copy(arr1)
+    orig_arr = np.loadtxt('./shift.dot')
 
-    assert arr1.shape[0] % HEIGHT == 0
-    assert arr1.shape[1] % WIDTH == 0
+    assert orig_arr.shape[0] % HEIGHT == 0
+    assert orig_arr.shape[1] % WIDTH == 0
 
-    shift = np.full(shape=(arr2.shape[0], 2), fill_value=0)
-    arr2 = np.concatenate((shift, arr2), axis=1)
-    arr2 = np.delete(arr2, -2, axis=1)
+    arr1 = create_shift_arr(orig_arr, shift_x=2, shift_y=2)
+    arr2 = create_shift_arr(orig_arr, shift_x=-2, shift_y=-2)
 
     dots_arr1 = create_dots_arr(arr1)
     dots_arr2 = create_dots_arr(arr2)
@@ -88,6 +86,26 @@ def setup_curses(scr):
 def log(*args, **kwargs):
     """log on stderr."""
     print(*args, file=sys.stderr)
+
+
+def create_shift_arr(orig_arr, shift_x, shift_y):
+    new_arr = np.copy(orig_arr)
+    wall_x = np.full(shape=(orig_arr.shape[0], abs(shift_x)), fill_value=0)
+
+    if shift_x < 0:
+        new_arr = np.concatenate((wall_x, orig_arr), axis=1)
+    else:
+        new_arr = np.concatenate((orig_arr, wall_x), axis=1)
+    new_arr = np.delete(orig_arr, shift_x, axis=1)
+
+    wall_y = np.full(shape=(abs(shift_y), new_arr.shape[1]), fill_value=0)
+    if shift_y < 0:
+        new_arr = np.concatenate((wall_y, new_arr), axis=0)
+    else:
+        new_arr = np.concatenate((new_arr, wall_y), axis=0)
+    new_arr = np.delete(new_arr, shift_y, axis=1)
+
+    return new_arr
 
 
 def create_dots_arr(arr):
