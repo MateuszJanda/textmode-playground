@@ -21,6 +21,8 @@ import sys
 import itertools as it
 import curses
 import locale
+import random
+import time
 import numpy as np
 
 
@@ -53,16 +55,32 @@ def main(scr):
     assert orig_arr.shape[0] % HEIGHT == 0
     assert orig_arr.shape[1] % WIDTH == 0
 
-    arr2 = create_shift_arr(orig_arr, shift_x=2, shift_y=2)
-    arr3 = create_shift_arr(orig_arr, shift_x=0, shift_y=4)
+    while True:
+        scr.clear()
 
-    dots_arr1 = create_dots_arr(orig_arr)
-    dots_arr2 = create_dots_arr(arr2)
-    dots_arr3 = create_dots_arr(arr3)
+        shift_x, shift_y = random.choice(range(-2, 2)), random.choice(range(-2, 2))
+        arr1 = create_shift_arr(orig_arr, shift_x, shift_y)
+        shift_x, shift_y = random.choice([-2, 0, 2]), random.choice([-4, 0, 4])
+        arr2 = create_shift_arr(arr1, shift_x, shift_y)
+        shift_x, shift_y = random.choice([-2, 0, 2]), random.choice([-4, 0, 4])
+        arr3 = create_shift_arr(orig_arr, shift_x, shift_y)
 
-    draw(scr, dots_arr1, curses.color_pair(WHITE_ID))
-    draw(scr, dots_arr2, curses.color_pair(RED_ID))
-    draw(scr, dots_arr3, curses.color_pair(BLUE_ID))
+        dots_arr1 = create_dots_arr(arr1)
+        dots_arr2 = create_dots_arr(arr2)
+        dots_arr3 = create_dots_arr(arr3)
+
+        call_data = [
+            (dots_arr1, WHITE_ID),
+            (dots_arr2, RED_ID),
+            (dots_arr3, BLUE_ID)
+        ]
+
+        random.shuffle(call_data)
+        for arr, color in call_data:
+            draw(scr, arr, curses.color_pair(color))
+
+        # time.sleep(0.05)
+        scr.refresh()
 
     while not is_exit_key(scr):
         pass
@@ -161,7 +179,6 @@ def draw(scr, arr, color):
     """Draw buffer content to screen."""
     for y, x in np.argwhere(arr != EMPTY_BRAILLE):
         scr.addstr(y, x, arr[y, x], color)
-    scr.refresh()
 
 
 def is_exit_key(scr):
