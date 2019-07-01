@@ -54,7 +54,7 @@ def main(scr):
     assert orig_arr.shape[1] % WIDTH == 0
 
     arr2 = create_shift_arr(orig_arr, shift_x=2, shift_y=2)
-    arr3 = create_shift_arr(orig_arr, shift_x=0, shift_y=-4)
+    arr3 = create_shift_arr(orig_arr, shift_x=0, shift_y=4)
 
     dots_arr1 = create_dots_arr(orig_arr)
     dots_arr2 = create_dots_arr(arr2)
