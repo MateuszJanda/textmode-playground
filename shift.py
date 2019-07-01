@@ -7,16 +7,6 @@ Ad maiorem Dei gloriam
 """
 
 
-"""
-       .__    .__  _____  __
-  _____|  |__ |__|/ ____\/  |_
- /  ___/  |  \|  \   __\\   __\
- \___ \|   Y  \  ||  |   |  |
-/____  >___|  /__||__|   |__|
-     \/     \/
-"""
-
-
 import sys
 import itertools as it
 import curses
@@ -44,6 +34,15 @@ BACKGROUND_ID = 4
 
 HEIGHT = 4
 WIDTH = 2
+
+SHIFT =  r"""
+       .__    .__  _____  __
+  _____|  |__ |__|/ ____\/  |_
+ /  ___/  |  \|  \   __\\   __\
+ \___ \|   Y  \  ||  |   |  |
+/____  >___|  /__||__|   |__|
+     \/     \/
+"""
 
 
 def main(scr):
@@ -78,6 +77,9 @@ def main(scr):
         random.shuffle(call_data)
         for arr, color in call_data:
             draw(scr, arr, curses.color_pair(color))
+
+        _, color = random.choice(call_data)
+        draw_ascii_shift(scr, color)
 
         time.sleep(0.01)
         scr.refresh()
@@ -179,6 +181,12 @@ def draw(scr, arr, color):
     """Draw buffer content to screen."""
     for y, x in np.argwhere(arr != EMPTY_BRAILLE):
         scr.addstr(y, x, arr[y, x], color)
+
+
+def draw_ascii_shift(scr, color):
+    Y_SHIFT = 9
+    for y, text in enumerate(SHIFT.split('\n')):
+        scr.addstr(y + Y_SHIFT, 0, text, curses.color_pair(color))
 
 
 def is_exit_key(scr):
