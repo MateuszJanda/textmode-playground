@@ -60,9 +60,9 @@ def main(scr):
 
         shift_x, shift_y = random.choice(range(-2, 2)), random.choice(range(-2, 2))
         arr1 = create_shift_arr(orig_arr, shift_x, shift_y)
-        shift_x, shift_y = random.choice([-2, 0, 2]), random.choice([-4, 0, 4])
+        shift_x, shift_y = random.choice(range(-2, 2)), random.choice(range(-2, 2))
         arr2 = create_shift_arr(arr1, shift_x, shift_y)
-        shift_x, shift_y = random.choice([-2, 0, 2]), random.choice([-4, 0, 4])
+        shift_x, shift_y = random.choice(range(-2, 2)), random.choice(range(-2, 2))
         arr3 = create_shift_arr(orig_arr, shift_x, shift_y)
 
         dots_arr1 = create_dots_arr(arr1)
@@ -79,7 +79,7 @@ def main(scr):
         for arr, color in call_data:
             draw(scr, arr, curses.color_pair(color))
 
-        # time.sleep(0.05)
+        time.sleep(0.01)
         scr.refresh()
 
     while not is_exit_key(scr):
