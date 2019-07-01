@@ -84,9 +84,6 @@ def main(scr):
         time.sleep(0.01)
         scr.refresh()
 
-    while not is_exit_key(scr):
-        pass
-
 
 def setup_stderr(terminal='/dev/pts/1'):
     """
@@ -187,12 +184,6 @@ def draw_ascii_shift(scr, color):
     Y_SHIFT = 9
     for y, text in enumerate(SHIFT.split('\n')):
         scr.addstr(y + Y_SHIFT, 0, text, curses.color_pair(color))
-
-
-def is_exit_key(scr):
-    """Wait for key (defined by halfdelay), and check if q."""
-    ch = scr.getch()
-    return ch == ord('q')
 
 
 if __name__ == '__main__':
