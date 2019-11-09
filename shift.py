@@ -46,7 +46,7 @@ SHIFT =  r"""
 
 
 def main(scr):
-    setup_stderr(terminal='/dev/pts/1')
+    # setup_stderr(terminal='/dev/pts/1')
     setup_curses(scr)
 
     orig_arr = np.loadtxt('./shift.dot')
