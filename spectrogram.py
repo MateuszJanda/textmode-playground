@@ -21,7 +21,7 @@ DEBUG = False
 
 def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
-    setup_stderr(terminal='/dev/pts/1')
+    # setup_stderr(terminal='/dev/pts/1')
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
