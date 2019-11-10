@@ -32,6 +32,8 @@ BLUE_ID = 2
 RED_ID = 3
 BACKGROUND_ID = 4
 
+Y_SHIFT = 9
+X_SHIFT = 14
 HEIGHT = 4
 WIDTH = 2
 
@@ -177,13 +179,12 @@ def create_braille(arr):
 def draw(scr, arr, color):
     """Draw buffer content to screen."""
     for y, x in np.argwhere(arr != EMPTY_BRAILLE):
-        scr.addstr(y, x, arr[y, x], color)
+        scr.addstr(y, X_SHIFT + x, arr[y, x], color)
 
 
 def draw_ascii_shift(scr, color):
-    Y_SHIFT = 9
     for y, text in enumerate(SHIFT.split('\n')):
-        scr.addstr(y + Y_SHIFT, 0, text, curses.color_pair(color))
+        scr.addstr(y + Y_SHIFT, X_SHIFT, text, curses.color_pair(color))
 
 
 if __name__ == '__main__':
