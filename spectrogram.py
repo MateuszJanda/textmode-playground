@@ -101,7 +101,7 @@ class Screen:
     LOWER_HALF_BLOCK = u'\u2584'
 
     def __init__(self):
-        self._ncurses = ct.CDLL('./libncursesw_g.so.6.1')
+        self._ncurses = ct.CDLL('./libncursesw.so.6.1')
         self._setup_ncurses()
         self._init_colors()
 
@@ -156,7 +156,6 @@ class Screen:
     def _spectogram(self, samples, sample_rate):
         _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1024)
         show(spectrogram.shape)
-        spectrogram[1,1] = -1
         spectrogram = 10*log10(spectrogram)
 
         # Normalize data
