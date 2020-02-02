@@ -7,6 +7,7 @@ Ad maiorem Dei gloriam
 """
 
 import sys
+import os
 import itertools as it
 import ctypes as ct
 import matplotlib.pyplot as plt
@@ -23,15 +24,20 @@ def main():
     # https://pl.wikipedia.org/wiki/Spektrogram
     # setup_stderr(terminal='/dev/pts/1')
 
+    if not os.path.isfile('out.wav'):
+        print('Missing "out.wav" (mono, 32 PCM) file in current folder')
+        print('ffmpeg -i input.mp4 -c copy -ac 1 -vn -c:a pcm_s32le -y out.wav')
+        exit()
+
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.read.html
     # sample_rate - samples per second
     # samples - for 32-bit PCM, values are in range [-2147483648, 2147483647]
     sample_rate, samples = wavfile.read('out.wav')
-    log('Rate:', sample_rate)
-    log('Shape:', samples.shape)
-    log('Time:', samples.shape[0]/sample_rate, '[sec]')
+    show('Rate:', sample_rate)
+    show('Shape:', samples.shape)
+    show('Time:', samples.shape[0]/sample_rate, '[sec]')
 
-    log('Inferno colors:', cm.inferno.N)  # of RGB
+    show('Inferno colors:', cm.inferno.N)  # of RGB
 
     # sci_spectogram(samples, sample_rate)
     # plt_spectogram(samples, sample_rate)
@@ -53,8 +59,8 @@ def setup_stderr(terminal='/dev/pts/1'):
         sys.stderr = open(terminal, 'w')
 
 
-def log(*args, **kwargs):
-    """log on stderr."""
+def show(*args, **kwargs):
+    """show on stderr."""
     if DEBUG:
         print(*args, file=sys.stderr)
 
@@ -62,12 +68,13 @@ def log(*args, **kwargs):
 def sci_spectogram(samples, sample_rate):
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html
     frequencies, times, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1024)
-    log('frequencies.shape', frequencies.shape)
-    log('times.shape', times.shape)
-    log('spectrogram.shape', spectrogram.shape)
+    show('frequencies.shape', frequencies.shape)
+    show('times.shape', times.shape)
+    show('spectrogram.shape', spectrogram.shape)
 
     plt.figure(2)
-    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap=cm.inferno)
+
+    plt.pcolormesh(times, frequencies, 10*log10(spectrogram), cmap=cm.inferno)
     plt.title('signal spectrogram')
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
@@ -79,6 +86,13 @@ def plt_spectogram(samples, sample_rate):
     plt.title('matplotlib sectrogram')
     plt.ylabel('Frequency [Hz]')
     plt.xlabel('Time [sec]')
+
+
+def log10(spectrogram):
+    """Fix spectogram data if values are zero or less and run log10"""
+    min_value = spectrogram[np.nonzero(spectrogram > 0)].min()
+    spectrogram[spectrogram <= 0] = min_value
+    return np.log10(spectrogram)
 
 
 class Screen:
@@ -110,7 +124,7 @@ class Screen:
             r, g, b = cm.inferno.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
-                log('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+                show('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
         assert cm.inferno.N == 256
@@ -123,7 +137,7 @@ class Screen:
 
             ret = self._ncurses.init_extended_pair(pair_num, fg, bg)
             if ret != 0:
-                log('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
+                show('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
 
     def render(self, samples, sample_rate):
@@ -141,7 +155,9 @@ class Screen:
 
     def _spectogram(self, samples, sample_rate):
         _, _, spectrogram = signal.spectrogram(samples, fs=sample_rate, nfft=1024)
-        spectrogram = 10*np.log10(spectrogram)
+        show(spectrogram.shape)
+        spectrogram[1,1] = -1
+        spectrogram = 10*log10(spectrogram)
 
         # Normalize data
         shift = 0 - spectrogram.min()
@@ -167,12 +183,12 @@ class Screen:
         pair_num_pt = ct.c_int(pair_num)
         ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
         if ret != 0:
-            log('attr_set error %d, pair_num: %d' % (ret, pair_num))
+            show('attr_set error %d, pair_num: %d' % (ret, pair_num))
             raise RuntimeError
 
         ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
         if ret != 0:
-            log('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
+            show('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
             raise RuntimeError
 
     def refresh(self):
@@ -184,7 +200,7 @@ class Screen:
             ch = self._ncurses.getch()
         self._ncurses.endwin()
 
-        log('The end.')
+        show('The end.')
 
 
 if __name__ == '__main__':
