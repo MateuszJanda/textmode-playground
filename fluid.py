@@ -6,13 +6,16 @@ Site: github.com/MateuszJanda
 Ad maiorem Dei gloriam
 """
 
-import curses
 import time
+import curses
+import locale
 import numpy as np
 
 
 N = 64
 ITERATION = 4
+
+DEBUG = open('/dev/pts/1', 'w')
 
 
 class Fluid:
@@ -39,7 +42,7 @@ class Fluid:
         self.vy[y, x] += amount_y
 
 
-def main():
+def main(scr):
     setup_curses(scr)
 
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
@@ -63,7 +66,7 @@ def main():
         diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
         advect(0, fluid.density, fluid.s, fluid.Vx, fluid.Vy, fluid.dt)
 
-        render_fluid(scr, color)
+        render_fluid(scr, fluid)
 
         time.sleep(0.01)
         scr.refresh()
@@ -79,7 +82,7 @@ def setup_curses(scr):
 
     for bg_id in range(128):
         for fg_id in range(128):
-            curses.init_pair(bg_id*128 + fg_id, fg_id, bg_id)
+            curses.init_pair(bg_id*128 + fg_id + 1, fg_id, bg_id)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
@@ -132,7 +135,7 @@ def project(velocX, velocY, p, div):
 
     for j in range(1, N - 1):
         for i in range(1, N - 1):
-            velocX[j, i] -= 0.f * (p[j, i+1] - p[j, i-1]) * N
+            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) * N
             velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) * N
 
     set_boundry(1, velocX)
@@ -209,4 +212,5 @@ def set_boundry(b, x):
 
 
 if __name__ == '__main__':
-    main()
+    locale.setlocale(locale.LC_ALL, '')
+    curses.wrapper(main)
