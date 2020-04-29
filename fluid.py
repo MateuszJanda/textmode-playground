@@ -15,22 +15,22 @@ N = 256
 class Fluid:
     def __init__(self, dt, diffusion, viscosity):
         self.size = N
-        self.dt = dt                   # time step
-        self.diff = diffusion          # diffusion - dyfuzja
-        self.visc = viscosity          # viscosity - lepkość
+        self.dt = dt                            # time step
+        self.diff = diffusion                   # diffusion - dyfuzja
+        self.visc = viscosity                   # viscosity - lepkość
 
-        self.s = new float[N*N]        # prev density
-        self.density = new float[N*N]
+        self.s = np.zeros(shape=(N, N))         # prev density
+        self.density = np.zeros(shape=(N, N))
 
-        self.Vx = new float[N*N]
-        self.Vy = new float[N*N]
+        self.Vx = np.zeros(shape=(N, N))
+        self.Vy = np.zeros(shape=(N, N))
 
-        self.Vx0 = new float[N*N]      # prev velocity X
-        self.Vy0 = new float[N*N]      # prev velocity Y
+        self.Vx0 = np.zeros(shape=(N, N))       # prev velocity X
+        self.Vy0 = np.zeros(shape=(N, N))       # prev velocity Y
 
 
 def main():
-    pass
+    fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
 
 
 if __name__ == '__main__':
