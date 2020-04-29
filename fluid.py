@@ -6,11 +6,13 @@ Site: github.com/MateuszJanda
 Ad maiorem Dei gloriam
 """
 
+import curses
+import time
 import numpy as np
 
 
 N = 256
-ITERATION = 10
+ITERATION = 4
 
 
 class Fluid:
@@ -39,7 +41,56 @@ class Fluid:
 
 
 def main():
+    setup_curses(scr)
+
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
+
+    while True:
+        scr.clear()
+
+        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
+        diffuse(2, fluid.Vy0, fluid.Vy, fluid.visc, fluid.dt)
+
+        project(fluid.Vx0, fluid.Vy0, fluid.Vx, fluid.Vy)
+
+        advect(1, fluid.Vx, fluid.Vx0, fluid.Vx0, fluid.Vy0, fluid.dt)
+        advect(2, fluid.Vy, fluid.Vy0, fluid.Vx0, fluid.Vy0, fluid.dt)
+
+        project(fluid.Vx, fluid.Vy, fluid.Vx0, fluid.Vy0)
+
+        diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
+        advect(0, fluid.density, fluid.s, fluid.Vx, fluid.Vy, fluid.dt)
+
+        draw_fluid(scr, color)
+
+        time.sleep(0.01)
+        scr.refresh()
+
+
+
+def setup_curses(scr):
+    curses.start_color()
+    curses.halfdelay(1)
+    curses.curs_set(False)
+
+    curses.init_color(0, *BLACK_RGB)
+    curses.init_color(1, *WHITE_RGB)
+    curses.init_color(2, *BLUE_RGB)
+    curses.init_color(3, *RED_RGB)
+
+    curses.init_pair(WHITE_ID, 1, 0)
+    curses.init_pair(BLUE_ID, 2, 0)
+    curses.init_pair(RED_ID, 3, 0)
+    curses.init_pair(BACKGROUND_ID, 0, 0)
+
+    scr.bkgd(' ', curses.color_pair(BACKGROUND_ID))
+    scr.clear()
+
+
+def draw_fluid(scr, color):
+    for y, text in enumerate(SHIFT.split('\n')):
+        scr.addstr(y + Y_SHIFT, X_SHIFT, text, curses.color_pair(color))
+
 
 
 def diffuse(b,  x, x0, diff, dt):
@@ -116,7 +167,7 @@ def advect(b, d, d0, velocX, velocY, dt):
     set_boundry(b, d)
 
 
-def set_bnd(b, x):
+def set_boundry(b, x):
     for i in range(N-1):
         if b == 2:
             x[0, i] = -x[1, i]
