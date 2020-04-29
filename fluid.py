@@ -35,9 +35,11 @@ class Fluid:
         self.vy0 = np.zeros(shape=(N, N))       # prev velocity Y
 
     def add_density(self, x, y, amount):
-        self.density[y, x] += amount
+        self.density[int(y), int(x)] += amount
 
     def add_velocity(self, x, y, amount_x, amount_y):
+        y = int(y)
+        x = int(x)
         self.vx[y, x] += amount_x
         self.vy[y, x] += amount_y
 
@@ -54,17 +56,17 @@ def main(scr):
         scr.clear()
 
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
-        diffuse(2, fluid.Vy0, fluid.Vy, fluid.visc, fluid.dt)
+        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
 
-        project(fluid.Vx0, fluid.Vy0, fluid.Vx, fluid.Vy)
+        project(fluid.vx0, fluid.vy0, fluid.vx, fluid.vy)
 
-        advect(1, fluid.Vx, fluid.Vx0, fluid.Vx0, fluid.Vy0, fluid.dt)
-        advect(2, fluid.Vy, fluid.Vy0, fluid.Vx0, fluid.Vy0, fluid.dt)
+        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, fluid.dt)
+        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, fluid.dt)
 
-        project(fluid.Vx, fluid.Vy, fluid.Vx0, fluid.Vy0)
+        project(fluid.vx, fluid.vy, fluid.vx0, fluid.vy0)
 
         diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
-        advect(0, fluid.density, fluid.s, fluid.Vx, fluid.Vy, fluid.dt)
+        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, fluid.dt)
 
         render_fluid(scr, fluid)
 
@@ -157,13 +159,13 @@ def advect(b, d, d0, velocX, velocY, dt):
                 x = 0.5
             if x > N + 0.5:
                 x = N + 0.5
-            i0 = floor(x)
+            i0 = np.floor(x)
             i1 = i0 + 1.0
             if y < 0.5:
                 y = 0.5
             if y > N + 0.5:
                 y = N + 0.5
-            j0 = floor(y)
+            j0 = np.floor(y)
             j1 = j0 + 1.0
 
             s1 = x - i0
