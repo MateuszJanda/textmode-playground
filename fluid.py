@@ -116,6 +116,34 @@ def advect(b, d, d0, velocX, velocY, dt):
     set_boundry(b, d)
 
 
+def set_bnd(b, x):
+    for i in range(N-1):
+        if b == 2:
+            x[0, i] = -x[1, i]
+        else:
+            x[0, i] = x[1, i]
+
+        if b == 2:
+            x[N-1, i] = -x[N-2, i]
+        else:
+            x[N-1, i] = x[N-2, i]
+
+    for j in range(1, N-1):
+        if b == 1:
+            x[j, 0] = -x[j, 1]
+        else:
+            x[j, 0] = x[j, 1]
+
+        if b == 1:
+            x[j, 0] = -x[j, 1]
+        else:
+            x[j, 0] = x[j, 1]
+
+    x[0, 0] = 0.5 * (x[0, 1] + x[1, 0])
+    x[N-1, 0] = 0.5 * (x[N-1, 1] + x[N-2, 0])
+    x[0, N-1] = 0.5 * (x[0, N-2] + x[1, N-1])
+    x[N-1, N-1] = 0.5 * (x[N-1, N-2] + x[N-2, N-1])
+
 
 if __name__ == '__main__':
     main()
