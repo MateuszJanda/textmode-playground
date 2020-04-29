@@ -157,14 +157,14 @@ def advect(b, d, d0, velocX, velocY, dt):
 
             if x < 0.5:
                 x = 0.5
-            if x > N + 0.5:
-                x = N + 0.5
+            if x > (N-1-1) + 0.5:
+                x = (N-1-1) + 0.5
             i0 = np.floor(x)
             i1 = i0 + 1.0
             if y < 0.5:
                 y = 0.5
-            if y > N + 0.5:
-                y = N + 0.5
+            if y > (N-1-1) + 0.5:
+                y = (N-1-1) + 0.5
             j0 = np.floor(y)
             j1 = j0 + 1.0
 
@@ -178,6 +178,8 @@ def advect(b, d, d0, velocX, velocY, dt):
             j0i = int(j0)
             j1i = int(j1)
 
+            print('====', j0, i0, j1, i1, file=DEBUG)
+            print(j, i, j0i, i0i, j1i, i1i, file=DEBUG)
             d[j, i] = s0 * (t0 * d0[j0i, i0i] + t1 * d0[j1i, i0i]) + \
                       s1 * (t0 * d0[j0i, i1i] + t1 * d0[j1i, i1i])
 
