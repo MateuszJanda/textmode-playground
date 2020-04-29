@@ -12,7 +12,7 @@ import locale
 import numpy as np
 
 
-N = 64
+N = 48
 ITERATION = 4
 
 DEBUG = open('/dev/pts/1', 'w')
@@ -103,11 +103,11 @@ def render_fluid(scr, fluid):
 
     for i in range(N):
         for j in range(0, N, 2):
-            bg = (fluid.density[j, i] + 50) % 127
-            fg = (fluid.density[j+1, i] + 50) % 127
+            bg = (fluid.density[j, i] + 50) % 128
+            fg = (fluid.density[j+1, i] + 50) % 128
 
-            color = bg * 128 + fg
-            scr.addstr(j/2 + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color))
+            color = int(bg * 128 + fg)
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color))
 
 
 def diffuse(b,  x, x0, diff, dt):
@@ -178,8 +178,6 @@ def advect(b, d, d0, velocX, velocY, dt):
             j0i = int(j0)
             j1i = int(j1)
 
-            print('====', j0, i0, j1, i1, file=DEBUG)
-            print(j, i, j0i, i0i, j1i, i1i, file=DEBUG)
             d[j, i] = s0 * (t0 * d0[j0i, i0i] + t1 * d0[j1i, i0i]) + \
                       s1 * (t0 * d0[j0i, i1i] + t1 * d0[j1i, i1i])
 
