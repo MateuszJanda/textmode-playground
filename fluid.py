@@ -11,7 +11,7 @@ import time
 import numpy as np
 
 
-N = 256
+N = 64
 ITERATION = 4
 
 
@@ -31,7 +31,6 @@ class Fluid:
         self.vx0 = np.zeros(shape=(N, N))       # prev velocity X
         self.vy0 = np.zeros(shape=(N, N))       # prev velocity Y
 
-
     def add_density(self, x, y, amount):
         self.density[y, x] += amount
 
@@ -44,6 +43,9 @@ def main():
     setup_curses(scr)
 
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
+
+    fluid.add_density(N/2, N/2, 100)
+    fluid.add_velocity(N/2, N/2, 100, 100)
 
     while True:
         scr.clear()
@@ -61,11 +63,10 @@ def main():
         diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
         advect(0, fluid.density, fluid.s, fluid.Vx, fluid.Vy, fluid.dt)
 
-        draw_fluid(scr, color)
+        render_fluid(scr, color)
 
         time.sleep(0.01)
         scr.refresh()
-
 
 
 def setup_curses(scr):
@@ -73,24 +74,35 @@ def setup_curses(scr):
     curses.halfdelay(1)
     curses.curs_set(False)
 
-    curses.init_color(0, *BLACK_RGB)
-    curses.init_color(1, *WHITE_RGB)
-    curses.init_color(2, *BLUE_RGB)
-    curses.init_color(3, *RED_RGB)
+    for color_id in range(128):
+        curses.init_color(color_id, *gray_rgb(color_id*2))
 
-    curses.init_pair(WHITE_ID, 1, 0)
-    curses.init_pair(BLUE_ID, 2, 0)
-    curses.init_pair(RED_ID, 3, 0)
-    curses.init_pair(BACKGROUND_ID, 0, 0)
+    for bg_id in range(128):
+        for fg_id in range(128):
+            curses.init_pair(bg_id*128 + fg_id, fg_id, bg_id)
 
-    scr.bkgd(' ', curses.color_pair(BACKGROUND_ID))
+    scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
 
 
-def draw_fluid(scr, color):
-    for y, text in enumerate(SHIFT.split('\n')):
-        scr.addstr(y + Y_SHIFT, X_SHIFT, text, curses.color_pair(color))
+def gray_rgb(val):
+    return (val*1000)//255, (val*1000)//255, (val*1000)//255
 
+
+Y_SHIFT = 0
+X_SHIFT = 0
+
+
+def render_fluid(scr, fluid):
+    LOWER_HALF_BLOCK = u'\u2584'
+
+    for i in range(N):
+        for j in range(0, N, 2):
+            bg = (fluid.density[j, i] + 50) % 127
+            fg = (fluid.density[j+1, i] + 50) % 127
+
+            color = bg * 128 + fg
+            scr.addstr(j/2 + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color))
 
 
 def diffuse(b,  x, x0, diff, dt):
