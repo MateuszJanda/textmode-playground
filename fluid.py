@@ -57,9 +57,10 @@ def main(scr):
 
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
 
-    fluid.add_density(N/2, N/2, 100)
+    fluid.add_density(N/2, N/2, 1000)
     fluid.add_velocity(N/2, N/2, 100, 100)
 
+    t = 0
     while True:
         scr.erase()
 
@@ -79,6 +80,18 @@ def main(scr):
         render_fluid(scr, fluid)
 
         time.sleep(0.01)
+        t += 0.01
+        # if t >= 1:
+        if False:
+            for line in fluid.density:
+                text = ''
+                for val in line:
+                    text += ' ' + str(val)
+                print(text, file=DEBUG)
+            print('===', np.max(fluid.density), np.min(fluid.density), file=DEBUG)
+            break
+
+
         scr.refresh()
         # return
 
@@ -96,11 +109,11 @@ def setup_curses(scr):
         color_value = color_number * 256//NUM_OF_COLORS
 
         curses.init_color(color_number, *gray_rgb(color_value))
-        if color_number == 50:
-            print('init_color', gray_rgb(color_value), file=DEBUG)
+    #     if color_number == 50:
+    #         print('init_color', gray_rgb(color_value), file=DEBUG)
 
-    curses.init_color(50, 500, 500, 500)
-    curses.init_color(1, 1, 1, 1)
+    # curses.init_color(50, 500, 500, 500)
+    # curses.init_color(1, 1, 1, 1)
 
     # Setup colors
     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
@@ -112,8 +125,8 @@ def setup_curses(scr):
             pair_id = colors_to_pair_id(fg, bg)
             curses.init_pair(pair_id, fg, bg)
 
-            if pair_id == 5050:
-                print('init_pair', fg, bg, file=DEBUG)
+            # if pair_id == 5050:
+            #     print('init_pair', fg, bg, file=DEBUG)
 
     # curses.init_pair(1, 50, 50)
     # curses.init_pair(GLOBAL_PAIR_ID, 50, 50)
@@ -139,15 +152,22 @@ def render_fluid(scr, fluid):
 
     for i in range(N):
         for j in range(0, N, 2):
-            bg = (fluid.density[j, i] + 50) % NUM_OF_COLORS
-            fg = (fluid.density[j+1, i] + 50) % NUM_OF_COLORS
+            bg = int((fluid.density[j, i] + 50) % NUM_OF_COLORS)
+            fg = int((fluid.density[j+1, i] + 50) % NUM_OF_COLORS)
 
-            print('render bg-fg', bg, fg, file=DEBUG)
+            # print('render bg-fg', bg, fg, file=DEBUG)
 
             pair_id = colors_to_pair_id(fg, bg)
             scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
-            print('render pair_id', pair_id, file=DEBUG)
+            # print('render pair_id', pair_id, file=DEBUG)
             # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
+
+            if i == 46 and j == 46:
+                text = 'pair_id: ' + str(pair_id) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
+                scr.addstr(25 + Y_SHIFT, 0 + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
+                scr.addstr(26 + Y_SHIFT, 0 + X_SHIFT, text, curses.color_pair(0))
+                text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
+                scr.addstr(27 + Y_SHIFT, 0 + X_SHIFT, text, curses.color_pair(0))
 
             # return
 
