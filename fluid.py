@@ -57,7 +57,7 @@ def main(scr):
     fluid.add_velocity(N/2, N/2, 100, 100)
 
     while True:
-        scr.clear()
+        scr.erase()
 
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
         diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
@@ -76,6 +76,7 @@ def main(scr):
 
         time.sleep(0.01)
         scr.refresh()
+        # return
 
 
 def setup_curses(scr):
@@ -89,27 +90,32 @@ def setup_curses(scr):
     # Actually because of some bug in Python curses only 14336 can be handled properly
     assert NUM_OF_COLORS*NUM_OF_COLORS <= 14336
 
-    for color in range(NUM_OF_COLORS):
-        curses.init_color(color, *gray_rgb(color))
+    for idx in range(NUM_OF_COLORS):
+        color_number = idx * 256//NUM_OF_COLORS
+        # The value of color_number must be between 0 and COLORS
+        assert color_number < curses.COLORS
+
+        print(gray_rgb(color_number), file=DEBUG)
+        curses.init_color(color_number, *gray_rgb(color_number))
 
     for bg in range(NUM_OF_COLORS):
         for fg in range(NUM_OF_COLORS):
-            color_id = color_to_id(bg, fg)
-            curses.init_pair(color_id, fg, bg)
+            pair_id = colors_to_pair_id(bg, fg)
+            curses.init_pair(pair_id, fg, bg)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
 
 
 def gray_rgb(val):
-    return (val*1000)//NUM_OF_COLORS, (val*1000)//NUM_OF_COLORS, (val*1000)//NUM_OF_COLORS
+    return (val*1000)//256, (val*1000)//256, (val*1000)//256
 
 
-def color_to_id(background, foreground):
-    color_id = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
-    if color_id == 0:
-        color_id = 1
-    return int(color_id)
+def colors_to_pair_id(background, foreground):
+    pair_id = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
+    if pair_id == 0:
+        pair_id = 1
+    return int(pair_id)
 
 
 def render_fluid(scr, fluid):
@@ -120,8 +126,13 @@ def render_fluid(scr, fluid):
             bg = (fluid.density[j, i] + 50) % NUM_OF_COLORS
             fg = (fluid.density[j+1, i] + 50) % NUM_OF_COLORS
 
-            color_id = color_to_id(bg, fg)
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color_id))
+            # print(bg, fg, file=DEBUG)
+
+            pair_id = colors_to_pair_id(bg, fg)
+            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1))
+
+            # return
 
 
 def diffuse(b,  x, x0, diff, dt):
