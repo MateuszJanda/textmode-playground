@@ -13,7 +13,8 @@ import numpy as np
 
 
 N = 48
-ITERATION = 4
+ITERATIONS = 4
+
 NUM_OF_COLORS = 100
 Y_SHIFT = 0
 X_SHIFT = 0
@@ -75,13 +76,6 @@ def main(scr):
 
         time.sleep(0.01)
         scr.refresh()
-    #     break
-
-    # while True:
-    #     c = scr.getch()
-    #     if c == ord('q'):
-    #         break
-
 
 
 def setup_curses(scr):
@@ -92,17 +86,16 @@ def setup_curses(scr):
 
     # Setup colors
     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
+    # Actually because of some bug in Python curses only 14336 can be handled properly
+    assert NUM_OF_COLORS*NUM_OF_COLORS <= 14336
 
     for color in range(NUM_OF_COLORS):
         curses.init_color(color, *gray_rgb(color))
 
-    print(curses.A_BLINK, file=DEBUG)
     for bg in range(NUM_OF_COLORS):
         for fg in range(NUM_OF_COLORS):
             color_id = color_to_id(bg, fg)
             curses.init_pair(color_id, fg, bg)
-
-            print(bg*NUM_OF_COLORS + fg, bg, fg, curses.color_pair(color_id) == curses.color_pair(color_id) | curses.A_BLINK, file=DEBUG)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
@@ -129,13 +122,7 @@ def render_fluid(scr, fluid):
 
             color_id = color_to_id(bg, fg)
             scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color_id))
-            # print('color_id', curses.color_pair(color_id), file=DEBUG)
-            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(color_id))
-            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1000))
 
-def rrr(scr):
-    for i in range(4):
-        pass
 
 def diffuse(b,  x, x0, diff, dt):
     a = dt * diff * (N - 2) * (N - 2)
@@ -144,7 +131,7 @@ def diffuse(b,  x, x0, diff, dt):
 
 def linear_solver(b, x, x0, a, c):
     cRecip = 1 / c
-    for k in range(ITERATION):
+    for k in range(ITERATIONS):
         for j in range(1, N - 1):
             for i in range(1, N - 1):
                 x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * cRecip
