@@ -15,9 +15,13 @@ import numpy as np
 N = 48
 ITERATIONS = 4
 
-NUM_OF_COLORS = 100
+NUM_OF_COLORS = 16
 Y_SHIFT = 0
 X_SHIFT = 0
+
+
+GLOBAL_PAIR_ID = 255
+
 
 DEBUG = open('/dev/pts/1', 'w')
 
@@ -92,21 +96,28 @@ def setup_curses(scr):
         color_value = color_number * 256//NUM_OF_COLORS
 
         curses.init_color(color_number, *gray_rgb(color_value))
-        if color_number == 1:
+        if color_number == 50:
             print('init_color', gray_rgb(color_value), file=DEBUG)
+
+    curses.init_color(50, 500, 500, 500)
+    curses.init_color(1, 1, 1, 1)
 
     # Setup colors
     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
-    # Actually because of some bug in Python curses only 14336 can be handled properly
-    assert NUM_OF_COLORS*NUM_OF_COLORS <= 14336
+    # Actually because of some bug in Python curses support only 256 color pairs
+    assert NUM_OF_COLORS*NUM_OF_COLORS <= 256
 
     for bg in range(NUM_OF_COLORS):
         for fg in range(NUM_OF_COLORS):
-            pair_id = colors_to_pair_id(bg, fg)
+            pair_id = colors_to_pair_id(fg, bg)
             curses.init_pair(pair_id, fg, bg)
 
-            if pair_id == 1:
+            if pair_id == 5050:
                 print('init_pair', fg, bg, file=DEBUG)
+
+    # curses.init_pair(1, 50, 50)
+    # curses.init_pair(GLOBAL_PAIR_ID, 50, 50)
+    # curses.init_pair(1, 1, 1)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
@@ -116,7 +127,7 @@ def gray_rgb(val):
     return (val*1000)//256, (val*1000)//256, (val*1000)//256
 
 
-def colors_to_pair_id(background, foreground):
+def colors_to_pair_id(foreground, background):
     pair_id = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
     if pair_id == 0:
         pair_id = 1
@@ -131,11 +142,12 @@ def render_fluid(scr, fluid):
             bg = (fluid.density[j, i] + 50) % NUM_OF_COLORS
             fg = (fluid.density[j+1, i] + 50) % NUM_OF_COLORS
 
-            # print(bg, fg, file=DEBUG)
+            print('render bg-fg', bg, fg, file=DEBUG)
 
-            pair_id = colors_to_pair_id(bg, fg)
+            pair_id = colors_to_pair_id(fg, bg)
             scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
-            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1))
+            print('render pair_id', pair_id, file=DEBUG)
+            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
 
             # return
 
