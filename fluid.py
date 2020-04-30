@@ -14,7 +14,7 @@ import numpy as np
 
 N = 48
 ITERATION = 4
-NUM_OF_COLORS = 128
+NUM_OF_COLORS = 100
 Y_SHIFT = 0
 X_SHIFT = 0
 
@@ -75,12 +75,12 @@ def main(scr):
 
         time.sleep(0.01)
         scr.refresh()
-        break
+    #     break
 
-    while True:
-        c = scr.getch()
-        if c == ord('q'):
-            break
+    # while True:
+    #     c = scr.getch()
+    #     if c == ord('q'):
+    #         break
 
 
 
@@ -88,25 +88,28 @@ def setup_curses(scr):
     """Setup curses environment and colors settings."""
     curses.start_color()
     curses.halfdelay(1)
-    curses.curs_set(False)
+    curses.curs_set(False)      # Disable blinking cursor
 
     # Setup colors
     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
 
-    for color_id in range(NUM_OF_COLORS):
-        curses.init_color(color_id, *gray_rgb(color_id*2))
+    for color in range(NUM_OF_COLORS):
+        curses.init_color(color, *gray_rgb(color))
 
+    print(curses.A_BLINK, file=DEBUG)
     for bg in range(NUM_OF_COLORS):
         for fg in range(NUM_OF_COLORS):
             color_id = color_to_id(bg, fg)
             curses.init_pair(color_id, fg, bg)
+
+            print(bg*NUM_OF_COLORS + fg, bg, fg, curses.color_pair(color_id) == curses.color_pair(color_id) | curses.A_BLINK, file=DEBUG)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
 
 
 def gray_rgb(val):
-    return (val*1000)//255, (val*1000)//255, (val*1000)//255
+    return (val*1000)//NUM_OF_COLORS, (val*1000)//NUM_OF_COLORS, (val*1000)//NUM_OF_COLORS
 
 
 def color_to_id(background, foreground):
@@ -124,9 +127,15 @@ def render_fluid(scr, fluid):
             bg = (fluid.density[j, i] + 50) % NUM_OF_COLORS
             fg = (fluid.density[j+1, i] + 50) % NUM_OF_COLORS
 
-            color = color_to_id(bg, fg)
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color))
+            color_id = color_to_id(bg, fg)
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(color_id))
+            # print('color_id', curses.color_pair(color_id), file=DEBUG)
+            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(color_id))
+            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1000))
 
+def rrr(scr):
+    for i in range(4):
+        pass
 
 def diffuse(b,  x, x0, diff, dt):
     a = dt * diff * (N - 2) * (N - 2)
