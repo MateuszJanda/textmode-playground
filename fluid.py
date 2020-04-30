@@ -85,23 +85,28 @@ def setup_curses(scr):
     curses.halfdelay(1)
     curses.curs_set(False)      # Disable blinking cursor
 
+    # The value of color_number must be between 0 and COLORS
+    assert NUM_OF_COLORS < curses.COLORS
+
+    for color_number in range(NUM_OF_COLORS):
+        color_value = color_number * 256//NUM_OF_COLORS
+
+        curses.init_color(color_number, *gray_rgb(color_value))
+        if color_number == 1:
+            print('init_color', gray_rgb(color_value), file=DEBUG)
+
     # Setup colors
     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
     # Actually because of some bug in Python curses only 14336 can be handled properly
     assert NUM_OF_COLORS*NUM_OF_COLORS <= 14336
 
-    for idx in range(NUM_OF_COLORS):
-        color_number = idx * 256//NUM_OF_COLORS
-        # The value of color_number must be between 0 and COLORS
-        assert color_number < curses.COLORS
-
-        print(gray_rgb(color_number), file=DEBUG)
-        curses.init_color(color_number, *gray_rgb(color_number))
-
     for bg in range(NUM_OF_COLORS):
         for fg in range(NUM_OF_COLORS):
             pair_id = colors_to_pair_id(bg, fg)
             curses.init_pair(pair_id, fg, bg)
+
+            if pair_id == 1:
+                print('init_pair', fg, bg, file=DEBUG)
 
     scr.bkgd(' ', curses.color_pair(0))
     scr.clear()
@@ -129,8 +134,8 @@ def render_fluid(scr, fluid):
             # print(bg, fg, file=DEBUG)
 
             pair_id = colors_to_pair_id(bg, fg)
-            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1))
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
+            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(1))
 
             # return
 
