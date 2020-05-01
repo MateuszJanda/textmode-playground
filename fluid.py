@@ -164,10 +164,10 @@ def render_fluid(scr, fluid):
 
             if i == 46 and j == 46:
                 text = 'pair_id: ' + str(pair_id) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                scr.addstr(25 + Y_SHIFT, 0 + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
-                scr.addstr(26 + Y_SHIFT, 0 + X_SHIFT, text, curses.color_pair(0))
+                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
+                scr.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, curses.color_pair(0))
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                scr.addstr(27 + Y_SHIFT, 0 + X_SHIFT, text, curses.color_pair(0))
+                scr.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, curses.color_pair(0))
 
             # return
 
