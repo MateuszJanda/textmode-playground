@@ -8,9 +8,10 @@ Ad maiorem Dei gloriam
 
 """
 Credits:
-- "Coding Challenge #132: Fluid Simulation" - https://www.youtube.com/watch?v=alhpH6ECFvQ
-- "Fluid Simulation for Dummies" by Mike Ash - https://mikeash.com/pyblog/fluid-simulation-for-dummies.html
 - "Real-Time Fluid Dynamics for Game" by Jos Stam - https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf
+- "Fluid Simulation for Dummies" by Mike Ash - https://mikeash.com/pyblog/fluid-simulation-for-dummies.html
+- "Coding Challenge #132: Fluid Simulation" - https://www.youtube.com/watch?v=alhpH6ECFvQ
+- "Coding Challenge #132: Fluid Simulation"- https://github.com/CodingTrain/website/tree/master/CodingChallenges/CC_132_FluidSimulation/Processing/CC_132_FluidSimulation
 """
 
 import time
