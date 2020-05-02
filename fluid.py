@@ -41,7 +41,7 @@ def main():
 
     t = 0
     while True:
-        # scr.erase()
+        # screen.erase()
 
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
         diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
@@ -190,27 +190,38 @@ def colors_to_pair_num(foreground, background):
     return int(pair_num)
 
 
-def render_fluid(scr, fluid):
+def render_fluid(screen, fluid):
     LOWER_HALF_BLOCK = u'\u2584'
+
+    # ddd = np.log10(fluid.density *100 + 100)
+    ddd = fluid.density *100
+    # ddd = np.log10(fluid.density) *100
 
     for i in range(N):
         for j in range(0, N, 2):
             bg = int((fluid.density[j, i] * 20) % NUM_OF_COLORS)
             fg = int((fluid.density[j+1, i] * 20) % NUM_OF_COLORS)
+            # if np.isinf(ddd[j, i]):
+            #     bg = 0
+            # else:
+            #     bg = int(ddd[j, i]) % NUM_OF_COLORS
+            # if np.isinf(ddd[j+1, i]):
+            #     fg = 0
+            # fg = int(ddd[j+1, i]) % NUM_OF_COLORS
 
             # print('render bg-fg', bg, fg, file=DEBUG)
 
             pair_num = colors_to_pair_num(fg, bg)
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+            screen.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
             # print('render pair_num', pair_num, file=DEBUG)
-            # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
+            # screen.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
 
             if i == 46 and j == 46:
                 text = 'pair_num: ' + str(pair_num) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
-                scr.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
+                screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                scr.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
+                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
 
             # return
 
