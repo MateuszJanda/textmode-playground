@@ -58,7 +58,7 @@ def main():
 
         render_fluid(screen, fluid)
 
-        time.sleep(0.01)
+        time.sleep(0.5)
         t += 0.01
         # if t >= 1:
         if False:
@@ -194,8 +194,12 @@ def render_fluid(screen, fluid):
     LOWER_HALF_BLOCK = u'\u2584'
 
     # ddd = np.log10(fluid.density *100 + 100)
-    ddd = fluid.density *100
+    # ddd = fluid.density *100
     # ddd = np.log10(fluid.density) *100
+    max_val = int(np.max(fluid.density) * 20) % NUM_OF_COLORS
+    screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', max_val)
+    screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 255)
+    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, str(np.max(fluid.density)) + '   ', 255)
 
     for i in range(N):
         for j in range(0, N, 2):
@@ -218,10 +222,10 @@ def render_fluid(screen, fluid):
 
             if i == 46 and j == 46:
                 text = 'pair_num: ' + str(pair_num) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
-                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
+                # screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 255)
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
+                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 255)
 
             # return
 
