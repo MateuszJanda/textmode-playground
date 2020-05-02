@@ -14,15 +14,16 @@ Credits:
 """
 
 import time
-import curses
-import locale
+import itertools as it
+import ctypes as ct
+import matplotlib.cm as cm
 import numpy as np
 
 
 N = 48
 ITERATIONS = 4
 
-NUM_OF_COLORS = 16
+NUM_OF_COLORS = 256
 Y_SHIFT = 0
 X_SHIFT = 0
 
@@ -31,6 +32,139 @@ GLOBAL_PAIR_ID = 255
 
 
 DEBUG = open('/dev/pts/1', 'w')
+
+
+def main():
+    screen = Screen(colormap=cm.viridis)
+
+    fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
+
+    fluid.add_density(N/2, N/2, 2000)
+    fluid.add_velocity(N/2, N/2, 100, 100)
+
+    t = 0
+    while True:
+        # scr.erase()
+
+        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
+        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
+
+        project(fluid.vx0, fluid.vy0, fluid.vx, fluid.vy)
+
+        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, fluid.dt)
+        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, fluid.dt)
+
+        project(fluid.vx, fluid.vy, fluid.vx0, fluid.vy0)
+
+        diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
+        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, fluid.dt)
+
+        render_fluid(screen, fluid)
+
+        time.sleep(0.01)
+        t += 0.01
+        # if t >= 1:
+        if False:
+            for line in fluid.density:
+                text = ''
+                for val in line:
+                    text += ' ' + str(val)
+                print(text, file=DEBUG)
+            print('===', np.max(fluid.density), np.min(fluid.density), file=DEBUG)
+            break
+
+
+        screen.refresh()
+        # return
+
+    screen.endwin()
+
+
+def show(*args, **kwargs):
+    print(*args, file=DEBUG)
+    pass
+
+
+class Screen:
+    A_NORMAL = 0
+
+    def __init__(self, colormap):
+        self._ncurses = ct.CDLL('./libncursesw.so.6.1')
+        self._setup_ncurses()
+        self._init_colors(colormap)
+
+    def _setup_ncurses(self):
+        """Setup ncurses screen."""
+        self._win = self._ncurses.initscr()
+        self._ncurses.start_color()
+        self._ncurses.halfdelay(5)
+        self._ncurses.noecho()
+        self._ncurses.curs_set(0)
+        self.LINES, self.COLS = self._getmaxyx()
+
+    def _getmaxyx(self):
+       y = self._ncurses.getmaxy(self._win)
+       x = self._ncurses.getmaxx(self._win)
+       return y, x-1
+
+    def _init_colors(self, colormap):
+        """Initi color pairs based on matplotlib colormap."""
+        for color_num in range(colormap.N):
+            r, g, b = colormap.colors[color_num]
+            ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
+            if ret != 0:
+                show('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+                raise RuntimeError
+
+        assert colormap.N == 256
+
+        for bg, fg in it.product(range(colormap.N), range(colormap.N)):
+            pair_num = bg * colormap.N + fg
+
+            if pair_num == 0:
+                continue
+
+            ret = self._ncurses.init_extended_pair(pair_num, fg, bg)
+            if ret != 0:
+                show('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
+                raise RuntimeError
+
+    # def render(self, samples, sample_rate):
+    #     """Draw buffer content on screen."""
+    #     spectrogram = self._spectogram(samples, sample_rate)
+
+    #     for shift in range(spectrogram.shape[1] - self.COLS):
+    #         for y, x in it.product(range(self.LINES), range(self.COLS)):
+    #             bg, fg = spectrogram[y*2:y*2+2, x+shift]
+    #             pair_num = int(bg) * cm.inferno.N + int(fg)
+
+    #             self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
+
+    #         self.refresh()
+
+    def addstr(self, y, x, text, pair_num):
+        pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
+        pair_num_pt = ct.c_int(pair_num)
+        ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
+        if ret != 0:
+            show('attr_set error %d, pair_num: %d' % (ret, pair_num))
+            raise RuntimeError
+
+        ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
+        if ret != 0:
+            show('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
+            raise RuntimeError
+
+    def refresh(self):
+        self._ncurses.refresh()
+
+    def endwin(self):
+        ch = self._ncurses.getch()
+        while ch != ord('q'):
+            ch = self._ncurses.getch()
+        self._ncurses.endwin()
+
+        show('The end.')
 
 
 class Fluid:
@@ -59,92 +193,48 @@ class Fluid:
         self.vy[y, x] += amount_y
 
 
-def main(scr):
-    setup_curses(scr)
+# def setup_curses(scr):
+#     """Setup curses environment and colors settings."""
+#     curses.start_color()
+#     curses.halfdelay(1)
+#     curses.curs_set(False)      # Disable blinking cursor
 
-    fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
+#     # The value of color_number must be between 0 and COLORS
+#     assert NUM_OF_COLORS < curses.COLORS
 
-    fluid.add_density(N/2, N/2, 1000)
-    fluid.add_velocity(N/2, N/2, 100, 100)
+#     for color_number in range(NUM_OF_COLORS):
+#         color_value = color_number * 256//NUM_OF_COLORS
 
-    t = 0
-    while True:
-        scr.erase()
+#         curses.init_color(color_number, *gray_rgb(color_value))
+#     #     if color_number == 50:
+#     #         print('init_color', gray_rgb(color_value), file=DEBUG)
 
-        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
-        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
+#     # curses.init_color(50, 500, 500, 500)
+#     # curses.init_color(1, 1, 1, 1)
 
-        project(fluid.vx0, fluid.vy0, fluid.vx, fluid.vy)
+#     # Setup colors
+#     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
+#     # Actually because of some bug in Python curses support only 256 color pairs
+#     assert NUM_OF_COLORS*NUM_OF_COLORS <= 256
 
-        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, fluid.dt)
-        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, fluid.dt)
+#     for bg in range(NUM_OF_COLORS):
+#         for fg in range(NUM_OF_COLORS):
+#             pair_id = colors_to_pair_id(fg, bg)
+#             curses.init_pair(pair_id, fg, bg)
 
-        project(fluid.vx, fluid.vy, fluid.vx0, fluid.vy0)
+#             # if pair_id == 5050:
+#             #     print('init_pair', fg, bg, file=DEBUG)
 
-        diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
-        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, fluid.dt)
+#     # curses.init_pair(1, 50, 50)
+#     # curses.init_pair(GLOBAL_PAIR_ID, 50, 50)
+#     # curses.init_pair(1, 1, 1)
 
-        render_fluid(scr, fluid)
-
-        time.sleep(0.01)
-        t += 0.01
-        # if t >= 1:
-        if False:
-            for line in fluid.density:
-                text = ''
-                for val in line:
-                    text += ' ' + str(val)
-                print(text, file=DEBUG)
-            print('===', np.max(fluid.density), np.min(fluid.density), file=DEBUG)
-            break
-
-
-        scr.refresh()
-        # return
+#     scr.bkgd(' ', curses.color_pair(0))
+#     scr.clear()
 
 
-def setup_curses(scr):
-    """Setup curses environment and colors settings."""
-    curses.start_color()
-    curses.halfdelay(1)
-    curses.curs_set(False)      # Disable blinking cursor
-
-    # The value of color_number must be between 0 and COLORS
-    assert NUM_OF_COLORS < curses.COLORS
-
-    for color_number in range(NUM_OF_COLORS):
-        color_value = color_number * 256//NUM_OF_COLORS
-
-        curses.init_color(color_number, *gray_rgb(color_value))
-    #     if color_number == 50:
-    #         print('init_color', gray_rgb(color_value), file=DEBUG)
-
-    # curses.init_color(50, 500, 500, 500)
-    # curses.init_color(1, 1, 1, 1)
-
-    # Setup colors
-    assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
-    # Actually because of some bug in Python curses support only 256 color pairs
-    assert NUM_OF_COLORS*NUM_OF_COLORS <= 256
-
-    for bg in range(NUM_OF_COLORS):
-        for fg in range(NUM_OF_COLORS):
-            pair_id = colors_to_pair_id(fg, bg)
-            curses.init_pair(pair_id, fg, bg)
-
-            # if pair_id == 5050:
-            #     print('init_pair', fg, bg, file=DEBUG)
-
-    # curses.init_pair(1, 50, 50)
-    # curses.init_pair(GLOBAL_PAIR_ID, 50, 50)
-    # curses.init_pair(1, 1, 1)
-
-    scr.bkgd(' ', curses.color_pair(0))
-    scr.clear()
-
-
-def gray_rgb(val):
-    return (val*1000)//256, (val*1000)//256, (val*1000)//256
+# def gray_rgb(val):
+#     return (val*1000)//256, (val*1000)//256, (val*1000)//256
 
 
 def colors_to_pair_id(foreground, background):
@@ -165,16 +255,16 @@ def render_fluid(scr, fluid):
             # print('render bg-fg', bg, fg, file=DEBUG)
 
             pair_id = colors_to_pair_id(fg, bg)
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_id)
             # print('render pair_id', pair_id, file=DEBUG)
             # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
 
             if i == 46 and j == 46:
                 text = 'pair_id: ' + str(pair_id) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, curses.color_pair(pair_id))
-                scr.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, curses.color_pair(0))
+                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_id)
+                scr.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                scr.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, curses.color_pair(0))
+                scr.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
 
             # return
 
@@ -283,5 +373,4 @@ def set_boundry(b, x):
 
 
 if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
-    curses.wrapper(main)
+    main()
