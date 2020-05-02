@@ -28,9 +28,6 @@ Y_SHIFT = 0
 X_SHIFT = 0
 
 
-GLOBAL_PAIR_ID = 255
-
-
 DEBUG = open('/dev/pts/1', 'w')
 
 
@@ -39,7 +36,7 @@ def main():
 
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
 
-    fluid.add_density(N/2, N/2, 2000)
+    fluid.add_density(N/2, N/2, 200)
     fluid.add_velocity(N/2, N/2, 100, 100)
 
     t = 0
@@ -129,20 +126,11 @@ class Screen:
                 show('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
 
-    # def render(self, samples, sample_rate):
-    #     """Draw buffer content on screen."""
-    #     spectrogram = self._spectogram(samples, sample_rate)
-
-    #     for shift in range(spectrogram.shape[1] - self.COLS):
-    #         for y, x in it.product(range(self.LINES), range(self.COLS)):
-    #             bg, fg = spectrogram[y*2:y*2+2, x+shift]
-    #             pair_num = int(bg) * cm.inferno.N + int(fg)
-
-    #             self.print(y, x, pair_num, Screen.LOWER_HALF_BLOCK)
-
-    #         self.refresh()
-
     def addstr(self, y, x, text, pair_num):
+        """
+        addstr - similar to curses.addstr function, however pari_num shouldn't
+        be converted by curses.color_pair or similar.
+        """
         pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
         pair_num_pt = ct.c_int(pair_num)
         ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
@@ -156,9 +144,11 @@ class Screen:
             raise RuntimeError
 
     def refresh(self):
+        """Refresh screen."""
         self._ncurses.refresh()
 
     def endwin(self):
+        """End when after pressing q."""
         ch = self._ncurses.getch()
         while ch != ord('q'):
             ch = self._ncurses.getch()
@@ -193,55 +183,11 @@ class Fluid:
         self.vy[y, x] += amount_y
 
 
-# def setup_curses(scr):
-#     """Setup curses environment and colors settings."""
-#     curses.start_color()
-#     curses.halfdelay(1)
-#     curses.curs_set(False)      # Disable blinking cursor
-
-#     # The value of color_number must be between 0 and COLORS
-#     assert NUM_OF_COLORS < curses.COLORS
-
-#     for color_number in range(NUM_OF_COLORS):
-#         color_value = color_number * 256//NUM_OF_COLORS
-
-#         curses.init_color(color_number, *gray_rgb(color_value))
-#     #     if color_number == 50:
-#     #         print('init_color', gray_rgb(color_value), file=DEBUG)
-
-#     # curses.init_color(50, 500, 500, 500)
-#     # curses.init_color(1, 1, 1, 1)
-
-#     # Setup colors
-#     assert NUM_OF_COLORS*NUM_OF_COLORS <= curses.COLOR_PAIRS
-#     # Actually because of some bug in Python curses support only 256 color pairs
-#     assert NUM_OF_COLORS*NUM_OF_COLORS <= 256
-
-#     for bg in range(NUM_OF_COLORS):
-#         for fg in range(NUM_OF_COLORS):
-#             pair_id = colors_to_pair_id(fg, bg)
-#             curses.init_pair(pair_id, fg, bg)
-
-#             # if pair_id == 5050:
-#             #     print('init_pair', fg, bg, file=DEBUG)
-
-#     # curses.init_pair(1, 50, 50)
-#     # curses.init_pair(GLOBAL_PAIR_ID, 50, 50)
-#     # curses.init_pair(1, 1, 1)
-
-#     scr.bkgd(' ', curses.color_pair(0))
-#     scr.clear()
-
-
-# def gray_rgb(val):
-#     return (val*1000)//256, (val*1000)//256, (val*1000)//256
-
-
-def colors_to_pair_id(foreground, background):
-    pair_id = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
-    if pair_id == 0:
-        pair_id = 1
-    return int(pair_id)
+def colors_to_pair_num(foreground, background):
+    pair_num = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
+    if pair_num == 0:
+        pair_num = 1
+    return int(pair_num)
 
 
 def render_fluid(scr, fluid):
@@ -249,19 +195,19 @@ def render_fluid(scr, fluid):
 
     for i in range(N):
         for j in range(0, N, 2):
-            bg = int((fluid.density[j, i] + 50) % NUM_OF_COLORS)
-            fg = int((fluid.density[j+1, i] + 50) % NUM_OF_COLORS)
+            bg = int((fluid.density[j, i] * 20) % NUM_OF_COLORS)
+            fg = int((fluid.density[j+1, i] * 20) % NUM_OF_COLORS)
 
             # print('render bg-fg', bg, fg, file=DEBUG)
 
-            pair_id = colors_to_pair_id(fg, bg)
-            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_id)
-            # print('render pair_id', pair_id, file=DEBUG)
+            pair_num = colors_to_pair_num(fg, bg)
+            scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+            # print('render pair_num', pair_num, file=DEBUG)
             # scr.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
 
             if i == 46 and j == 46:
-                text = 'pair_id: ' + str(pair_id) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_id)
+                text = 'pair_num: ' + str(pair_num) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
+                scr.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
                 scr.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
                 scr.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
