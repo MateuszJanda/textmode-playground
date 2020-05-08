@@ -27,14 +27,17 @@ import matplotlib.cm as cm
 import numpy as np
 
 
+# Engine parameters
 GRID_SIZE = 48
 ITERATIONS = 4
 
+# Screen parameters
 NUM_OF_COLORS = 256
 Y_SHIFT = 0
 X_SHIFT = 0
+LOWER_HALF_BLOCK = u'\u2584'
 
-
+# Debug parameters
 DEBUG = open('/dev/pts/1', 'w')
 sys.stderr = DEBUG
 
@@ -44,13 +47,13 @@ def main():
 
     fluid = Fluid(diffusion=0, viscosity=0)
 
-    fluid.add_density(GRID_SIZE/2, GRID_SIZE/2, 200)
-    fluid.add_velocity(GRID_SIZE/2, GRID_SIZE/2, 100, 100)
+    fluid.add_density(x=GRID_SIZE/2, y=GRID_SIZE/2, amount=200)
+    fluid.add_velocity(x=GRID_SIZE/2, y=GRID_SIZE/2, vel_x=100, vel_y=100)
 
-    t = 0
     dt = 0.1
 
     while True:
+        tic = time.time()
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, dt)
         diffuse(2, fluid.vy0, fluid.vy, fluid.visc, dt)
 
@@ -66,21 +69,10 @@ def main():
 
         render_fluid(screen, fluid)
 
-        time.sleep(0.5)
-        t += 0.01
-        # if t >= 1:
-        if False:
-            for line in fluid.density:
-                text = ''
-                for val in line:
-                    text += ' ' + str(val)
-                print(text, file=DEBUG)
-            print('===', np.max(fluid.density), np.min(fluid.density), file=DEBUG)
-            break
-
+        delay = max(0, dt - (time.time() - tic))
+        time.sleep(delay)
 
         screen.refresh()
-        # return
 
     screen.endwin()
 
@@ -91,6 +83,7 @@ def plog(*args, **kwargs):
 
 
 class Screen:
+    # As in Python curses
     A_NORMAL = 0
 
     def __init__(self, colormap):
@@ -166,7 +159,6 @@ class Screen:
 
 class Fluid:
     def __init__(self, diffusion, viscosity):
-        self.size = GRID_SIZE
         self.diff = diffusion                   # diffusion - dyfuzja
         self.visc = viscosity                   # viscosity - lepkość
 
@@ -182,11 +174,11 @@ class Fluid:
     def add_density(self, x, y, amount):
         self.density[int(y), int(x)] += amount
 
-    def add_velocity(self, x, y, amount_x, amount_y):
+    def add_velocity(self, x, y, vel_x, vel_y):
         y = int(y)
         x = int(x)
-        self.vx[y, x] += amount_x
-        self.vy[y, x] += amount_y
+        self.vx[y, x] += vel_x
+        self.vy[y, x] += vel_y
 
 
 def colors_to_pair_num(foreground, background):
@@ -197,8 +189,6 @@ def colors_to_pair_num(foreground, background):
 
 
 def render_fluid(screen, fluid):
-    LOWER_HALF_BLOCK = u'\u2584'
-
     # ddd = np.log10(fluid.density *100 + 100)
     # ddd = fluid.density *100
     # ddd = np.log10(fluid.density) *100
