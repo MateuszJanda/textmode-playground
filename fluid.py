@@ -33,8 +33,8 @@ ITERATIONS = 4
 
 # Screen parameters
 NUM_OF_COLORS = 256
-Y_SHIFT = 0
 X_SHIFT = 0
+Y_SHIFT = 0
 LOWER_HALF_BLOCK = u'\u2584'
 
 # Debug parameters
@@ -92,7 +92,7 @@ class Screen:
     def __init__(self, colormap):
         if not os.path.isfile('./libncursesw.so.6.1'):
             print("Can't find ./libncursesw.so.6.1")
-            exit()
+            raise RuntimeError
         self._ncurses = ct.CDLL('./libncursesw.so.6.1')
         self._setup_ncurses()
         self._init_colors(colormap)
@@ -108,9 +108,9 @@ class Screen:
 
     def _getmaxyx(self):
         """Determine max screen size."""
-       y = self._ncurses.getmaxy(self._win)
-       x = self._ncurses.getmaxx(self._win)
-       return y, x-1
+        y = self._ncurses.getmaxy(self._win)
+        x = self._ncurses.getmaxx(self._win)
+        return y, x-1
 
     def _init_colors(self, colormap):
         """Initialize color pairs based on matplotlib colormap."""
@@ -198,6 +198,12 @@ def render_fluid(screen, fluid):
     # ddd = np.log10(fluid.density *100 + 100)
     # ddd = fluid.density *100
     # ddd = np.log10(fluid.density) *100
+    # norml_dens = (np.max(fluid.density) * 20) % NUM_OF_COLORS
+    norml_dens = np.copy(fluid.density)
+    norml_dens = fluid.density + 1
+    norml_dens = (fluid.density * 20)
+    norml_dens = norml_dens.astype(int)
+
     max_val = int(np.max(fluid.density) * 20) % NUM_OF_COLORS
     screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', max_val)
     screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 255)
@@ -205,8 +211,8 @@ def render_fluid(screen, fluid):
 
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
-            bg = int((fluid.density[j, i] * 20) % NUM_OF_COLORS)
-            fg = int((fluid.density[j+1, i] * 20) % NUM_OF_COLORS)
+            bg, fg = norml_dens[j:j+2, i]
+
             # if np.isinf(ddd[j, i]):
             #     bg = 0
             # else:
@@ -232,7 +238,7 @@ def render_fluid(screen, fluid):
             # return
 
 
-def diffuse(b,  x, x0, diff, dt):
+def diffuse(b, x, x0, diff, dt):
     a = dt * diff * (GRID_SIZE - 2) * (GRID_SIZE - 2)
     linear_solver(b, x, x0, a, 1 + 4 * a)
 
