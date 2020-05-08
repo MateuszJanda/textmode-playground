@@ -115,7 +115,7 @@ class Screen:
 
     def _init_colors(self, colormap):
         """Initialize color pairs based on matplotlib colormap."""
-        assert colormap.N == 256, "We cant initialize more than 256*256 pairs"
+        assert colormap.N == NUM_OF_COLORS, "We cant initialize more than 256*256 pairs"
 
         SPARE_FOR_DEFAULT_COLORS = 2
 
@@ -162,8 +162,7 @@ class Screen:
             plog('assume_default_colors error: %d' % ret)
             raise RuntimeError
 
-
-    def addstr(self, y, x, text, pair_num):
+    def addstr(self, y, x, text, pair_num=0):
         """
         addstr - similar to curses.addstr function, however pari_num shouldn't
         be converted by curses.color_pair or similar.
@@ -224,48 +223,22 @@ def colors_to_pair_num(foreground, background):
 
 def render_fluid(screen, fluid):
     """Render fluid."""
-    # ddd = np.log10(fluid.density *100 + 100)
-    # ddd = fluid.density *100
-    # ddd = np.log10(fluid.density) *100
-    # norml_dens = (np.max(fluid.density) * 20) % NUM_OF_COLORS
-    norml_dens = np.copy(fluid.density)
-    norml_dens = fluid.density + 1
-    norml_dens = (fluid.density * 20)
+    norml_dens = (fluid.density * 80) + 1
     norml_dens[norml_dens>253] = 253
     norml_dens = norml_dens.astype(int)
 
-    max_val = int(np.max(fluid.density) * 20) % NUM_OF_COLORS
-    screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', max_val)
-    screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 0)
-    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, str(np.max(fluid.density)) + '   ', 0)
+    screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', np.max(norml_dens))
+    screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, 'Max     : %6.4f      ' % np.max(fluid.density))
+    screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, 'Max norm: %d  ' % np.max(norml_dens))
+    screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, 'Min     : %6.4f      ' %  np.min(fluid.density))
+    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, 'Min norm: %d  ' % np.min(norml_dens))
 
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
             bg, fg = norml_dens[j:j+2, i]
 
-            # if np.isinf(ddd[j, i]):
-            #     bg = 0
-            # else:
-            #     bg = int(ddd[j, i]) % NUM_OF_COLORS
-            # if np.isinf(ddd[j+1, i]):
-            #     fg = 0
-            # fg = int(ddd[j+1, i]) % NUM_OF_COLORS
-
-            # print('render bg-fg', bg, fg, file=DEBUG)
-
             pair_num = colors_to_pair_num(fg, bg)
             screen.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
-            # print('render pair_num', pair_num, file=DEBUG)
-            # screen.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, 'a', curses.color_pair(5050))
-
-            if i == 46 and j == 46:
-                text = 'pair_num: ' + str(pair_num) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
-                # screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
-                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
-                text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
-
-            # return
 
 
 def diffuse(b, x, x0, diff, dt):
