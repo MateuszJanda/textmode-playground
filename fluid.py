@@ -115,16 +115,16 @@ class Screen:
 
     def _init_colors(self, colormap):
         """Initialize color pairs based on matplotlib colormap."""
-        for color_num in range(colormap.N):
+        assert colormap.N == 256, "We cant initialize more than 256*256 pairs"
+
+        for color_num in range(colormap.N-2):
             r, g, b = colormap.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
-        assert colormap.N == 256, "We cant initialize more than 256*256 pairs"
-
-        for bg, fg in it.product(range(colormap.N), range(colormap.N)):
+        for bg, fg in it.product(range(colormap.N-2), range(colormap.N-2)):
             pair_num = bg * colormap.N + fg
 
             # Pair number 0 is reserved by lib, and can't be initialized
@@ -138,8 +138,8 @@ class Screen:
 
     def _init_text_colors(self):
         """Reserver two color for text."""
-        bg_color_num = 0
-        fg_color_num = 1
+        bg_color_num = 255
+        fg_color_num = 254
 
         r, g, b = 0, 0, 0
         ret = self._ncurses.init_extended_color(bg_color_num, int(r*1000), int(g*1000), int(b*1000))
@@ -228,7 +228,7 @@ def render_fluid(screen, fluid):
     norml_dens = np.copy(fluid.density)
     norml_dens = fluid.density + 1
     norml_dens = (fluid.density * 20)
-    norml_dens[norml_dens>255] = 255
+    norml_dens[norml_dens>253] = 253
     norml_dens = norml_dens.astype(int)
 
     max_val = int(np.max(fluid.density) * 20) % NUM_OF_COLORS
