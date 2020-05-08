@@ -54,6 +54,7 @@ def main():
 
     while True:
         tic = time.time()
+
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, dt)
         diffuse(2, fluid.vy0, fluid.vy, fluid.visc, dt)
 
@@ -69,6 +70,7 @@ def main():
 
         render_fluid(screen, fluid)
 
+        # Sleep only if extra time left
         delay = max(0, dt - (time.time() - tic))
         time.sleep(delay)
 
@@ -78,6 +80,7 @@ def main():
 
 
 def plog(*args, **kwargs):
+    """print replacement for logging on other console."""
     if DEBUG in globals():
         print(*args, file=DEBUG)
 
@@ -104,12 +107,13 @@ class Screen:
         self.LINES, self.COLS = self._getmaxyx()
 
     def _getmaxyx(self):
+        """Determine max screen size."""
        y = self._ncurses.getmaxy(self._win)
        x = self._ncurses.getmaxx(self._win)
        return y, x-1
 
     def _init_colors(self, colormap):
-        """Initi color pairs based on matplotlib colormap."""
+        """Initialize color pairs based on matplotlib colormap."""
         for color_num in range(colormap.N):
             r, g, b = colormap.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
@@ -117,11 +121,12 @@ class Screen:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
-        assert colormap.N == 256
+        assert colormap.N == 256, "We cant initialize more than 256*256 pairs"
 
         for bg, fg in it.product(range(colormap.N), range(colormap.N)):
             pair_num = bg * colormap.N + fg
 
+            # Pair number 0 is reserved by lib, and can't be initialized
             if pair_num == 0:
                 continue
 
@@ -162,14 +167,14 @@ class Fluid:
         self.diff = diffusion                   # diffusion - dyfuzja
         self.visc = viscosity                   # viscosity - lepkość
 
-        self.s = np.zeros(shape=(GRID_SIZE, GRID_SIZE))         # prev density
+        self.s = np.zeros(shape=(GRID_SIZE, GRID_SIZE))     # prev density
         self.density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
         self.vx = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
         self.vy = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))       # prev velocity X
-        self.vy0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))       # prev velocity Y
+        self.vx0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity X
+        self.vy0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity Y
 
     def add_density(self, x, y, amount):
         self.density[int(y), int(x)] += amount
@@ -182,6 +187,7 @@ class Fluid:
 
 
 def colors_to_pair_num(foreground, background):
+    """Determine pair number for two colors."""
     pair_num = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
     if pair_num == 0:
         pair_num = 1
