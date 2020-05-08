@@ -117,15 +117,18 @@ class Screen:
         """Initialize color pairs based on matplotlib colormap."""
         assert colormap.N == 256, "We cant initialize more than 256*256 pairs"
 
-        for color_num in range(colormap.N-2):
+        SPARE_FOR_DEFAULT_COLORS = 2
+
+        for color_num in range(colormap.N-SPARE_FOR_DEFAULT_COLORS):
             r, g, b = colormap.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
-        for bg, fg in it.product(range(colormap.N-2), range(colormap.N-2)):
-            pair_num = bg * colormap.N + fg
+        for bg, fg in it.product(range(colormap.N-SPARE_FOR_DEFAULT_COLORS), range(colormap.N-SPARE_FOR_DEFAULT_COLORS)):
+            # Start from 1, not from reserved 0
+            pair_num = bg * colormap.N + fg + 1
 
             # Pair number 0 is reserved by lib, and can't be initialized
             if pair_num == 0:
