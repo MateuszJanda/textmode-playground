@@ -18,6 +18,8 @@ Credits:
   https://github.com/CodingTrain/website/tree/master/CodingChallenges/CC_132_FluidSimulation/Processing/CC_132_FluidSimulation
 """
 
+import os
+import sys
 import time
 import itertools as it
 import ctypes as ct
@@ -34,30 +36,33 @@ X_SHIFT = 0
 
 
 DEBUG = open('/dev/pts/1', 'w')
+sys.stderr = DEBUG
 
 
 def main():
     screen = Screen(colormap=cm.viridis)
 
-    fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
+    fluid = Fluid(diffusion=0, viscosity=0)
 
     fluid.add_density(GRID_SIZE/2, GRID_SIZE/2, 200)
     fluid.add_velocity(GRID_SIZE/2, GRID_SIZE/2, 100, 100)
 
     t = 0
+    dt = 0.1
+
     while True:
-        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
-        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
+        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, dt)
+        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, dt)
 
         project(fluid.vx0, fluid.vy0, fluid.vx, fluid.vy)
 
-        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, fluid.dt)
-        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, fluid.dt)
+        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, dt)
+        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, dt)
 
         project(fluid.vx, fluid.vy, fluid.vx0, fluid.vy0)
 
-        diffuse(0, fluid.s, fluid.density, fluid.diff, fluid.dt)
-        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, fluid.dt)
+        diffuse(0, fluid.s, fluid.density, fluid.diff, dt)
+        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, dt)
 
         render_fluid(screen, fluid)
 
@@ -89,6 +94,9 @@ class Screen:
     A_NORMAL = 0
 
     def __init__(self, colormap):
+        if not os.path.isfile('./libncursesw.so.6.1'):
+            print("Can't find ./libncursesw.so.6.1")
+            exit()
         self._ncurses = ct.CDLL('./libncursesw.so.6.1')
         self._setup_ncurses()
         self._init_colors(colormap)
@@ -151,19 +159,14 @@ class Screen:
         self._ncurses.refresh()
 
     def endwin(self):
-        """End when after pressing q."""
-        ch = self._ncurses.getch()
-        while ch != ord('q'):
-            ch = self._ncurses.getch()
+        """End ncurses."""
         self._ncurses.endwin()
-
         plog('The end.')
 
 
 class Fluid:
-    def __init__(self, dt, diffusion, viscosity):
+    def __init__(self, diffusion, viscosity):
         self.size = GRID_SIZE
-        self.dt = dt                            # time step
         self.diff = diffusion                   # diffusion - dyfuzja
         self.visc = viscosity                   # viscosity - lepkość
 
@@ -275,8 +278,8 @@ def advect(b, d, d0, velocX, velocY, dt):
         for i in range(1, GRID_SIZE-1):
             tmp1 = dtx * velocX[j, i]
             tmp2 = dty * velocY[j, i]
-            x    = i - tmp1
-            y    = j - tmp2
+            x = i - tmp1
+            y = j - tmp2
 
             if x < 0.5:
                 x = 0.5
