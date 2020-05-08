@@ -81,7 +81,7 @@ def main():
 
 def plog(*args, **kwargs):
     """print replacement for logging on other console."""
-    if DEBUG in globals():
+    if 'DEBUG' in globals():
         print(*args, file=DEBUG)
 
 
@@ -96,6 +96,7 @@ class Screen:
         self._ncurses = ct.CDLL('./libncursesw.so.6.1')
         self._setup_ncurses()
         self._init_colors(colormap)
+        self._init_text_colors()
 
     def _setup_ncurses(self):
         """Setup ncurses screen."""
@@ -134,6 +135,30 @@ class Screen:
             if ret != 0:
                 plog('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
+
+    def _init_text_colors(self):
+        """Reserver two color for text."""
+        bg_color_num = 0
+        fg_color_num = 1
+
+        r, g, b = 0, 0, 0
+        ret = self._ncurses.init_extended_color(bg_color_num, int(r*1000), int(g*1000), int(b*1000))
+        if ret != 0:
+            plog('init_extended_color error: %d, for color_num: %d' % (ret, bg_color_num))
+            raise RuntimeError
+
+        r, g, b = 0.5, 0.5, 0.5
+        ret = self._ncurses.init_extended_color(fg_color_num, int(r*1000), int(g*1000), int(b*1000))
+        if ret != 0:
+            plog('init_extended_color error: %d, for color_num: %d' % (ret, fg_color_num))
+            raise RuntimeError
+
+        # Set color under pair number 0
+        ret = self._ncurses.assume_default_colors(fg_color_num, bg_color_num)
+        if ret != 0:
+            plog('assume_default_colors error: %d' % ret)
+            raise RuntimeError
+
 
     def addstr(self, y, x, text, pair_num):
         """
@@ -195,6 +220,7 @@ def colors_to_pair_num(foreground, background):
 
 
 def render_fluid(screen, fluid):
+    """Render fluid."""
     # ddd = np.log10(fluid.density *100 + 100)
     # ddd = fluid.density *100
     # ddd = np.log10(fluid.density) *100
@@ -202,12 +228,13 @@ def render_fluid(screen, fluid):
     norml_dens = np.copy(fluid.density)
     norml_dens = fluid.density + 1
     norml_dens = (fluid.density * 20)
+    norml_dens[norml_dens>255] = 255
     norml_dens = norml_dens.astype(int)
 
     max_val = int(np.max(fluid.density) * 20) % NUM_OF_COLORS
     screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', max_val)
-    screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 255)
-    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, str(np.max(fluid.density)) + '   ', 255)
+    screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 0)
+    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, str(np.max(fluid.density)) + '   ', 0)
 
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
@@ -231,9 +258,9 @@ def render_fluid(screen, fluid):
             if i == 46 and j == 46:
                 text = 'pair_num: ' + str(pair_num) + ' : ' + str(bg) + ' ' + str(fg) + ' ' + str(bg - fg)
                 # screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
-                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 255)
+                screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, text, 0)
                 text = str(fluid.density[j, i]) + ' ' + str(fluid.density[j+1, i]) + ' ' + str(fluid.density[j, i] - fluid.density[j+1, i])
-                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 255)
+                screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, text, 0)
 
             # return
 
