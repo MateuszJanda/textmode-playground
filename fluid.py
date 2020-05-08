@@ -25,7 +25,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 
-N = 48
+GRID_SIZE = 48
 ITERATIONS = 4
 
 NUM_OF_COLORS = 256
@@ -41,13 +41,11 @@ def main():
 
     fluid = Fluid(dt=0.1, diffusion=0, viscosity=0)
 
-    fluid.add_density(N/2, N/2, 200)
-    fluid.add_velocity(N/2, N/2, 100, 100)
+    fluid.add_density(GRID_SIZE/2, GRID_SIZE/2, 200)
+    fluid.add_velocity(GRID_SIZE/2, GRID_SIZE/2, 100, 100)
 
     t = 0
     while True:
-        # screen.erase()
-
         diffuse(1, fluid.vx0, fluid.vx, fluid.visc, fluid.dt)
         diffuse(2, fluid.vy0, fluid.vy, fluid.visc, fluid.dt)
 
@@ -82,9 +80,9 @@ def main():
     screen.endwin()
 
 
-def show(*args, **kwargs):
-    print(*args, file=DEBUG)
-    pass
+def plog(*args, **kwargs):
+    if DEBUG in globals():
+        print(*args, file=DEBUG)
 
 
 class Screen:
@@ -115,7 +113,7 @@ class Screen:
             r, g, b = colormap.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
-                show('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
+                plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
         assert colormap.N == 256
@@ -128,7 +126,7 @@ class Screen:
 
             ret = self._ncurses.init_extended_pair(pair_num, fg, bg)
             if ret != 0:
-                show('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
+                plog('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
 
     def addstr(self, y, x, text, pair_num):
@@ -140,12 +138,12 @@ class Screen:
         pair_num_pt = ct.c_int(pair_num)
         ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
         if ret != 0:
-            show('attr_set error %d, pair_num: %d' % (ret, pair_num))
+            plog('attr_set error %d, pair_num: %d' % (ret, pair_num))
             raise RuntimeError
 
         ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
         if ret != 0:
-            show('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
+            plog('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
             raise RuntimeError
 
     def refresh(self):
@@ -159,24 +157,24 @@ class Screen:
             ch = self._ncurses.getch()
         self._ncurses.endwin()
 
-        show('The end.')
+        plog('The end.')
 
 
 class Fluid:
     def __init__(self, dt, diffusion, viscosity):
-        self.size = N
+        self.size = GRID_SIZE
         self.dt = dt                            # time step
         self.diff = diffusion                   # diffusion - dyfuzja
         self.visc = viscosity                   # viscosity - lepkość
 
-        self.s = np.zeros(shape=(N, N))         # prev density
-        self.density = np.zeros(shape=(N, N))
+        self.s = np.zeros(shape=(GRID_SIZE, GRID_SIZE))         # prev density
+        self.density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx = np.zeros(shape=(N, N))
-        self.vy = np.zeros(shape=(N, N))
+        self.vx = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.vy = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx0 = np.zeros(shape=(N, N))       # prev velocity X
-        self.vy0 = np.zeros(shape=(N, N))       # prev velocity Y
+        self.vx0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))       # prev velocity X
+        self.vy0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))       # prev velocity Y
 
     def add_density(self, x, y, amount):
         self.density[int(y), int(x)] += amount
@@ -206,8 +204,8 @@ def render_fluid(screen, fluid):
     screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, str(max_val) + '   ', 255)
     screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, str(np.max(fluid.density)) + '   ', 255)
 
-    for i in range(N):
-        for j in range(0, N, 2):
+    for i in range(GRID_SIZE):
+        for j in range(0, GRID_SIZE, 2):
             bg = int((fluid.density[j, i] * 20) % NUM_OF_COLORS)
             fg = int((fluid.density[j+1, i] * 20) % NUM_OF_COLORS)
             # if np.isinf(ddd[j, i]):
@@ -236,45 +234,45 @@ def render_fluid(screen, fluid):
 
 
 def diffuse(b,  x, x0, diff, dt):
-    a = dt * diff * (N - 2) * (N - 2)
+    a = dt * diff * (GRID_SIZE - 2) * (GRID_SIZE - 2)
     linear_solver(b, x, x0, a, 1 + 4 * a)
 
 
 def linear_solver(b, x, x0, a, c):
     cRecip = 1 / c
     for k in range(ITERATIONS):
-        for j in range(1, N - 1):
-            for i in range(1, N - 1):
+        for j in range(1, GRID_SIZE - 1):
+            for i in range(1, GRID_SIZE - 1):
                 x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * cRecip
 
     set_boundry(b, x)
 
 
 def project(velocX, velocY, p, div):
-    for j in range(1, N - 1):
-        for i in range(1, N - 1):
-            div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) / N
+    for j in range(1, GRID_SIZE - 1):
+        for i in range(1, GRID_SIZE - 1):
+            div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) / GRID_SIZE
             p[j, i] = 0
 
     set_boundry(0, div)
     set_boundry(0, p)
     linear_solver(0, p, div, 1, 4)
 
-    for j in range(1, N - 1):
-        for i in range(1, N - 1):
-            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) * N
-            velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) * N
+    for j in range(1, GRID_SIZE - 1):
+        for i in range(1, GRID_SIZE - 1):
+            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) * GRID_SIZE
+            velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) * GRID_SIZE
 
     set_boundry(1, velocX)
     set_boundry(2, velocY)
 
 
 def advect(b, d, d0, velocX, velocY, dt):
-    dtx = dt * (N - 2)
-    dty = dt * (N - 2)
+    dtx = dt * (GRID_SIZE - 2)
+    dty = dt * (GRID_SIZE - 2)
 
-    for j in range(1, N-1):
-        for i in range(1, N-1):
+    for j in range(1, GRID_SIZE-1):
+        for i in range(1, GRID_SIZE-1):
             tmp1 = dtx * velocX[j, i]
             tmp2 = dty * velocY[j, i]
             x    = i - tmp1
@@ -282,14 +280,14 @@ def advect(b, d, d0, velocX, velocY, dt):
 
             if x < 0.5:
                 x = 0.5
-            if x > (N-1-1) + 0.5:
-                x = (N-1-1) + 0.5
+            if x > (GRID_SIZE-1-1) + 0.5:
+                x = (GRID_SIZE-1-1) + 0.5
             i0 = np.floor(x)
             i1 = i0 + 1.0
             if y < 0.5:
                 y = 0.5
-            if y > (N-1-1) + 0.5:
-                y = (N-1-1) + 0.5
+            if y > (GRID_SIZE-1-1) + 0.5:
+                y = (GRID_SIZE-1-1) + 0.5
             j0 = np.floor(y)
             j1 = j0 + 1.0
 
@@ -310,18 +308,18 @@ def advect(b, d, d0, velocX, velocY, dt):
 
 
 def set_boundry(b, x):
-    for i in range(N-1):
+    for i in range(GRID_SIZE-1):
         if b == 2:
             x[0, i] = -x[1, i]
         else:
             x[0, i] = x[1, i]
 
         if b == 2:
-            x[N-1, i] = -x[N-2, i]
+            x[GRID_SIZE-1, i] = -x[GRID_SIZE-2, i]
         else:
-            x[N-1, i] = x[N-2, i]
+            x[GRID_SIZE-1, i] = x[GRID_SIZE-2, i]
 
-    for j in range(1, N-1):
+    for j in range(1, GRID_SIZE-1):
         if b == 1:
             x[j, 0] = -x[j, 1]
         else:
@@ -333,9 +331,9 @@ def set_boundry(b, x):
             x[j, 0] = x[j, 1]
 
     x[0, 0] = 0.5 * (x[0, 1] + x[1, 0])
-    x[N-1, 0] = 0.5 * (x[N-1, 1] + x[N-2, 0])
-    x[0, N-1] = 0.5 * (x[0, N-2] + x[1, N-1])
-    x[N-1, N-1] = 0.5 * (x[N-1, N-2] + x[N-2, N-1])
+    x[GRID_SIZE-1, 0] = 0.5 * (x[GRID_SIZE-1, 1] + x[GRID_SIZE-2, 0])
+    x[0, GRID_SIZE-1] = 0.5 * (x[0, GRID_SIZE-2] + x[1, GRID_SIZE-1])
+    x[GRID_SIZE-1, GRID_SIZE-1] = 0.5 * (x[GRID_SIZE-1, GRID_SIZE-2] + x[GRID_SIZE-2, GRID_SIZE-1])
 
 
 if __name__ == '__main__':
