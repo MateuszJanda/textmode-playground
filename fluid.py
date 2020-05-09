@@ -274,7 +274,7 @@ def diffuse(b, x, x0, diff, dt):
 
 def linear_solver(b, x, x0, a, c):
     """
-    Solving a linear differential equation.
+    Solving a system of linear differential equation.
     """
     cRecip = 1 / c
     for k in range(ITERATIONS):
@@ -353,37 +353,37 @@ def advect(b, d, d0, velocX, velocY, dt):
     set_boundry(b, d)
 
 
-def set_boundry(b, x):
+def set_boundry(b, matrix):
     """
     Keep fluid from leaking out of the box. Every velocity in the layer next to
     this outer layer is mirrored.
     """
-    for i in range(FLUID_SIZE-1):
+    for i in range(1, FLUID_SIZE-1):
         if b == 2:
-            x[0, i] = -x[1, i]
+            matrix[0, i] = -matrix[1, i]
         else:
-            x[0, i] = x[1, i]
+            matrix[0, i] = matrix[1, i]
 
         if b == 2:
-            x[FLUID_SIZE-1, i] = -x[FLUID_SIZE-2, i]
+            matrix[FLUID_SIZE-1, i] = -matrix[FLUID_SIZE-2, i]
         else:
-            x[FLUID_SIZE-1, i] = x[FLUID_SIZE-2, i]
+            matrix[FLUID_SIZE-1, i] = matrix[FLUID_SIZE-2, i]
 
     for j in range(1, FLUID_SIZE-1):
         if b == 1:
-            x[j, 0] = -x[j, 1]
+            matrix[j, 0] = -matrix[j, 1]
         else:
-            x[j, 0] = x[j, 1]
+            matrix[j, 0] = matrix[j, 1]
 
         if b == 1:
-            x[j, 0] = -x[j, 1]
+            matrix[j, 0] = -matrix[j, 1]
         else:
-            x[j, 0] = x[j, 1]
+            matrix[j, 0] = matrix[j, 1]
 
-    x[0, 0] = 0.5 * (x[0, 1] + x[1, 0])
-    x[FLUID_SIZE-1, 0] = 0.5 * (x[FLUID_SIZE-1, 1] + x[FLUID_SIZE-2, 0])
-    x[0, FLUID_SIZE-1] = 0.5 * (x[0, FLUID_SIZE-2] + x[1, FLUID_SIZE-1])
-    x[FLUID_SIZE-1, FLUID_SIZE-1] = 0.5 * (x[FLUID_SIZE-1, FLUID_SIZE-2] + x[FLUID_SIZE-2, FLUID_SIZE-1])
+    matrix[0, 0]                       = 0.5 * (matrix[0, 1] + matrix[1, 0])
+    matrix[FLUID_SIZE-1, 0]            = 0.5 * (matrix[FLUID_SIZE-1, 1] + matrix[FLUID_SIZE-2, 0])
+    matrix[0, FLUID_SIZE-1]            = 0.5 * (matrix[0, FLUID_SIZE-2] + matrix[1, FLUID_SIZE-1])
+    matrix[FLUID_SIZE-1, FLUID_SIZE-1] = 0.5 * (matrix[FLUID_SIZE-1, FLUID_SIZE-2] + matrix[FLUID_SIZE-2, FLUID_SIZE-1])
 
 
 if __name__ == '__main__':
