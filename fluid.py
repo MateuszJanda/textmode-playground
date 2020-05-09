@@ -28,7 +28,7 @@ import numpy as np
 
 
 # Engine parameters
-FLUID_SIZE = 48
+GRID_SIZE = 46+2         # Grid size with boundaries around fluid
 ITERATIONS = 4
 
 # Screen parameters
@@ -48,8 +48,8 @@ def main():
 
     fluid = Fluid(diffusion=0, viscosity=0)
 
-    fluid.add_density(x=FLUID_SIZE//2, y=FLUID_SIZE//2, amount=200)
-    fluid.add_velocity(x=FLUID_SIZE//2, y=FLUID_SIZE//2, vel_x=100, vel_y=100)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=100, vel_y=100)
 
     # Printaquarium borders
     render_aquarium_borders(screen)
@@ -205,14 +205,14 @@ class Fluid:
         self.diff = diffusion                   # diffusion - dyfuzja
         self.visc = viscosity                   # viscosity - lepkość
 
-        self.s = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))     # prev density
-        self.density = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))
+        self.s = np.zeros(shape=(GRID_SIZE, GRID_SIZE))     # prev density
+        self.density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))
-        self.vy = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))
+        self.vx = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.vy = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx0 = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))   # prev velocity X
-        self.vy0 = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))   # prev velocity Y
+        self.vx0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity X
+        self.vy0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity Y
 
     def add_density(self, x, y, amount):
         self.density[y, x] += amount
@@ -245,8 +245,8 @@ def render_fluid(screen, fluid):
     screen.addstr(4 + y_shift, 51 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
 
     # Print fluid
-    for i in range(FLUID_SIZE):
-        for j in range(0, FLUID_SIZE, 2):
+    for i in range(GRID_SIZE):
+        for j in range(0, GRID_SIZE, 2):
             bg, fg = norm_dens[j:j+2, i]
             pair_num = screen.colors_to_pair_num(fg, bg)
             screen.addstr(j//2 + y_shift, i + x_shift, LOWER_HALF_BLOCK, pair_num)
@@ -254,13 +254,13 @@ def render_fluid(screen, fluid):
 
 def render_aquarium_borders(screen):
     """Render aquarium borders."""
-    vertical_border = '+' + '-' * FLUID_SIZE + '+'
+    vertical_border = '+' + '-' * GRID_SIZE + '+'
     screen.addstr(0 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
-    screen.addstr(FLUID_SIZE//2 + 1 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
+    screen.addstr(GRID_SIZE//2 + 1 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
 
-    for y in range(FLUID_SIZE//2):
+    for y in range(GRID_SIZE//2):
         screen.addstr(y + 1 + Y_SHIFT, 0 + X_SHIFT, '|')
-        screen.addstr(y + 1 + Y_SHIFT, FLUID_SIZE + 1 + X_SHIFT, '|')
+        screen.addstr(y + 1 + Y_SHIFT, GRID_SIZE + 1 + X_SHIFT, '|')
 
 
 def diffuse(b, x, x0, diff, dt):
@@ -268,7 +268,7 @@ def diffuse(b, x, x0, diff, dt):
     Diffusion is the net movement of anything (for example dye) from
     a region of higher concentration to a region of lower concentration.
     """
-    a = dt * diff * (FLUID_SIZE - 2) * (FLUID_SIZE - 2)
+    a = dt * diff * (GRID_SIZE - 2) * (GRID_SIZE - 2)
     linear_solver(b, x, x0, a, 1 + 4 * a)
 
 
@@ -278,8 +278,8 @@ def linear_solver(b, x, x0, a, c):
     """
     cRecip = 1 / c
     for k in range(ITERATIONS):
-        for j in range(1, FLUID_SIZE - 1):
-            for i in range(1, FLUID_SIZE - 1):
+        for j in range(1, GRID_SIZE - 1):
+            for i in range(1, GRID_SIZE - 1):
                 x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * cRecip
 
     set_boundry(b, x)
@@ -291,19 +291,20 @@ def project(velocX, velocY, p, div):
     in each cell has to stay constant. Amount of fluid going in has must be
     equal to the amount of fluid going out of cell.
     """
-    for j in range(1, FLUID_SIZE - 1):
-        for i in range(1, FLUID_SIZE - 1):
-            div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) / FLUID_SIZE
+    cell_size = 1/GRID_SIZE
+    for j in range(1, GRID_SIZE - 1):
+        for i in range(1, GRID_SIZE - 1):
+            div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) * cell_size
             p[j, i] = 0
 
     set_boundry(0, div)
     set_boundry(0, p)
     linear_solver(0, p, div, 1, 4)
 
-    for j in range(1, FLUID_SIZE - 1):
-        for i in range(1, FLUID_SIZE - 1):
-            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) * FLUID_SIZE
-            velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) * FLUID_SIZE
+    for j in range(1, GRID_SIZE - 1):
+        for i in range(1, GRID_SIZE - 1):
+            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) / cell_size
+            velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) / cell_size
 
     set_boundry(1, velocX)
     set_boundry(2, velocY)
@@ -314,11 +315,11 @@ def advect(b, d, d0, velocX, velocY, dt):
     Advection is the transport of a substance or quantity by fluid in this way
     that velocity of transported substance is equal to velocity of fluid.
     """
-    dtx = dt * (FLUID_SIZE - 2)
-    dty = dt * (FLUID_SIZE - 2)
+    dtx = dt * (GRID_SIZE - 2)
+    dty = dt * (GRID_SIZE - 2)
 
-    for j in range(1, FLUID_SIZE-1):
-        for i in range(1, FLUID_SIZE-1):
+    for j in range(1, GRID_SIZE-1):
+        for i in range(1, GRID_SIZE-1):
             tmp1 = dtx * velocX[j, i]
             tmp2 = dty * velocY[j, i]
             x = i - tmp1
@@ -326,14 +327,14 @@ def advect(b, d, d0, velocX, velocY, dt):
 
             if x < 0.5:
                 x = 0.5
-            if x > (FLUID_SIZE-1-1) + 0.5:
-                x = (FLUID_SIZE-1-1) + 0.5
+            if x > (GRID_SIZE-1-1) + 0.5:
+                x = (GRID_SIZE-1-1) + 0.5
             i0 = np.floor(x)
             i1 = i0 + 1.0
             if y < 0.5:
                 y = 0.5
-            if y > (FLUID_SIZE-1-1) + 0.5:
-                y = (FLUID_SIZE-1-1) + 0.5
+            if y > (GRID_SIZE-1-1) + 0.5:
+                y = (GRID_SIZE-1-1) + 0.5
             j0 = np.floor(y)
             j1 = j0 + 1.0
 
@@ -358,18 +359,18 @@ def set_boundry(b, matrix):
     Keep fluid from leaking out of the box. Every velocity in the layer next to
     this outer layer is mirrored.
     """
-    for i in range(1, FLUID_SIZE-1):
+    for i in range(1, GRID_SIZE-1):
         if b == 2:
             matrix[0, i] = -matrix[1, i]
         else:
             matrix[0, i] = matrix[1, i]
 
         if b == 2:
-            matrix[FLUID_SIZE-1, i] = -matrix[FLUID_SIZE-2, i]
+            matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         else:
-            matrix[FLUID_SIZE-1, i] = matrix[FLUID_SIZE-2, i]
+            matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
-    for j in range(1, FLUID_SIZE-1):
+    for j in range(1, GRID_SIZE-1):
         if b == 1:
             matrix[j, 0] = -matrix[j, 1]
         else:
@@ -381,9 +382,9 @@ def set_boundry(b, matrix):
             matrix[j, 0] = matrix[j, 1]
 
     matrix[0, 0]                       = 0.5 * (matrix[0, 1] + matrix[1, 0])
-    matrix[FLUID_SIZE-1, 0]            = 0.5 * (matrix[FLUID_SIZE-1, 1] + matrix[FLUID_SIZE-2, 0])
-    matrix[0, FLUID_SIZE-1]            = 0.5 * (matrix[0, FLUID_SIZE-2] + matrix[1, FLUID_SIZE-1])
-    matrix[FLUID_SIZE-1, FLUID_SIZE-1] = 0.5 * (matrix[FLUID_SIZE-1, FLUID_SIZE-2] + matrix[FLUID_SIZE-2, FLUID_SIZE-1])
+    matrix[GRID_SIZE-1, 0]            = 0.5 * (matrix[GRID_SIZE-1, 1] + matrix[GRID_SIZE-2, 0])
+    matrix[0, GRID_SIZE-1]            = 0.5 * (matrix[0, GRID_SIZE-2] + matrix[1, GRID_SIZE-1])
+    matrix[GRID_SIZE-1, GRID_SIZE-1] = 0.5 * (matrix[GRID_SIZE-1, GRID_SIZE-2] + matrix[GRID_SIZE-2, GRID_SIZE-1])
 
 
 if __name__ == '__main__':
