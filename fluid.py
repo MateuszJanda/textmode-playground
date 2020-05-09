@@ -32,7 +32,8 @@ GRID_SIZE = 48
 ITERATIONS = 4
 
 # Screen parameters
-NUM_OF_COLORS = 256
+NUM_OF_COLORS = 254
+SPARE_FOR_DEFAULT_COLORS = 2
 X_SHIFT = 0
 Y_SHIFT = 0
 LOWER_HALF_BLOCK = u'\u2584'
@@ -43,7 +44,7 @@ sys.stderr = DEBUG
 
 
 def main():
-    screen = Screen(colormap=cm.viridis)
+    screen = Screen(colormap=cm.cividis)
 
     fluid = Fluid(diffusion=0, viscosity=0)
 
@@ -115,20 +116,18 @@ class Screen:
 
     def _init_colors(self, colormap):
         """Initialize color pairs based on matplotlib colormap."""
-        assert colormap.N == NUM_OF_COLORS, "We cant initialize more than 256*256 pairs"
+        assert colormap.N == NUM_OF_COLORS + SPARE_FOR_DEFAULT_COLORS, "We cant initialize more than 256*256 pairs"
 
-        SPARE_FOR_DEFAULT_COLORS = 2
-
-        for color_num in range(colormap.N-SPARE_FOR_DEFAULT_COLORS):
+        for color_num in range(NUM_OF_COLORS):
             r, g, b = colormap.colors[color_num]
             ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
-        for bg, fg in it.product(range(colormap.N-SPARE_FOR_DEFAULT_COLORS), range(colormap.N-SPARE_FOR_DEFAULT_COLORS)):
-            # Start from 1, not from reserved 0
-            pair_num = bg * colormap.N + fg + 1
+        for bg, fg in it.product(range(NUM_OF_COLORS), range(NUM_OF_COLORS)):
+            # Start from 1 (0 is reserved by ncurses)
+            pair_num = colors_to_pair_num(fg, bg)
 
             # Pair number 0 is reserved by lib, and can't be initialized
             if pair_num == 0:
@@ -164,7 +163,7 @@ class Screen:
 
     def addstr(self, y, x, text, pair_num=0):
         """
-        addstr - similar to curses.addstr function, however pari_num shouldn't
+        addstr - similar to curses.addstr function, however pair_num shouldn't
         be converted by curses.color_pair or similar.
         """
         pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
@@ -215,30 +214,36 @@ class Fluid:
 
 def colors_to_pair_num(foreground, background):
     """Determine pair number for two colors."""
-    pair_num = (background*NUM_OF_COLORS + foreground) % NUM_OF_COLORS**2
+    pair_num = int(background) * NUM_OF_COLORS + int(foreground) + 1
     if pair_num == 0:
         pair_num = 1
-    return int(pair_num)
+    return pair_num
 
 
 def render_fluid(screen, fluid):
     """Render fluid."""
+    # Normalize density array
     norml_dens = (fluid.density * 80) + 1
     norml_dens[norml_dens>253] = 253
     norml_dens = norml_dens.astype(int)
 
-    screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, '█', np.max(norml_dens))
+    # Print debug info
+    bg, fg = norml_dens[0:2, 0]
+    pair_num = colors_to_pair_num(fg, bg)
+    screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+    screen.addstr(0 + Y_SHIFT, 53 + X_SHIFT, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
+
     screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, 'Max     : %6.4f      ' % np.max(fluid.density))
     screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, 'Max norm: %d  ' % np.max(norml_dens))
     screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, 'Min     : %6.4f      ' %  np.min(fluid.density))
     screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, 'Min norm: %d  ' % np.min(norml_dens))
 
+    # Print fluid
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
             bg, fg = norml_dens[j:j+2, i]
-
             pair_num = colors_to_pair_num(fg, bg)
-            screen.addstr(int(j/2) + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
+            screen.addstr(j//2 + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
 
 
 def diffuse(b, x, x0, diff, dt):
