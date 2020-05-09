@@ -130,7 +130,7 @@ class Screen:
 
         for bg, fg in it.product(range(NUM_OF_COLORS), range(NUM_OF_COLORS)):
             # Start from 1 (0 is reserved by ncurses)
-            pair_num = colors_to_pair_num(fg, bg)
+            pair_num = self.colors_to_pair_num(fg, bg)
 
             # Pair number 0 is reserved by lib, and can't be initialized
             if pair_num == 0:
@@ -181,6 +181,13 @@ class Screen:
             plog('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
             raise RuntimeError
 
+    def colors_to_pair_num(self, foreground, background):
+        """Determine pair number for two colors."""
+        pair_num = int(background) * NUM_OF_COLORS + int(foreground) + 1
+        if pair_num == 0:
+            pair_num = 1
+        return pair_num
+
     def refresh(self):
         """Refresh screen."""
         self._ncurses.refresh()
@@ -215,14 +222,6 @@ class Fluid:
         self.vy[y, x] += vel_y
 
 
-def colors_to_pair_num(foreground, background):
-    """Determine pair number for two colors."""
-    pair_num = int(background) * NUM_OF_COLORS + int(foreground) + 1
-    if pair_num == 0:
-        pair_num = 1
-    return pair_num
-
-
 def render_fluid(screen, fluid):
     """Render fluid."""
     # Normalize density array
@@ -235,7 +234,7 @@ def render_fluid(screen, fluid):
 
     # Print debug info
     bg, fg = norm_dens[0:2, 0]
-    pair_num = colors_to_pair_num(fg, bg)
+    pair_num = screen.colors_to_pair_num(fg, bg)
     screen.addstr(0 + y_shift, 51 + x_shift, LOWER_HALF_BLOCK, pair_num)
     screen.addstr(0 + y_shift, 53 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
 
@@ -248,7 +247,7 @@ def render_fluid(screen, fluid):
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
             bg, fg = norm_dens[j:j+2, i]
-            pair_num = colors_to_pair_num(fg, bg)
+            pair_num = screen.colors_to_pair_num(fg, bg)
             screen.addstr(j//2 + y_shift, i + x_shift, LOWER_HALF_BLOCK, pair_num)
 
 
