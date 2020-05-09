@@ -223,25 +223,25 @@ def colors_to_pair_num(foreground, background):
 def render_fluid(screen, fluid):
     """Render fluid."""
     # Normalize density array
-    norml_dens = (fluid.density * 80) + 1
-    norml_dens[norml_dens>253] = 253
-    norml_dens = norml_dens.astype(int)
+    norm_dens = fluid.density * 80
+    norm_dens[norm_dens>253] = 253
+    norm_dens = norm_dens.astype(int)
 
     # Print debug info
-    bg, fg = norml_dens[0:2, 0]
+    bg, fg = norm_dens[0:2, 0]
     pair_num = colors_to_pair_num(fg, bg)
     screen.addstr(0 + Y_SHIFT, 51 + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
     screen.addstr(0 + Y_SHIFT, 53 + X_SHIFT, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
 
     screen.addstr(1 + Y_SHIFT, 51 + X_SHIFT, 'Max     : %6.4f      ' % np.max(fluid.density))
-    screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, 'Max norm: %d  ' % np.max(norml_dens))
+    screen.addstr(2 + Y_SHIFT, 51 + X_SHIFT, 'Max norm: %d  ' % np.max(norm_dens))
     screen.addstr(3 + Y_SHIFT, 51 + X_SHIFT, 'Min     : %6.4f      ' %  np.min(fluid.density))
-    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, 'Min norm: %d  ' % np.min(norml_dens))
+    screen.addstr(4 + Y_SHIFT, 51 + X_SHIFT, 'Min norm: %d  ' % np.min(norm_dens))
 
     # Print fluid
     for i in range(GRID_SIZE):
         for j in range(0, GRID_SIZE, 2):
-            bg, fg = norml_dens[j:j+2, i]
+            bg, fg = norm_dens[j:j+2, i]
             pair_num = colors_to_pair_num(fg, bg)
             screen.addstr(j//2 + Y_SHIFT, i + X_SHIFT, LOWER_HALF_BLOCK, pair_num)
 
