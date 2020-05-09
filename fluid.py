@@ -264,11 +264,18 @@ def render_aquarium_borders(screen):
 
 
 def diffuse(b, x, x0, diff, dt):
+    """
+    Diffusion is the net movement of anything (for example dye) from
+    a region of higher concentration to a region of lower concentration.
+    """
     a = dt * diff * (FLUID_SIZE - 2) * (FLUID_SIZE - 2)
     linear_solver(b, x, x0, a, 1 + 4 * a)
 
 
 def linear_solver(b, x, x0, a, c):
+    """
+    Solving a linear differential equation.
+    """
     cRecip = 1 / c
     for k in range(ITERATIONS):
         for j in range(1, FLUID_SIZE - 1):
@@ -279,6 +286,11 @@ def linear_solver(b, x, x0, a, c):
 
 
 def project(velocX, velocY, p, div):
+    """
+    Keep all cells in equilibrium. For incompressible fluids amount of fluid
+    in each cell has to stay constant. Amount of fluid going in has must be
+    equal to the amount of fluid going out of cell.
+    """
     for j in range(1, FLUID_SIZE - 1):
         for i in range(1, FLUID_SIZE - 1):
             div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) / FLUID_SIZE
@@ -298,6 +310,10 @@ def project(velocX, velocY, p, div):
 
 
 def advect(b, d, d0, velocX, velocY, dt):
+    """
+    Advection is the transport of a substance or quantity by fluid in this way
+    that velocity of transported substance is equal to velocity of fluid.
+    """
     dtx = dt * (FLUID_SIZE - 2)
     dty = dt * (FLUID_SIZE - 2)
 
@@ -338,6 +354,10 @@ def advect(b, d, d0, velocX, velocY, dt):
 
 
 def set_boundry(b, x):
+    """
+    Keep fluid from leaking out of the box. Every velocity in the layer next to
+    this outer layer is mirrored.
+    """
     for i in range(FLUID_SIZE-1):
         if b == 2:
             x[0, i] = -x[1, i]
