@@ -69,6 +69,10 @@ def main():
 
         project(fluid.vel_x, fluid.vel_y, fluid.prev_vel_x, fluid.prev_vel_y)
 
+        # We try to find the densities which, when diffused backward in time,
+        # gives the density we started with.
+        # For each grid cell of the latter we trace the cell’s center
+        # position backwards through the velocity field.
         diffuse(0, fluid.prev_density, fluid.density, fluid.diffusion, dt)
         advect(0, fluid.density, fluid.prev_density, fluid.vel_x, fluid.vel_y, dt)
 
@@ -285,7 +289,7 @@ def linear_solver(b, x, x0, a, c):
     set_boundry(b, x)
 
 
-def project(velocX, velocY, p, div):
+def project(vel_x, vel_y, p, div):
     """
     Keep all cells in equilibrium. For incompressible fluids amount of fluid
     in each cell has to stay constant. Amount of fluid going in has must be
@@ -294,7 +298,7 @@ def project(velocX, velocY, p, div):
     cell_size = 1 / (GRID_SIZE - 2)
     for j in range(1, GRID_SIZE - 1):
         for i in range(1, GRID_SIZE - 1):
-            div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) * cell_size
+            div[j, i] = -0.5 * (vel_x[j, i+1] - vel_x[j, i-1] + vel_y[j+1, i] - vel_y[j-1, i]) * cell_size
             p[j, i] = 0
 
     set_boundry(0, div)
@@ -303,53 +307,46 @@ def project(velocX, velocY, p, div):
 
     for j in range(1, GRID_SIZE - 1):
         for i in range(1, GRID_SIZE - 1):
-            velocX[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) / cell_size
-            velocY[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) / cell_size
+            vel_x[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) / cell_size
+            vel_y[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) / cell_size
 
-    set_boundry(1, velocX)
-    set_boundry(2, velocY)
+    set_boundry(1, vel_x)
+    set_boundry(2, vel_y)
 
 
-def advect(b, d, d0, velocX, velocY, dt):
+def advect(b, d, d0, vel_x, vel_y, dt):
     """
     Advection is the transport of a substance or quantity by fluid in this way
     that velocity of transported substance is equal to velocity of fluid.
     """
-    dtx = dt * (GRID_SIZE - 2)
-    dty = dt * (GRID_SIZE - 2)
+    dt0 = dt * (GRID_SIZE - 2)
 
-    for j in range(1, GRID_SIZE-1):
-        for i in range(1, GRID_SIZE-1):
-            tmp1 = dtx * velocX[j, i]
-            tmp2 = dty * velocY[j, i]
-            x = i - tmp1
-            y = j - tmp2
+    for j in range(1, GRID_SIZE - 1):
+        for i in range(1, GRID_SIZE - 1):
+            x = i - dt0 * vel_x[j, i]
+            y = j - dt0 * vel_y[j, i]
 
             if x < 0.5:
                 x = 0.5
-            if x > (GRID_SIZE-1-1) + 0.5:
-                x = (GRID_SIZE-1-1) + 0.5
-            i0 = np.floor(x)
-            i1 = i0 + 1.0
+            elif x > (GRID_SIZE - 2) + 0.5:
+                x = (GRID_SIZE - 2) + 0.5
+            i0 = int(x)
+            i1 = i0 + 1
+
             if y < 0.5:
                 y = 0.5
-            if y > (GRID_SIZE-1-1) + 0.5:
-                y = (GRID_SIZE-1-1) + 0.5
-            j0 = np.floor(y)
-            j1 = j0 + 1.0
+            elif y > (GRID_SIZE - 2) + 0.5:
+                y = (GRID_SIZE - 2) + 0.5
+            j0 = int(y)
+            j1 = j0 + 1
 
             s1 = x - i0
             s0 = 1 - s1
             t1 = y - j0
             t0 = 1 - t1
 
-            i0i = int(i0)
-            i1i = int(i1)
-            j0i = int(j0)
-            j1i = int(j1)
-
-            d[j, i] = s0 * (t0 * d0[j0i, i0i] + t1 * d0[j1i, i0i]) + \
-                      s1 * (t0 * d0[j0i, i1i] + t1 * d0[j1i, i1i])
+            d[j, i] = s0 * (t0 * d0[j0, i0] + t1 * d0[j1, i0]) + \
+                      s1 * (t0 * d0[j0, i1] + t1 * d0[j1, i1])
 
     set_boundry(b, d)
 
