@@ -236,31 +236,31 @@ def render_fluid(screen, fluid):
     # Print debug info
     bg, fg = norm_dens[0:2, 0]
     pair_num = screen.colors_to_pair_num(fg, bg)
-    screen.addstr(0 + y_shift, 51 + x_shift, LOWER_HALF_BLOCK, pair_num)
-    screen.addstr(0 + y_shift, 53 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
+    screen.addstr(0 + y_shift, 48 + x_shift, LOWER_HALF_BLOCK, pair_num)
+    screen.addstr(0 + y_shift, 51 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
 
-    screen.addstr(1 + y_shift, 51 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
-    screen.addstr(2 + y_shift, 51 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
-    screen.addstr(3 + y_shift, 51 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
-    screen.addstr(4 + y_shift, 51 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
+    screen.addstr(1 + y_shift, 48 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
+    screen.addstr(2 + y_shift, 48 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
+    screen.addstr(3 + y_shift, 48 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
+    screen.addstr(4 + y_shift, 48 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
 
     # Print fluid
-    for i in range(GRID_SIZE):
-        for j in range(0, GRID_SIZE, 2):
+    for i in range(1, GRID_SIZE-1):
+        for j in range(1, GRID_SIZE-1, 2):
             bg, fg = norm_dens[j:j+2, i]
             pair_num = screen.colors_to_pair_num(fg, bg)
-            screen.addstr(j//2 + y_shift, i + x_shift, LOWER_HALF_BLOCK, pair_num)
+            screen.addstr(j//2 + y_shift, (i - 1) + x_shift, LOWER_HALF_BLOCK, pair_num)
 
 
 def render_aquarium_borders(screen):
     """Render aquarium borders."""
-    vertical_border = '+' + '-' * GRID_SIZE + '+'
+    vertical_border = '+' + '-' * (GRID_SIZE-2) + '+'
     screen.addstr(0 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
-    screen.addstr(GRID_SIZE//2 + 1 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
+    screen.addstr((GRID_SIZE-2)//2 + 1 + Y_SHIFT, 0 + X_SHIFT, vertical_border)
 
-    for y in range(GRID_SIZE//2):
+    for y in range((GRID_SIZE-2)//2):
         screen.addstr(y + 1 + Y_SHIFT, 0 + X_SHIFT, '|')
-        screen.addstr(y + 1 + Y_SHIFT, GRID_SIZE + 1 + X_SHIFT, '|')
+        screen.addstr(y + 1 + Y_SHIFT, (GRID_SIZE - 2) + 1 + X_SHIFT, '|')
 
 
 def diffuse(b, x, x0, diff, dt):
