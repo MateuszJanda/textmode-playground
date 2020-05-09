@@ -44,12 +44,12 @@ sys.stderr = DEBUG
 
 
 def main():
-    screen = Screen(colormap=cm.cividis)
+    screen = Screen(colormap=cm.viridis)
 
     fluid = Fluid(diffusion=0, viscosity=0)
 
-    fluid.add_density(x=FLUID_SIZE/2, y=FLUID_SIZE/2, amount=200)
-    fluid.add_velocity(x=FLUID_SIZE/2, y=FLUID_SIZE/2, vel_x=100, vel_y=100)
+    fluid.add_density(x=FLUID_SIZE//2, y=FLUID_SIZE//2, amount=200)
+    fluid.add_velocity(x=FLUID_SIZE//2, y=FLUID_SIZE//2, vel_x=100, vel_y=100)
 
     # Printaquarium borders
     render_aquarium_borders(screen)
@@ -154,7 +154,7 @@ class Screen:
             plog('init_extended_color error: %d, for color_num: %d' % (ret, bg_color_num))
             raise RuntimeError
 
-        r, g, b = 0.5, 0.5, 0.5
+        r, g, b = 0.6, 0.6, 0.6
         ret = self._ncurses.init_extended_color(fg_color_num, int(r*1000), int(g*1000), int(b*1000))
         if ret != 0:
             plog('init_extended_color error: %d, for color_num: %d' % (ret, fg_color_num))
@@ -215,11 +215,9 @@ class Fluid:
         self.vy0 = np.zeros(shape=(FLUID_SIZE, FLUID_SIZE))   # prev velocity Y
 
     def add_density(self, x, y, amount):
-        self.density[int(y), int(x)] += amount
+        self.density[y, x] += amount
 
     def add_velocity(self, x, y, vel_x, vel_y):
-        y = int(y)
-        x = int(x)
         self.vx[y, x] += vel_x
         self.vy[y, x] += vel_y
 
