@@ -59,18 +59,18 @@ def main():
     while True:
         tic = time.time()
 
-        diffuse(1, fluid.vx0, fluid.vx, fluid.visc, dt)
-        diffuse(2, fluid.vy0, fluid.vy, fluid.visc, dt)
+        diffuse(1, fluid.prev_vel_x, fluid.vel_x, fluid.viscosity, dt)
+        diffuse(2, fluid.prev_vel_y, fluid.vel_y, fluid.viscosity, dt)
 
-        project(fluid.vx0, fluid.vy0, fluid.vx, fluid.vy)
+        project(fluid.prev_vel_x, fluid.prev_vel_y, fluid.vel_x, fluid.vel_y)
 
-        advect(1, fluid.vx, fluid.vx0, fluid.vx0, fluid.vy0, dt)
-        advect(2, fluid.vy, fluid.vy0, fluid.vx0, fluid.vy0, dt)
+        advect(1, fluid.vel_x, fluid.prev_vel_x, fluid.prev_vel_x, fluid.prev_vel_y, dt)
+        advect(2, fluid.vel_y, fluid.prev_vel_y, fluid.prev_vel_x, fluid.prev_vel_y, dt)
 
-        project(fluid.vx, fluid.vy, fluid.vx0, fluid.vy0)
+        project(fluid.vel_x, fluid.vel_y, fluid.prev_vel_x, fluid.prev_vel_y)
 
-        diffuse(0, fluid.s, fluid.density, fluid.diff, dt)
-        advect(0, fluid.density, fluid.s, fluid.vx, fluid.vy, dt)
+        diffuse(0, fluid.prev_density, fluid.density, fluid.diffusion, dt)
+        advect(0, fluid.density, fluid.prev_density, fluid.vel_x, fluid.vel_y, dt)
 
         render_fluid(screen, fluid)
 
@@ -202,24 +202,24 @@ class Screen:
 
 class Fluid:
     def __init__(self, diffusion, viscosity):
-        self.diff = diffusion                   # diffusion - dyfuzja
-        self.visc = viscosity                   # viscosity - lepkość
+        self.diffusion = diffusion  # dyfuzja
+        self.viscosity = viscosity  # lepkość
 
-        self.s = np.zeros(shape=(GRID_SIZE, GRID_SIZE))     # prev density
+        self.prev_density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
         self.density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
-        self.vy = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.vel_x = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.prev_vel_x = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
-        self.vx0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity X
-        self.vy0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))   # prev velocity Y
+        self.vel_y = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.prev_vel_y = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
 
     def add_density(self, x, y, amount):
         self.density[y, x] += amount
 
     def add_velocity(self, x, y, vel_x, vel_y):
-        self.vx[y, x] += vel_x
-        self.vy[y, x] += vel_y
+        self.vel_x[y, x] += vel_x
+        self.vel_y[y, x] += vel_y
 
 
 def render_fluid(screen, fluid):
@@ -263,12 +263,12 @@ def render_aquarium_borders(screen):
         screen.addstr(y + 1 + Y_SHIFT, (GRID_SIZE - 2) + 1 + X_SHIFT, '|')
 
 
-def diffuse(b, x, x0, diff, dt):
+def diffuse(b, x, x0, diffusion, dt):
     """
     Diffusion is the net movement of anything (for example dye) from
     a region of higher concentration to a region of lower concentration.
     """
-    a = dt * diff * (GRID_SIZE - 2) * (GRID_SIZE - 2)
+    a = dt * diffusion * (GRID_SIZE - 2) * (GRID_SIZE - 2)
     linear_solver(b, x, x0, a, 1 + 4 * a)
 
 
@@ -291,7 +291,7 @@ def project(velocX, velocY, p, div):
     in each cell has to stay constant. Amount of fluid going in has must be
     equal to the amount of fluid going out of cell.
     """
-    cell_size = 1/GRID_SIZE
+    cell_size = 1 / (GRID_SIZE - 2)
     for j in range(1, GRID_SIZE - 1):
         for i in range(1, GRID_SIZE - 1):
             div[j, i] = -0.5 * (velocX[j, i+1] - velocX[j, i-1] + velocY[j+1, i] - velocY[j-1, i]) * cell_size
