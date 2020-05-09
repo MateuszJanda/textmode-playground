@@ -29,7 +29,7 @@ import numpy as np
 
 # Engine parameters
 GRID_SIZE = 46+2         # Grid size with boundaries around fluid
-ITERATIONS = 4
+SOLVER_ITERATIONS = 4
 
 # Screen parameters
 NUM_OF_COLORS = 254
@@ -59,6 +59,8 @@ def main():
     while True:
         tic = time.time()
 
+        # Velocity step
+
         diffuse(1, fluid.prev_vel_x, fluid.vel_x, fluid.viscosity, dt)
         diffuse(2, fluid.prev_vel_y, fluid.vel_y, fluid.viscosity, dt)
 
@@ -68,6 +70,8 @@ def main():
         advect(2, fluid.vel_y, fluid.prev_vel_y, fluid.prev_vel_x, fluid.prev_vel_y, dt)
 
         project(fluid.vel_x, fluid.vel_y, fluid.prev_vel_x, fluid.prev_vel_y)
+
+        # Density step
 
         # We try to find the densities which, when diffused backward in time,
         # gives the density we started with.
@@ -278,19 +282,22 @@ def diffuse(b, x, x0, diffusion, dt):
 
 def linear_solver(b, x, x0, a, c):
     """
-    Solving a system of linear differential equation.
+    Solving a system of linear differential equation using Gauss-Seidel
+    relaxation.
     """
-    cRecip = 1 / c
-    for k in range(ITERATIONS):
+    c_recip = 1 / c
+    for _ in range(SOLVER_ITERATIONS):
         for j in range(1, GRID_SIZE - 1):
             for i in range(1, GRID_SIZE - 1):
-                x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * cRecip
+                x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * c_recip
 
     set_boundry(b, x)
 
 
 def project(vel_x, vel_y, p, div):
     """
+    Forces the velocity to be mass conserving.
+
     Keep all cells in equilibrium. For incompressible fluids amount of fluid
     in each cell has to stay constant. Amount of fluid going in has must be
     equal to the amount of fluid going out of cell.
@@ -298,7 +305,7 @@ def project(vel_x, vel_y, p, div):
     cell_size = 1 / (GRID_SIZE - 2)
     for j in range(1, GRID_SIZE - 1):
         for i in range(1, GRID_SIZE - 1):
-            div[j, i] = -0.5 * (vel_x[j, i+1] - vel_x[j, i-1] + vel_y[j+1, i] - vel_y[j-1, i]) * cell_size
+            div[j, i] = -0.5 * cell_size * (vel_x[j, i+1] - vel_x[j, i-1] + vel_y[j+1, i] - vel_y[j-1, i])
             p[j, i] = 0
 
     set_boundry(0, div)
