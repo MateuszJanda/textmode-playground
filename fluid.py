@@ -49,7 +49,10 @@ def main():
     fluid = Fluid(diffusion=0, viscosity=0)
 
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=100, vel_y=100)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
+    fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
+    fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=00, vel_y=-100)
 
     # Printaquarium borders
     render_aquarium_borders(screen)
@@ -247,10 +250,13 @@ def render_fluid(screen, fluid):
     screen.addstr(0 + y_shift, 48 + x_shift, LOWER_HALF_BLOCK, pair_num)
     screen.addstr(0 + y_shift, 51 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
 
-    screen.addstr(1 + y_shift, 48 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
-    screen.addstr(2 + y_shift, 48 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
-    screen.addstr(3 + y_shift, 48 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
-    screen.addstr(4 + y_shift, 48 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
+    vel = (fluid.vel_y[GRID_SIZE//2][GRID_SIZE//2], fluid.vel_x[GRID_SIZE//2][GRID_SIZE//2])
+    screen.addstr(1 + y_shift, 48 + x_shift, 'velocity[y, x]: (%4.2f, %4.2f)  ' % vel)
+
+    screen.addstr(2 + y_shift, 48 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
+    screen.addstr(3 + y_shift, 48 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
+    screen.addstr(4 + y_shift, 48 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
+    screen.addstr(5 + y_shift, 48 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
 
     # Print fluid
     for i in range(1, GRID_SIZE-1):
@@ -385,9 +391,9 @@ def set_boundry(b, matrix):
         else:
             matrix[j, 0] = matrix[j, 1]
 
-    matrix[0, 0]                       = 0.5 * (matrix[0, 1] + matrix[1, 0])
-    matrix[GRID_SIZE-1, 0]            = 0.5 * (matrix[GRID_SIZE-1, 1] + matrix[GRID_SIZE-2, 0])
-    matrix[0, GRID_SIZE-1]            = 0.5 * (matrix[0, GRID_SIZE-2] + matrix[1, GRID_SIZE-1])
+    matrix[0, 0]                     = 0.5 * (matrix[0, 1] + matrix[1, 0])
+    matrix[GRID_SIZE-1, 0]           = 0.5 * (matrix[GRID_SIZE-1, 1] + matrix[GRID_SIZE-2, 0])
+    matrix[0, GRID_SIZE-1]           = 0.5 * (matrix[0, GRID_SIZE-2] + matrix[1, GRID_SIZE-1])
     matrix[GRID_SIZE-1, GRID_SIZE-1] = 0.5 * (matrix[GRID_SIZE-1, GRID_SIZE-2] + matrix[GRID_SIZE-2, GRID_SIZE-1])
 
 
