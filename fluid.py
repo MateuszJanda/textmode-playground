@@ -54,12 +54,12 @@ def main():
     fluid = Fluid(diffusion=0.001, viscosity=0)
 
     # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
-    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=20)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=200)
 
     # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
     # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
     # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE-2, vel_x=0, vel_y=-100)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE-2, vel_x=100, vel_y=-100)
 
     # Print aquarium borders
     render_aquarium_borders(screen)
@@ -69,7 +69,7 @@ def main():
     while True:
         tic = time.time()
 
-        burn(fluid)
+        # burn(fluid)
 
         # Velocity step
         fluid.swap_velocity()
@@ -403,22 +403,22 @@ def set_boundary(boundary, matrix):
     for i in range(1, GRID_SIZE-1):
         # Copy and mirror value from border - protection against leaking
         if boundary == BND_HORIZONTAL:
-            # matrix[0, i]           = -matrix[1, i]
+            matrix[0, i]           = -matrix[1, i]
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         # Copy from border
         else:
             # matrix[0, i]           = matrix[1, i]
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
-    # for j in range(1, GRID_SIZE-1):
-    #     # Copy and mirror value from border - protection against leaking
-    #     if boundary == BND_VERTICAL:
-    #         matrix[j, 0]           = -matrix[j, 1]
-    #         matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
-    #     # Copy from border
-    #     else:
-    #         matrix[j, 0]           = matrix[j, 1]
-    #         matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
+    for j in range(1, GRID_SIZE-1):
+        # Copy and mirror value from border - protection against leaking
+        if boundary == BND_VERTICAL:
+            matrix[j, 0]           = -matrix[j, 1]
+            matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
+        # Copy from border
+        else:
+            matrix[j, 0]           = matrix[j, 1]
+            matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
 
     # Corners
     matrix[0, 0]                     = 0.5 * (matrix[0, 1] + matrix[1, 0])
