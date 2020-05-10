@@ -53,10 +53,10 @@ def main():
     fluid = Fluid(diffusion=0, viscosity=0)
 
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
-    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
-    fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=-100, vel_y=-100)
+    # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
+    # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
+    # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=100, vel_y=100)
 
     # Printaquarium borders
     render_aquarium_borders(screen)
@@ -319,8 +319,8 @@ def project(vel_x, vel_y, p, div):
             div[j, i] = -0.5 * cell_size * (vel_x[j, i+1] - vel_x[j, i-1] + vel_y[j+1, i] - vel_y[j-1, i])
             p[j, i] = 0
 
-    set_boundary(0, div)
-    set_boundary(0, p)
+    set_boundary(BND_NONE, div)
+    set_boundary(BND_NONE, p)
     linear_solver(0, p, div, 1, 4)
 
     for j in range(1, GRID_SIZE - 1):
@@ -328,8 +328,8 @@ def project(vel_x, vel_y, p, div):
             vel_x[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) / cell_size
             vel_y[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) / cell_size
 
-    set_boundary(1, vel_x)
-    set_boundary(2, vel_y)
+    set_boundary(BND_VERTICAL, vel_x)
+    set_boundary(BND_HORIZONTAL, vel_y)
 
 
 def advect(boundary, d, d0, vel_x, vel_y, dt):
@@ -375,21 +375,26 @@ def set_boundary(boundary, matrix):
     this outer layer is mirrored.
     """
     for i in range(1, GRID_SIZE-1):
+        # Copy and mirror value from border - protection against leaking
         if boundary == BND_HORIZONTAL:
             matrix[0, i]           = -matrix[1, i]
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
+        # Copy from border
         else:
             matrix[0, i]           = matrix[1, i]
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
     for j in range(1, GRID_SIZE-1):
+        # Copy and mirror value from border - protection against leaking
         if boundary == BND_VERTICAL:
             matrix[j, 0]           = -matrix[j, 1]
             matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
+        # Copy from border
         else:
             matrix[j, 0]           = matrix[j, 1]
             matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
 
+    # Corners
     matrix[0, 0]                     = 0.5 * (matrix[0, 1] + matrix[1, 0])
     matrix[GRID_SIZE-1, 0]           = 0.5 * (matrix[GRID_SIZE-1, 1] + matrix[GRID_SIZE-2, 0])
     matrix[0, GRID_SIZE-1]           = 0.5 * (matrix[0, GRID_SIZE-2] + matrix[1, GRID_SIZE-1])
