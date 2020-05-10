@@ -52,7 +52,7 @@ def main():
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
     fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
     fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=00, vel_y=-100)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=-100, vel_y=-100)
 
     # Printaquarium borders
     render_aquarium_borders(screen)
@@ -245,7 +245,7 @@ def render_fluid(screen, fluid):
     x_shift = GRID_SIZE + X_SHIFT + 1
 
     # Print debug info
-    bg, fg = norm_dens[0:2, 0]
+    bg, fg = norm_dens[1:3, 1]
     pair_num = screen.colors_to_pair_num(fg, bg)
     screen.addstr(0 + y_shift, 0 + x_shift, LOWER_HALF_BLOCK, pair_num)
     screen.addstr(0 + y_shift, 3 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
@@ -372,25 +372,19 @@ def set_boundry(b, matrix):
     """
     for i in range(1, GRID_SIZE-1):
         if b == 2:
-            matrix[0, i] = -matrix[1, i]
-        else:
-            matrix[0, i] = matrix[1, i]
-
-        if b == 2:
+            matrix[0, i]           = -matrix[1, i]
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         else:
+            matrix[0, i]           = matrix[1, i]
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
     for j in range(1, GRID_SIZE-1):
         if b == 1:
-            matrix[j, 0] = -matrix[j, 1]
+            matrix[j, 0]           = -matrix[j, 1]
+            matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
         else:
-            matrix[j, 0] = matrix[j, 1]
-
-        if b == 1:
-            matrix[j, 0] = -matrix[j, 1]
-        else:
-            matrix[j, 0] = matrix[j, 1]
+            matrix[j, 0]           = matrix[j, 1]
+            matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
 
     matrix[0, 0]                     = 0.5 * (matrix[0, 1] + matrix[1, 0])
     matrix[GRID_SIZE-1, 0]           = 0.5 * (matrix[GRID_SIZE-1, 1] + matrix[GRID_SIZE-2, 0])
