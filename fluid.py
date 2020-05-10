@@ -21,6 +21,7 @@ Credits:
 import os
 import sys
 import time
+import random
 import itertools as it
 import ctypes as ct
 import matplotlib.cm as cm
@@ -50,13 +51,15 @@ sys.stderr = DEBUG
 def main():
     screen = Screen(colormap=cm.viridis)
 
-    fluid = Fluid(diffusion=0, viscosity=0)
+    fluid = Fluid(diffusion=0.001, viscosity=0)
 
-    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
+    # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=20)
+
     # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
     # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
     # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=100, vel_y=100)
+    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE-2, vel_x=0, vel_y=-100)
 
     # Print aquarium borders
     render_aquarium_borders(screen)
@@ -65,6 +68,8 @@ def main():
 
     while True:
         tic = time.time()
+
+        burn(fluid)
 
         # Velocity step
         fluid.swap_velocity()
@@ -99,6 +104,17 @@ def main():
         screen.refresh()
 
     screen.endwin()
+
+def burn(fluid):
+    for _ in range(10):
+        x = random.randint(1, GRID_SIZE-2)
+        y = random.randint(1, GRID_SIZE-2)
+        vel_x = random.randint(-3, 3)
+        vel_y = random.randint(-5, 3)
+        fluid.add_velocity(x, y, vel_x, vel_y)
+
+    a = random.randint(0, 5)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=a)
 
 
 def plog(*args, **kwargs):
@@ -250,7 +266,7 @@ class Fluid:
 def render_fluid(screen, fluid):
     """Render fluid."""
     # Normalize density array
-    norm_dens = fluid.density * 80
+    norm_dens = fluid.density * 50
     # Set max possible color
     norm_dens[norm_dens>=NUM_OF_COLORS] = NUM_OF_COLORS - 1
     norm_dens = norm_dens.astype(int)
@@ -387,22 +403,22 @@ def set_boundary(boundary, matrix):
     for i in range(1, GRID_SIZE-1):
         # Copy and mirror value from border - protection against leaking
         if boundary == BND_HORIZONTAL:
-            matrix[0, i]           = -matrix[1, i]
+            # matrix[0, i]           = -matrix[1, i]
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         # Copy from border
         else:
-            matrix[0, i]           = matrix[1, i]
+            # matrix[0, i]           = matrix[1, i]
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
-    for j in range(1, GRID_SIZE-1):
-        # Copy and mirror value from border - protection against leaking
-        if boundary == BND_VERTICAL:
-            matrix[j, 0]           = -matrix[j, 1]
-            matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
-        # Copy from border
-        else:
-            matrix[j, 0]           = matrix[j, 1]
-            matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
+    # for j in range(1, GRID_SIZE-1):
+    #     # Copy and mirror value from border - protection against leaking
+    #     if boundary == BND_VERTICAL:
+    #         matrix[j, 0]           = -matrix[j, 1]
+    #         matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
+    #     # Copy from border
+    #     else:
+    #         matrix[j, 0]           = matrix[j, 1]
+    #         matrix[j, GRID_SIZE-1] = matrix[j, GRID_SIZE-2]
 
     # Corners
     matrix[0, 0]                     = 0.5 * (matrix[0, 1] + matrix[1, 0])
