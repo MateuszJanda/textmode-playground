@@ -293,11 +293,10 @@ def linear_solver(b, x, x0, a, c):
     Solving a system of linear differential equation using Gauss-Seidel
     relaxation.
     """
-    c_recip = 1 / c
     for _ in range(SOLVER_ITERATIONS):
         for j in range(1, GRID_SIZE - 1):
             for i in range(1, GRID_SIZE - 1):
-                x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) * c_recip
+                x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) / c
 
     set_boundry(b, x)
 
