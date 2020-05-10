@@ -242,23 +242,25 @@ def render_fluid(screen, fluid):
     norm_dens = norm_dens.astype(int)
 
     y_shift = Y_SHIFT + 1
-    x_shift = X_SHIFT + 1
+    x_shift = GRID_SIZE + X_SHIFT + 1
 
     # Print debug info
     bg, fg = norm_dens[0:2, 0]
     pair_num = screen.colors_to_pair_num(fg, bg)
-    screen.addstr(0 + y_shift, 48 + x_shift, LOWER_HALF_BLOCK, pair_num)
-    screen.addstr(0 + y_shift, 51 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
+    screen.addstr(0 + y_shift, 0 + x_shift, LOWER_HALF_BLOCK, pair_num)
+    screen.addstr(0 + y_shift, 3 + x_shift, 'bg: %d fg: %d pair_num: %d  ' % (bg, fg, pair_num))
 
     vel = (fluid.vel_y[GRID_SIZE//2][GRID_SIZE//2], fluid.vel_x[GRID_SIZE//2][GRID_SIZE//2])
-    screen.addstr(1 + y_shift, 48 + x_shift, 'velocity[y, x]: (%4.2f, %4.2f)  ' % vel)
+    screen.addstr(1 + y_shift, 0 + x_shift, 'velocity[y, x]: (%4.2f, %4.2f)  ' % vel)
 
-    screen.addstr(2 + y_shift, 48 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
-    screen.addstr(3 + y_shift, 48 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
-    screen.addstr(4 + y_shift, 48 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
-    screen.addstr(5 + y_shift, 48 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
+    screen.addstr(2 + y_shift, 0 + x_shift, 'Max     : %6.4f      ' % np.max(fluid.density))
+    screen.addstr(3 + y_shift, 0 + x_shift, 'Max norm: %d  ' % np.max(norm_dens))
+    screen.addstr(4 + y_shift, 0 + x_shift, 'Min     : %6.4f      ' %  np.min(fluid.density))
+    screen.addstr(5 + y_shift, 0 + x_shift, 'Min norm: %d  ' % np.min(norm_dens))
 
     # Print fluid
+    x_shift = X_SHIFT + 1
+
     for i in range(1, GRID_SIZE-1):
         for j in range(1, GRID_SIZE-1, 2):
             bg, fg = norm_dens[j:j+2, i]
