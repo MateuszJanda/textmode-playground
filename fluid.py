@@ -67,12 +67,13 @@ def main():
         tic = time.time()
 
         # Velocity step
+        fluid.swap_velocity()
+        diffuse(BND_VERTICAL, fluid.vel_x, fluid.vel_x0, fluid.viscosity, dt)
+        diffuse(BND_HORIZONTAL, fluid.vel_y, fluid.vel_y0, fluid.viscosity, dt)
 
-        diffuse(BND_VERTICAL, fluid.vel_x0, fluid.vel_x, fluid.viscosity, dt)
-        diffuse(BND_HORIZONTAL, fluid.vel_y0, fluid.vel_y, fluid.viscosity, dt)
+        project(fluid.vel_x, fluid.vel_y, fluid.vel_x0, fluid.vel_y0)
 
-        project(fluid.vel_x0, fluid.vel_y0, fluid.vel_x, fluid.vel_y)
-
+        fluid.swap_velocity()
         advect(BND_VERTICAL, fluid.vel_x, fluid.vel_x0, fluid.vel_x0, fluid.vel_y0, dt)
         advect(BND_HORIZONTAL, fluid.vel_y, fluid.vel_y0, fluid.vel_x0, fluid.vel_y0, dt)
 
@@ -84,7 +85,9 @@ def main():
         # gives the density we started with.
         # For each grid cell of the latter we trace the cell’s center
         # position backwards through the velocity field.
-        diffuse(BND_NONE, fluid.density0, fluid.density, fluid.diffusion, dt)
+        fluid.swap_density()
+        diffuse(BND_NONE, fluid.density, fluid.density0, fluid.diffusion, dt)
+        fluid.swap_density()
         advect(BND_NONE, fluid.density, fluid.density0, fluid.vel_x, fluid.vel_y, dt)
 
         render_fluid(screen, fluid)
@@ -235,6 +238,13 @@ class Fluid:
     def add_velocity(self, x, y, vel_x, vel_y):
         self.vel_x[y, x] += vel_x
         self.vel_y[y, x] += vel_y
+
+    def swap_velocity(self):
+        self.vel_x0, self.vel_x = self.vel_x, self.vel_x0
+        self.vel_y0, self.vel_y = self.vel_y, self.vel_y0
+
+    def swap_density(self):
+        self.density0, self.density = self.density, self.density0
 
 
 def render_fluid(screen, fluid):
