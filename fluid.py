@@ -58,7 +58,7 @@ def main():
     # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
     fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE//2, vel_x=100, vel_y=100)
 
-    # Printaquarium borders
+    # Print aquarium borders
     render_aquarium_borders(screen)
 
     dt = 0.1
@@ -68,15 +68,15 @@ def main():
 
         # Velocity step
 
-        diffuse(BND_VERTICAL, fluid.prev_vel_x, fluid.vel_x, fluid.viscosity, dt)
-        diffuse(BND_HORIZONTAL, fluid.prev_vel_y, fluid.vel_y, fluid.viscosity, dt)
+        diffuse(BND_VERTICAL, fluid.vel_x0, fluid.vel_x, fluid.viscosity, dt)
+        diffuse(BND_HORIZONTAL, fluid.vel_y0, fluid.vel_y, fluid.viscosity, dt)
 
-        project(fluid.prev_vel_x, fluid.prev_vel_y, fluid.vel_x, fluid.vel_y)
+        project(fluid.vel_x0, fluid.vel_y0, fluid.vel_x, fluid.vel_y)
 
-        advect(BND_VERTICAL, fluid.vel_x, fluid.prev_vel_x, fluid.prev_vel_x, fluid.prev_vel_y, dt)
-        advect(BND_HORIZONTAL, fluid.vel_y, fluid.prev_vel_y, fluid.prev_vel_x, fluid.prev_vel_y, dt)
+        advect(BND_VERTICAL, fluid.vel_x, fluid.vel_x0, fluid.vel_x0, fluid.vel_y0, dt)
+        advect(BND_HORIZONTAL, fluid.vel_y, fluid.vel_y0, fluid.vel_x0, fluid.vel_y0, dt)
 
-        project(fluid.vel_x, fluid.vel_y, fluid.prev_vel_x, fluid.prev_vel_y)
+        project(fluid.vel_x, fluid.vel_y, fluid.vel_x0, fluid.vel_y0)
 
         # Density step
 
@@ -84,8 +84,8 @@ def main():
         # gives the density we started with.
         # For each grid cell of the latter we trace the cell’s center
         # position backwards through the velocity field.
-        diffuse(BND_NONE, fluid.prev_density, fluid.density, fluid.diffusion, dt)
-        advect(BND_NONE, fluid.density, fluid.prev_density, fluid.vel_x, fluid.vel_y, dt)
+        diffuse(BND_NONE, fluid.density0, fluid.density, fluid.diffusion, dt)
+        advect(BND_NONE, fluid.density, fluid.density0, fluid.vel_x, fluid.vel_y, dt)
 
         render_fluid(screen, fluid)
 
@@ -220,14 +220,14 @@ class Fluid:
         self.diffusion = diffusion  # dyfuzja
         self.viscosity = viscosity  # lepkość
 
-        self.prev_density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
         self.density = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.density0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))  # previous density
 
         self.vel_x = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
-        self.prev_vel_x = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.vel_x0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))    # previous velocity
 
         self.vel_y = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
-        self.prev_vel_y = np.zeros(shape=(GRID_SIZE, GRID_SIZE))
+        self.vel_y0 = np.zeros(shape=(GRID_SIZE, GRID_SIZE))    # previous velocity
 
     def add_density(self, x, y, amount):
         self.density[y, x] += amount
