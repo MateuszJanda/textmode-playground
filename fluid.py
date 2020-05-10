@@ -30,6 +30,10 @@ import numpy as np
 # Engine parameters
 GRID_SIZE = 46+2         # Grid size with boundaries around fluid
 SOLVER_ITERATIONS = 4
+BND_NONE = 0
+BND_VERTICAL = 1
+BND_HORIZONTAL = 2
+
 
 # Screen parameters
 NUM_OF_COLORS = 254
@@ -64,13 +68,13 @@ def main():
 
         # Velocity step
 
-        diffuse(1, fluid.prev_vel_x, fluid.vel_x, fluid.viscosity, dt)
-        diffuse(2, fluid.prev_vel_y, fluid.vel_y, fluid.viscosity, dt)
+        diffuse(BND_VERTICAL, fluid.prev_vel_x, fluid.vel_x, fluid.viscosity, dt)
+        diffuse(BND_HORIZONTAL, fluid.prev_vel_y, fluid.vel_y, fluid.viscosity, dt)
 
         project(fluid.prev_vel_x, fluid.prev_vel_y, fluid.vel_x, fluid.vel_y)
 
-        advect(1, fluid.vel_x, fluid.prev_vel_x, fluid.prev_vel_x, fluid.prev_vel_y, dt)
-        advect(2, fluid.vel_y, fluid.prev_vel_y, fluid.prev_vel_x, fluid.prev_vel_y, dt)
+        advect(BND_VERTICAL, fluid.vel_x, fluid.prev_vel_x, fluid.prev_vel_x, fluid.prev_vel_y, dt)
+        advect(BND_HORIZONTAL, fluid.vel_y, fluid.prev_vel_y, fluid.prev_vel_x, fluid.prev_vel_y, dt)
 
         project(fluid.vel_x, fluid.vel_y, fluid.prev_vel_x, fluid.prev_vel_y)
 
@@ -80,8 +84,8 @@ def main():
         # gives the density we started with.
         # For each grid cell of the latter we trace the cell’s center
         # position backwards through the velocity field.
-        diffuse(0, fluid.prev_density, fluid.density, fluid.diffusion, dt)
-        advect(0, fluid.density, fluid.prev_density, fluid.vel_x, fluid.vel_y, dt)
+        diffuse(BND_NONE, fluid.prev_density, fluid.density, fluid.diffusion, dt)
+        advect(BND_NONE, fluid.density, fluid.prev_density, fluid.vel_x, fluid.vel_y, dt)
 
         render_fluid(screen, fluid)
 
@@ -279,16 +283,16 @@ def render_aquarium_borders(screen):
         screen.addstr(y + 1 + Y_SHIFT, (GRID_SIZE - 2) + 1 + X_SHIFT, '|')
 
 
-def diffuse(b, x, x0, diffusion, dt):
+def diffuse(boundary, x, x0, diffusion, dt):
     """
     Diffusion is the net movement of anything (for example dye) from
     a region of higher concentration to a region of lower concentration.
     """
     a = dt * diffusion * (GRID_SIZE - 2) * (GRID_SIZE - 2)
-    linear_solver(b, x, x0, a, 1 + 4 * a)
+    linear_solver(boundary, x, x0, a, 1 + 4 * a)
 
 
-def linear_solver(b, x, x0, a, c):
+def linear_solver(boundary, x, x0, a, c):
     """
     Solving a system of linear differential equation using Gauss-Seidel
     relaxation.
@@ -298,7 +302,7 @@ def linear_solver(b, x, x0, a, c):
             for i in range(1, GRID_SIZE - 1):
                 x[j, i] = (x0[j, i] + a*(x[j, i+1] + x[j, i-1] + x[j+1, i] + x[j-1, i])) / c
 
-    set_boundry(b, x)
+    set_boundary(boundary, x)
 
 
 def project(vel_x, vel_y, p, div):
@@ -315,8 +319,8 @@ def project(vel_x, vel_y, p, div):
             div[j, i] = -0.5 * cell_size * (vel_x[j, i+1] - vel_x[j, i-1] + vel_y[j+1, i] - vel_y[j-1, i])
             p[j, i] = 0
 
-    set_boundry(0, div)
-    set_boundry(0, p)
+    set_boundary(0, div)
+    set_boundary(0, p)
     linear_solver(0, p, div, 1, 4)
 
     for j in range(1, GRID_SIZE - 1):
@@ -324,11 +328,11 @@ def project(vel_x, vel_y, p, div):
             vel_x[j, i] -= 0.5 * (p[j, i+1] - p[j, i-1]) / cell_size
             vel_y[j, i] -= 0.5 * (p[j+1, i] - p[j-1, i]) / cell_size
 
-    set_boundry(1, vel_x)
-    set_boundry(2, vel_y)
+    set_boundary(1, vel_x)
+    set_boundary(2, vel_y)
 
 
-def advect(b, d, d0, vel_x, vel_y, dt):
+def advect(boundary, d, d0, vel_x, vel_y, dt):
     """
     Advection is the transport of a substance or quantity by fluid in this way
     that velocity of transported substance is equal to velocity of fluid.
@@ -362,16 +366,16 @@ def advect(b, d, d0, vel_x, vel_y, dt):
             d[j, i] = s0 * (t0 * d0[j0, i0] + t1 * d0[j1, i0]) + \
                       s1 * (t0 * d0[j0, i1] + t1 * d0[j1, i1])
 
-    set_boundry(b, d)
+    set_boundary(boundary, d)
 
 
-def set_boundry(b, matrix):
+def set_boundary(boundary, matrix):
     """
     Keep fluid from leaking out of the box. Every velocity in the layer next to
     this outer layer is mirrored.
     """
     for i in range(1, GRID_SIZE-1):
-        if b == 2:
+        if boundary == BND_HORIZONTAL:
             matrix[0, i]           = -matrix[1, i]
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         else:
@@ -379,7 +383,7 @@ def set_boundry(b, matrix):
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
     for j in range(1, GRID_SIZE-1):
-        if b == 1:
+        if boundary == BND_VERTICAL:
             matrix[j, 0]           = -matrix[j, 1]
             matrix[j, GRID_SIZE-1] = -matrix[j, GRID_SIZE-2]
         else:
