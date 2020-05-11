@@ -407,7 +407,7 @@ def set_boundary(boundary, matrix):
             matrix[GRID_SIZE-1, i] = -matrix[GRID_SIZE-2, i]
         # Copy from border
         else:
-            # matrix[0, i]           = matrix[1, i]
+            matrix[0, i]           = matrix[1, i]
             matrix[GRID_SIZE-1, i] = matrix[GRID_SIZE-2, i]
 
     for j in range(1, GRID_SIZE-1):
