@@ -44,22 +44,18 @@ Y_SHIFT = 0
 LOWER_HALF_BLOCK = u'\u2584'
 
 # Debug parameters
-DEBUG = open('/dev/pts/1', 'w')
-sys.stderr = DEBUG
+# DEBUG = open('/dev/pts/1', 'w')
 
 
 def main():
+    if 'DEBUG' in globals():
+        sys.stderr = DEBUG
+    random.seed(81227)
+
     screen = Screen(colormap=cm.viridis)
 
-    fluid = Fluid(diffusion=0.001, viscosity=0)
-
-    # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2, amount=200)
+    fluid = Fluid(diffusion=0.001, viscosity=0.0001)
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=200)
-
-    # fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE//2+1, amount=200)
-    # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2, amount=200)
-    # fluid.add_density(x=GRID_SIZE//2+1, y=GRID_SIZE//2+1, amount=200)
-    fluid.add_velocity(x=GRID_SIZE//2, y=GRID_SIZE-2, vel_x=100, vel_y=-100)
 
     # Print aquarium borders
     render_aquarium_borders(screen)
@@ -69,7 +65,7 @@ def main():
     while True:
         tic = time.time()
 
-        # burn(fluid)
+        burn(fluid)
 
         # Velocity step
         fluid.swap_velocity()
@@ -105,16 +101,21 @@ def main():
 
     screen.endwin()
 
+
 def burn(fluid):
     for _ in range(10):
-        x = random.randint(1, GRID_SIZE-2)
         y = random.randint(1, GRID_SIZE-2)
-        vel_x = random.randint(-3, 3)
-        vel_y = random.randint(-5, 3)
+        if y > GRID_SIZE//2:
+            x = random.randint(GRID_SIZE//2 - 5, GRID_SIZE//2 + 5)
+            vel_x = random.uniform(-5, 5)
+            vel_y = random.uniform(-3, -4)
+        else:
+            x = random.randint(1, GRID_SIZE-2)
+            vel_x = random.uniform(-2, 9)
+            vel_y = random.uniform(-4, 2)
         fluid.add_velocity(x, y, vel_x, vel_y)
 
-    a = random.randint(0, 5)
-    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=a)
+    fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=random.randint(5, 18))
 
 
 def plog(*args, **kwargs):
