@@ -129,10 +129,7 @@ class Screen:
     A_NORMAL = 0
 
     def __init__(self, colormap):
-        if not os.path.isfile('./libncursesw.so.6.1'):
-            print("Can't find ./libncursesw.so.6.1")
-            raise RuntimeError
-        self._ncurses = ct.CDLL('./libncursesw.so.6.1')
+        self._ncurses = ct.CDLL('libncursesw.so.6.2')
         self._setup_ncurses()
         self._init_colors(colormap)
         self._init_text_colors()
