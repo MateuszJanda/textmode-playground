@@ -52,8 +52,7 @@ def main():
         sys.stderr = DEBUG
     random.seed(81227)
 
-    # screen = Screen(colormap=cm.viridis)
-    screen = ScreenWithChars()
+    screen = Screen(colormap=cm.viridis, mode='green')
 
     fluid = Fluid(diffusion=0.001, viscosity=0.0001)
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=200)
@@ -93,7 +92,7 @@ def main():
         advect(BND_NONE, fluid.density, fluid.density0, fluid.vel_x, fluid.vel_y, dt)
 
         # render_fluid(screen, fluid)
-        render_fluid_with_chars(screen, fluid)
+        render_fluid_by_chars(screen, fluid)
 
         # Sleep only if extra time left
         delay = max(0, dt - (time.time() - tic))
@@ -130,10 +129,15 @@ class Screen:
     # As in Python curses
     A_NORMAL = 0
 
-    def __init__(self, colormap):
+    def __init__(self, colormap, mode='matplotlib'):
         self._ncurses = ct.CDLL('libncursesw.so.6.2')
         self._setup_ncurses()
-        self._init_colors(colormap)
+        if mode == 'matplotlib':
+            self._init_matplotlib_colors(colormap)
+        elif mode == 'green':
+            self._init_greem_colors()
+        else:
+            raise Exception('Unknown mode: ', mode)
         self._init_text_colors()
 
     def _setup_ncurses(self):
@@ -151,13 +155,11 @@ class Screen:
         x = self._ncurses.getmaxx(self._win)
         return y, x-1
 
-    def _init_colors(self, colormap):
-        """Initialize color pairs based on matplotlib colormap."""
-        assert colormap.N == NUM_OF_COLORS + SPARE_FOR_DEFAULT_COLORS, "We cant initialize more than 256*256 pairs"
-
+    def _init_greem_colors(self):
+        """Initialize green color pairs."""
         for color_num in range(NUM_OF_COLORS):
-            r, g, b = colormap.colors[color_num]
-            ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
+            g = color_num/NUM_OF_COLORS
+            ret = self._ncurses.init_extended_color(color_num, 0, int(g*1000), 0)
             if ret != 0:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
@@ -175,95 +177,13 @@ class Screen:
                 plog('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
 
-    def _init_text_colors(self):
-        """Reserver two color for text."""
-        assert SPARE_FOR_DEFAULT_COLORS >= 2, 'There is no free color indexes for text colors.'
-        # Reserve next two available indexes
-        fg_color_num = NUM_OF_COLORS
-        bg_color_num = NUM_OF_COLORS + 1
+    def _init_matplotlib_colors(self, colormap):
+        """Initialize color pairs based on matplotlib colormap."""
+        assert colormap.N == NUM_OF_COLORS + SPARE_FOR_DEFAULT_COLORS, "We cant initialize more than 256*256 pairs"
 
-        r, g, b = 0, 0, 0
-        ret = self._ncurses.init_extended_color(bg_color_num, int(r*1000), int(g*1000), int(b*1000))
-        if ret != 0:
-            plog('init_extended_color error: %d, for color_num: %d' % (ret, bg_color_num))
-            raise RuntimeError
-
-        r, g, b = 0.6, 0.6, 0.6
-        ret = self._ncurses.init_extended_color(fg_color_num, int(r*1000), int(g*1000), int(b*1000))
-        if ret != 0:
-            plog('init_extended_color error: %d, for color_num: %d' % (ret, fg_color_num))
-            raise RuntimeError
-
-        # Set color under pair number 0
-        ret = self._ncurses.assume_default_colors(fg_color_num, bg_color_num)
-        if ret != 0:
-            plog('assume_default_colors error: %d' % ret)
-            raise RuntimeError
-
-    def addstr(self, y, x, text, pair_num=0):
-        """
-        addstr - similar to curses.addstr function, however pair_num shouldn't
-        be converted by curses.color_pair or similar.
-        """
-        pair_num_short = ct.cast((ct.c_int*1)(pair_num), ct.POINTER(ct.c_short)).contents
-        pair_num_pt = ct.c_int(pair_num)
-        ret = self._ncurses.attr_set(ct.c_int(self.A_NORMAL), pair_num_short, ct.pointer(pair_num_pt))
-        if ret != 0:
-            plog('attr_set error %d, pair_num: %d' % (ret, pair_num))
-            raise RuntimeError
-
-        ret = self._ncurses.mvprintw(y, x, text.encode('utf-8'))
-        if ret != 0:
-            plog('mvprintw error: %d, y: %d, x: %d, pair_num: %d' % (ret, y, x, pair_num))
-            raise RuntimeError
-
-    def colors_to_pair_num(self, foreground, background):
-        """Determine pair number for two colors."""
-        pair_num = int(background) * NUM_OF_COLORS + int(foreground) + 1
-        if pair_num == 0:
-            pair_num = 1
-        return pair_num
-
-    def refresh(self):
-        """Refresh screen."""
-        self._ncurses.refresh()
-
-    def endwin(self):
-        """End ncurses."""
-        self._ncurses.endwin()
-        plog('The end.')
-
-
-class ScreenWithChars:
-    # As in Python curses
-    A_NORMAL = 0
-
-    def __init__(self):
-        self._ncurses = ct.CDLL('libncursesw.so.6.2')
-        self._setup_ncurses()
-        self._init_colors()
-        self._init_text_colors()
-
-    def _setup_ncurses(self):
-        """Setup ncurses screen."""
-        self._win = self._ncurses.initscr()
-        self._ncurses.start_color()
-        self._ncurses.halfdelay(5)
-        self._ncurses.noecho()
-        self._ncurses.curs_set(0)
-        self.LINES, self.COLS = self._getmaxyx()
-
-    def _getmaxyx(self):
-        """Determine max screen size."""
-        y = self._ncurses.getmaxy(self._win)
-        x = self._ncurses.getmaxx(self._win)
-        return y, x-1
-
-    def _init_colors(self):
-        """Initialize color pairs."""
         for color_num in range(NUM_OF_COLORS):
-            g = color_num/NUM_OF_COLORS
-            ret = self._ncurses.init_extended_color(color_num, int(0), int(g*1000), int(0))
+            r, g, b = colormap.colors[color_num]
+            ret = self._ncurses.init_extended_color(color_num, int(r*1000), int(g*1000), int(b*1000))
             if ret != 0:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
@@ -404,8 +324,8 @@ def render_fluid(screen, fluid):
             screen.addstr(j//2 + y_shift, (i - 1) + x_shift, LOWER_HALF_BLOCK, pair_num)
 
 
-def render_fluid_with_chars(screen, fluid):
-    """Render fluid."""
+def render_fluid_by_chars(screen, fluid):
+    """Render fluid using chars."""
     # Normalize density array
     norm_dens = fluid.density * 40
     # Set max possible color
