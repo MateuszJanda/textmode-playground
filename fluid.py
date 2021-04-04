@@ -436,27 +436,27 @@ def render_fluid_with_chars(screen, fluid):
         for j in range(1, GRID_SIZE-1, 2):
             bg, fg = norm_dens[j:j+2, i]
 
-            if bg < 32:
-                pair_num = screen.colors_to_pair_num(1, bg)
+            if bg < 97:
+                pair_num = screen.colors_to_pair_num(1, 12 * bg/97)
                 # screen.addstr(j//2 + y_shift, (i - 1) + x_shift, LOWER_HALF_BLOCK, pair_num)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, ' ', pair_num)
-            elif bg < 69:
-                pair_num = screen.colors_to_pair_num(bg, 32)
+            elif bg < 158:
+                pair_num = screen.colors_to_pair_num(bg, 24 * bg/158)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, '.', pair_num)
-            elif bg < 106:
-                pair_num = screen.colors_to_pair_num(bg, 37)
+            elif bg < 195:
+                pair_num = screen.colors_to_pair_num(bg, 36 * bg/195)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, '-', pair_num)
-            elif bg < 143:
-                pair_num = screen.colors_to_pair_num(bg, 42)
+            elif bg < 218:
+                pair_num = screen.colors_to_pair_num(bg, 48 * bg/218)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, 'o', pair_num)
-            elif bg < 189:
-                pair_num = screen.colors_to_pair_num(bg, 47)
+            elif bg < 232:
+                pair_num = screen.colors_to_pair_num(bg, 60 * bg/232)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, 'X', pair_num)
-            elif bg < 217:
-                pair_num = screen.colors_to_pair_num(bg, 52)
+            elif bg < 241:
+                pair_num = screen.colors_to_pair_num(bg, 72 * bg/241)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, '%', pair_num)
             else:
-                pair_num = screen.colors_to_pair_num(bg, 60)
+                pair_num = screen.colors_to_pair_num(bg, 84 * bg/256)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, '@', pair_num)
 
 
