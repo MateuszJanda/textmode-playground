@@ -135,7 +135,7 @@ class Screen:
         if mode == 'matplotlib':
             self._init_matplotlib_colors(colormap)
         elif mode == 'green':
-            self._init_greem_colors()
+            self._init_green_colors()
         else:
             raise Exception('Unknown mode: ', mode)
         self._init_text_colors()
@@ -155,8 +155,8 @@ class Screen:
         x = self._ncurses.getmaxx(self._win)
         return y, x-1
 
-    def _init_greem_colors(self):
-        """Initialize green color pairs."""
+    def _init_green_colors(self):
+        """Initialize green color."""
         for color_num in range(NUM_OF_COLORS):
             g = color_num/NUM_OF_COLORS
             ret = self._ncurses.init_extended_color(color_num, 0, int(g*1000), 0)
@@ -164,21 +164,10 @@ class Screen:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
-        for bg, fg in it.product(range(NUM_OF_COLORS), range(NUM_OF_COLORS)):
-            # Start from 1 (0 is reserved by ncurses)
-            pair_num = self.colors_to_pair_num(fg, bg)
-
-            # Pair number 0 is reserved by lib, and can't be initialized
-            if pair_num == 0:
-                continue
-
-            ret = self._ncurses.init_extended_pair(pair_num, fg, bg)
-            if ret != 0:
-                plog('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
-                raise RuntimeError
+        self._init_color_pairs()
 
     def _init_matplotlib_colors(self, colormap):
-        """Initialize color pairs based on matplotlib colormap."""
+        """Initialize color based on matplotlib colormap."""
         assert colormap.N == NUM_OF_COLORS + SPARE_FOR_DEFAULT_COLORS, "We cant initialize more than 256*256 pairs"
 
         for color_num in range(NUM_OF_COLORS):
@@ -188,6 +177,10 @@ class Screen:
                 plog('init_extended_color error: %d, for color_num: %d' % (ret, color_num))
                 raise RuntimeError
 
+        self._init_color_pairs()
+
+    def _init_color_pairs(self):
+        """Initialize color pairs."""
         for bg, fg in it.product(range(NUM_OF_COLORS), range(NUM_OF_COLORS)):
             # Start from 1 (0 is reserved by ncurses)
             pair_num = self.colors_to_pair_num(fg, bg)
@@ -200,6 +193,7 @@ class Screen:
             if ret != 0:
                 plog('init_extended_pair error: %d, for pair_num: %d' % (ret, pair_num))
                 raise RuntimeError
+
 
     def _init_text_colors(self):
         """Reserver two color for text."""
@@ -354,11 +348,10 @@ def render_fluid_by_chars(screen, fluid):
 
     for i in range(1, GRID_SIZE-1):
         for j in range(1, GRID_SIZE-1, 2):
-            bg, fg = norm_dens[j:j+2, i]
+            bg, _ = norm_dens[j:j+2, i]
 
             if bg < 97:
                 pair_num = screen.colors_to_pair_num(1, 12 * bg/97)
-                # screen.addstr(j//2 + y_shift, (i - 1) + x_shift, LOWER_HALF_BLOCK, pair_num)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, ' ', pair_num)
             elif bg < 158:
                 pair_num = screen.colors_to_pair_num(bg, 24 * bg/158)
