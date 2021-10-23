@@ -101,7 +101,7 @@ class Screen:
     LOWER_HALF_BLOCK = u'\u2584'
 
     def __init__(self):
-        self._ncurses = ct.CDLL('./libncursesw.so.6.1')
+        self._ncurses = ct.CDLL('libncursesw.so.6.2')
         self._setup_ncurses()
         self._init_colors()
 
