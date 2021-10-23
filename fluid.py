@@ -52,7 +52,8 @@ def main():
         sys.stderr = DEBUG
     random.seed(81227)
 
-    screen = Screen(colormap=cm.viridis, mode='green')
+    screen = Screen(colormap=cm.viridis, mode='matplotlib')
+    # screen = Screen(colormap=cm.viridis, mode='green')
 
     fluid = Fluid(diffusion=0.001, viscosity=0.0001)
     fluid.add_density(x=GRID_SIZE//2, y=GRID_SIZE-2, amount=200)
@@ -91,8 +92,8 @@ def main():
         fluid.swap_density()
         advect(BND_NONE, fluid.density, fluid.density0, fluid.vel_x, fluid.vel_y, dt)
 
-        # render_fluid(screen, fluid)
-        render_fluid_by_chars(screen, fluid)
+        render_fluid_with_blocks(screen, fluid)
+        # render_fluid_with_chars(screen, fluid)
 
         # Sleep only if extra time left
         delay = max(0, dt - (time.time() - tic))
@@ -283,7 +284,7 @@ class Fluid:
         self.density0, self.density = self.density, self.density0
 
 
-def render_fluid(screen, fluid):
+def render_fluid_with_blocks(screen, fluid):
     """Render fluid."""
     # Normalize density array
     norm_dens = fluid.density * 50
@@ -318,7 +319,7 @@ def render_fluid(screen, fluid):
             screen.addstr(j//2 + y_shift, (i - 1) + x_shift, LOWER_HALF_BLOCK, pair_num)
 
 
-def render_fluid_by_chars(screen, fluid):
+def render_fluid_with_chars(screen, fluid):
     """Render fluid using chars."""
     # Normalize density array
     norm_dens = fluid.density * 40
@@ -350,6 +351,7 @@ def render_fluid_by_chars(screen, fluid):
         for j in range(1, GRID_SIZE-1, 2):
             bg, _ = norm_dens[j:j+2, i]
 
+            # Golden ratio thresholds
             if bg < 97:
                 pair_num = screen.colors_to_pair_num(1, 12 * bg/97)
                 screen.addstr(j//2 + y_shift, (i - 1) + x_shift, ' ', pair_num)
