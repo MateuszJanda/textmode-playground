@@ -141,6 +141,7 @@ func printBoard(board [][]int) {
 	height := len(board)
 	width := len(board[0])
 
+	// https://en.wikipedia.org/wiki/Geometric_Shapes
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			val := board[y][x]
