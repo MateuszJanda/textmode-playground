@@ -131,7 +131,7 @@ class Screen:
     A_NORMAL = 0
 
     def __init__(self, colormap, mode='matplotlib'):
-        self._ncurses = ct.CDLL('libncursesw.so.6.2')
+        self._ncurses = ct.CDLL('libncursesw.so.6')
         self._setup_ncurses()
         if mode == 'matplotlib':
             self._init_matplotlib_colors(colormap)
