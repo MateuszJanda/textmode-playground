@@ -70,12 +70,15 @@ func initBoard(board *[][]int) {
 	height := len(*board)
 	width := len((*board)[0])
 
-	// Set pattern
-	(*board)[height/2][width/2] = 3
-	(*board)[height/2][width/2+1] = 3
-	(*board)[height/2][width/2+2] = 3
-	(*board)[height/2+1][width/2] = 3
-	(*board)[height/2+1][width/2+2] = 3
+	// Set pattern: acorn
+	(*board)[height/2][width/2] = 1
+	(*board)[height/2][width/2+1] = 1
+	(*board)[height/2-2][width/2+1] = 1
+
+	(*board)[height/2-1][width/2+3] = 1
+	(*board)[height/2-1][width/2+4] = 1
+	(*board)[height/2-1][width/2+5] = 1
+	(*board)[height/2-1][width/2+6] = 1
 }
 
 func copyBoard(board [][]int) [][]int {
@@ -114,22 +117,15 @@ func gameOfLifeRound(oldBoard [][]int) [][]int {
 			// Game rules
 			if oldBoard[y][x] <= 0 && neighboursCount == 3 {
 				// Any dead cell with three live neighbours becomes a live cell
-				if oldBoard[y][x] == 0 {
-					newBoard[y][x] = 1
-				} else {
-					newBoard[y][x] = newBoard[y][x] * -1
-				}
+				newBoard[y][x] = 1
 			} else if oldBoard[y][x] > 0 && (neighboursCount == 2 || neighboursCount == 3) {
 				// Any live cell with two or three live neighbours survives
-				if oldBoard[y][x] <= 3 {
-					newBoard[y][x] += 1
-				}
 			} else if oldBoard[y][x] > 0 {
 				// All other live cells die in the next generation
-				newBoard[y][x] = newBoard[y][x] * -1
+				newBoard[y][x] = -1
 			} else if oldBoard[y][x] < 0 {
 				// All other dead cells stay dead
-				newBoard[y][x] += 1
+				newBoard[y][x] = 0
 			}
 		}
 	}
@@ -147,18 +143,12 @@ func printBoard(board [][]int) {
 			val := board[y][x]
 			char := " "
 			switch val {
-			case -3:
-				char = "□"
-			case -2:
-				char = "○"
 			case -1:
 				char = "▫"
 			case 1:
 				char = "▪"
-			case 2:
-				char = "●"
-			case 3:
-				char = "■"
+			default:
+				char = " "
 			}
 
 			fmt.Printf("\033[%d;%dH%s", y, x, char)
