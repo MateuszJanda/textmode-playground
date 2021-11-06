@@ -19,7 +19,7 @@ func main() {
 	width, height := getTerminalSize()
 
 	oldBoard := makeBoard(height, width)
-	initBoardWithAcorn(&oldBoard)
+	initBoardWithDiehard(&oldBoard)
 	printBoard(oldBoard)
 
 	const ROUNDS = 1000
@@ -77,12 +77,31 @@ func initBoardWithBlinker(board *[][]int) {
 	(*board)[height/2+1][width/2] = 1
 }
 
+func initBoardWithDiehard(board *[][]int) {
+	height := len(*board)
+	width := len((*board)[0])
+
+	// Set pattern: diehard
+	(*board)[height/2-1][width/2] = 1
+
+	(*board)[height/2-1][width/2+1] = 1
+	(*board)[height/2][width/2+1] = 1
+
+	(*board)[height/2][width/2+5] = 1
+
+	(*board)[height/2][width/2+6] = 1
+	(*board)[height/2-2][width/2+6] = 1
+
+	(*board)[height/2][width/2+7] = 1
+}
+
 func initBoardWithAcorn(board *[][]int) {
 	height := len(*board)
 	width := len((*board)[0])
 
 	// Set pattern: acorn
 	(*board)[height/2][width/2] = 1
+
 	(*board)[height/2][width/2+1] = 1
 	(*board)[height/2-2][width/2+1] = 1
 
