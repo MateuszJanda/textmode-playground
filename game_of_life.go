@@ -106,19 +106,10 @@ func initBoardWithAcorn(board *[][]int) {
 	(*board)[height/2-2][width/2+1] = 1
 
 	(*board)[height/2-1][width/2+3] = 1
-	(*board)[height/2-1][width/2+4] = 1
-	(*board)[height/2-1][width/2+5] = 1
-	(*board)[height/2-1][width/2+6] = 1
-}
 
-func copyBoard(board [][]int) [][]int {
-	duplicate := make([][]int, len(board))
-	for y := range board {
-		duplicate[y] = make([]int, len(board[y]))
-		copy(duplicate[y], board[y])
-	}
-
-	return duplicate
+	(*board)[height/2][width/2+4] = 1
+	(*board)[height/2][width/2+5] = 1
+	(*board)[height/2][width/2+6] = 1
 }
 
 func gameOfLifeRound(oldBoard [][]int) [][]int {
@@ -189,7 +180,9 @@ func printBoard(board [][]int) {
 			case -1:
 				// char = "▫"
 			case 1:
-				char = "▪"
+				// char = "▪"
+				char = "1"
+				// char = "◼"
 			default:
 				char = " "
 			}
