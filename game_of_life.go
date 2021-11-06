@@ -19,7 +19,7 @@ func main() {
 	width, height := getTerminalSize()
 
 	oldBoard := makeBoard(height, width)
-	initBoardWithDiehard(&oldBoard)
+	initBoardWithAcorn(&oldBoard)
 	printBoard(oldBoard)
 
 	const ROUNDS = 1000
@@ -122,8 +122,6 @@ func copyBoard(board [][]int) [][]int {
 }
 
 func gameOfLifeRound(oldBoard [][]int) [][]int {
-	newBoard := copyBoard(oldBoard)
-
 	height := len(oldBoard)
 	width := len(oldBoard[0])
 
@@ -155,6 +153,8 @@ func gameOfLifeRound(oldBoard [][]int) [][]int {
 	}
 
 	// Game rules
+	newBoard := makeBoard(height, width)
+
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			if oldBoard[y][x] <= 0 && neighboursCount[y][x] == 3 {
@@ -162,6 +162,7 @@ func gameOfLifeRound(oldBoard [][]int) [][]int {
 				newBoard[y][x] = 1
 			} else if oldBoard[y][x] > 0 && (neighboursCount[y][x] == 2 || neighboursCount[y][x] == 3) {
 				// Any live cell with two or three live neighbours survives
+				newBoard[y][x] = 1
 			} else if oldBoard[y][x] > 0 {
 				// All other live cells die in the next generation
 				newBoard[y][x] = -1
@@ -186,7 +187,7 @@ func printBoard(board [][]int) {
 			char := " "
 			switch val {
 			case -1:
-				char = "▫"
+				// char = "▫"
 			case 1:
 				char = "▪"
 			default:
