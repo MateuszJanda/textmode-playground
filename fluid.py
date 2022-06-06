@@ -148,12 +148,20 @@ class Screen:
         self._ncurses.halfdelay(5)
         self._ncurses.noecho()
         self._ncurses.curs_set(0)
-        self.LINES, self.COLS = self._getmaxyx()
+        # This fail sometimes
+        # self.LINES, self.COLS = self._getmaxyx()
 
     def _getmaxyx(self):
         """Determine max screen size."""
-        y = self._ncurses.getmaxy(self._win)
-        x = self._ncurses.getmaxx(self._win)
+        plog("self._ncurses.stdscr", self._ncurses.stdscr)
+        plog("self._win", self._win)
+
+        # y = self._ncurses.getmaxy(self._win)
+        y = self._ncurses.getmaxy(self._ncurses.stdscr)
+        # x = self._ncurses.getmaxx(self._win)
+        x = self._ncurses.getmaxx(self._ncurses.stdscr)
+
+        plog("LINES, COLS:", (y, x-1))
         return y, x-1
 
     def _init_green_colors(self):
