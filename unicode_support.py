@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-"""
-Author: Mateusz Janda <mateusz janda at gmail com>
-Site: github.com/MateuszJanda/textmode-playground
-Ad maiorem Dei gloriam
-"""
+# Author: Mateusz Janda <mateusz janda at gmail com>
+# Site: github.com/MateuszJanda/textmode-playground
+# Ad maiorem Dei gloriam
 
 import curses
 import locale
