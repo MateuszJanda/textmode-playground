@@ -9,7 +9,7 @@ Tested on GNOME Terminal (default DejaVu Sans Mono font) with braille font suppo
 
 ## Gallery
 
-<img src="./demos/lightning.gif" alt="lightning" width="285" height="213"/> <img src="./demos/orbit.gif" alt="orbit" width="285" height="213"/> <img src="./demos/rect.gif" alt="rect" width="285" height="213"/>
-<img src="./demos/boids.gif" alt="boids" width="285" height="213"/> <img src="./demos/shift.gif" alt="shift" width="285" height="213"/> <img src="./demos/spectrogram.gif" alt="spectrogram" width="285" height="213"/>
-<img src="./demos/fluid.gif" alt="boids" width="285" height="213"/>
+<img src="./lightning/lightning.gif" alt="lightning" width="280" height="210"/> <img src="./orbit/orbit.gif" alt="orbit" width="280" height="210"/> <img src="./rect/rect.gif" alt="rect" width="280" height="210"/>
+<img src="./boids/boids.gif" alt="boids" width="280" height="210"/> <img src="./shift/shift.gif" alt="shift" width="280" height="210"/> <img src="./spectrogram/spectrogram.gif" alt="spectrogram" width="280" height="210"/>
+<img src="./fluid/fluid.gif" alt="fluid" width="280" height="210"/>
 
