@@ -16,10 +16,11 @@ import sys
 import curses
 import locale
 import time
-import copy
 import math
 import heapq
 import numpy as np
+
+DEBUG = False
 
 
 BODY_COUNT = 250
@@ -307,12 +308,14 @@ def setup_curses(scr):
 
 def setup_stderr(output):
     """Hard-coded console for debug prints (stderr)."""
-    sys.stderr = open(output, 'w')
+    if DEBUG:
+        sys.stderr = open(output, 'w')
 
 
 def eprint(*args, **kwargs):
     """Debug print function (on stderr)."""
-    print(*args, file=sys.stderr)
+    if DEBUG:
+        print(*args, file=sys.stderr)
 
 
 def rule1_fly_to_center(body):
