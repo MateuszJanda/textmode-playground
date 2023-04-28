@@ -1,5 +1,5 @@
 # textmode-playground
-Playground for console (ASCII/Unicode) animations (intros). Where possible scripts should be self-sufficient.
+Playground for console (ASCII/Unicode) animations (intros).
 
 ## Requirements
 Tested on GNOME Terminal (default DejaVu Sans Mono font) with braille font support.
