@@ -14,6 +14,7 @@ import time
 import curses
 import locale
 
+DEBUG = False
 
 GRAVITY = 1.0
 BLANK_BRAILLE = u'\u2800'
@@ -85,12 +86,14 @@ def main(scr):
 def esetup():
     """ Hard-coded console for debug prints (std err).
     Console must exist before running script. """
-    sys.stderr = open('/dev/pts/1', 'w')
+    if DEBUG:
+        sys.stderr = open('/dev/pts/1', 'w')
 
 
 def eprint(*args, **kwargs):
     """ Debug print function (on std err) """
-    print(*args, file=sys.stderr)
+    if DEBUG:
+        print(*args, file=sys.stderr)
 
 
 def setup_curses():
