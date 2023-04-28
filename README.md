@@ -3,9 +3,11 @@ Playground for console (ASCII/Unicode) animations (intros).
 
 ## Requirements
 Tested on GNOME Terminal (default DejaVu Sans Mono font) with braille font support.
-- Python-fontconfig (0.5.1)  - Python bindings for Fontconfig library
-- matplotlib
-- scipy
+
+For Python:
+```bash
+pip install -r requirements.txt
+```
 
 ## Gallery
 
