@@ -12,8 +12,8 @@ pub struct ScreenBuffer {
 
 impl ScreenBuffer {
     /// Create ScreenBuffer, and clear screen.
-    pub fn new() -> ScreenBuffer {
-        let mut screen = stdout().into_raw_mode().unwrap();
+    pub fn new() -> Self {
+        let screen = stdout().into_raw_mode().unwrap();
         let (width, height) = terminal_size().unwrap();
 
         let mut sb = ScreenBuffer {
@@ -28,18 +28,20 @@ impl ScreenBuffer {
         return sb;
     }
 
+    #[allow(dead_code)]
     /// Clear screen and buffer.
-    fn clear(mut self) {
+    fn clear(&mut self) {
         write!(self.screen, "{}", termion::clear::All).unwrap();
     }
 
+    #[allow(dead_code)]
     /// Send everything from buffer to screen and clear buffer.
-    fn flush(mut self) {
-        // self.screen.flush().unwrap();
+    pub fn flush(&mut self) {
+        self.screen.flush().unwrap();
     }
 
     /// Write text on specific position (numeration start from 1).
-    pub fn write(&mut self, y: u16, x: u16, text: String) {
+    pub fn write(&mut self, y: usize, x: usize, text: String) {
         if y == 0 || x == 0 {
             return;
         }
@@ -48,7 +50,7 @@ impl ScreenBuffer {
             self.screen,
             "{}{}{}",
             termion::cursor::Hide,
-            termion::cursor::Goto(y, x),
+            termion::cursor::Goto(x as u16, y as u16),
             text
         )
         .unwrap();
