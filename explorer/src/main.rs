@@ -104,9 +104,9 @@ fn fix_direction(
     let mut is_correct = false;
     while !is_correct {
         if (dir == Direction::Up && pos_y == 0)
-            || (dir == Direction::Down && pos_y == height)
+            || (dir == Direction::Down && pos_y == height - 1)
             || (dir == Direction::Left && pos_x == 0)
-            || (dir == Direction::Right && pos_x == width)
+            || (dir == Direction::Right && pos_x == width - 1)
         {
             dir = new_direction();
         } else {
@@ -125,7 +125,7 @@ async fn run_animation() {
     let (mut pos_y, mut pos_x) = ((sb.height / 2) as usize, (sb.width / 2) as usize);
     let mut dir = None;
 
-    let mut interval = tokio::time::interval(Duration::from_millis(100));
+    let mut interval = tokio::time::interval(Duration::from_millis(5));
     interval.tick().await;
 
     loop {
@@ -134,8 +134,8 @@ async fn run_animation() {
 
         let new_dir = fix_direction(sb.height as usize, sb.width as usize, new_dir, pos_y, pos_x);
         match new_dir {
-            Direction::Up => pos_y += 1,
-            Direction::Down => pos_y -= 1,
+            Direction::Up => pos_y -= 1,
+            Direction::Down => pos_y += 1,
             Direction::Left => pos_x -= 1,
             Direction::Right => pos_x += 1,
         }
