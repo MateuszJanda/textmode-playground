@@ -106,13 +106,13 @@ fn new_direction() -> Direction {
 }
 
 /// Change direction in case we reach wall.
-fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, pos_y: usize, pos_x: usize) -> Direction {
+fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, warm: &Warm) -> Direction {
     let mut is_correct = false;
     while !is_correct {
-        if (new_dir == Direction::Up && pos_y == 0)
-            || (new_dir == Direction::Down && pos_y == sb.height - 1)
-            || (new_dir == Direction::Left && pos_x == 0)
-            || (new_dir == Direction::Right && pos_x == sb.width - 1)
+        if (new_dir == Direction::Up && warm.y == 0)
+            || (new_dir == Direction::Down && warm.y == sb.height - 1)
+            || (new_dir == Direction::Left && warm.x == 0)
+            || (new_dir == Direction::Right && warm.x == sb.width - 1)
         {
             new_dir = new_direction();
         } else {
@@ -127,22 +127,26 @@ fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, pos_y: usize, pos_x:
 async fn run_animation() {
     let mut sb = ScreenBuffer::new();
     let mut cell_map = vec![vec![Cell::new(); sb.width]; sb.height];
-    let (mut pos_y, mut pos_x) = (sb.height / 2, sb.width / 2);
+    let mut warm = Warm::new(sb.width / 2, sb.height / 2);
     let mut dir = None;
 
     let mut interval = tokio::time::interval(Duration::from_millis(5));
     interval.tick().await;
 
     loop {
-        let new_dir = cell_map[pos_y][pos_x].set_random_direction(dir);
-        sb.write(pos_y, pos_x, cell_map[pos_y][pos_x].get_char().to_string());
+        let new_dir = cell_map[warm.y][warm.x].set_random_direction(dir);
+        sb.write(
+            warm.y,
+            warm.x,
+            cell_map[warm.y][warm.x].get_char().to_string(),
+        );
 
-        let new_dir = fix_direction(&sb, new_dir, pos_y, pos_x);
+        let new_dir = fix_direction(&sb, new_dir, &warm);
         match new_dir {
-            Direction::Up => pos_y -= 1,
-            Direction::Down => pos_y += 1,
-            Direction::Left => pos_x -= 1,
-            Direction::Right => pos_x += 1,
+            Direction::Up => warm.y -= 1,
+            Direction::Down => warm.y += 1,
+            Direction::Left => warm.x -= 1,
+            Direction::Right => warm.x += 1,
         }
         dir = Some(new_dir);
 
