@@ -5,8 +5,8 @@ use termion::raw::{IntoRawMode, RawTerminal};
 use termion::terminal_size;
 
 pub struct ScreenBuffer {
-    pub width: u16,
-    pub height: u16,
+    pub width: usize,
+    pub height: usize,
     screen: RawTerminal<Stdout>,
 }
 
@@ -17,8 +17,8 @@ impl ScreenBuffer {
         let (width, height) = terminal_size().unwrap();
 
         let mut sb = ScreenBuffer {
-            width: width as u16,
-            height: height as u16,
+            width: width as usize,
+            height: height as usize,
             screen: screen,
         };
 
@@ -40,9 +40,9 @@ impl ScreenBuffer {
         self.screen.flush().unwrap();
     }
 
-    /// Write text on specific position (numeration start from 1).
+    /// Write text on specific position (top left cell is at position (0, 0)).
     pub fn write(&mut self, y: usize, x: usize, text: String) {
-        if y == 0 || x == 0 {
+        if y >= self.height || x >= self.width {
             return;
         }
 
@@ -50,7 +50,7 @@ impl ScreenBuffer {
             self.screen,
             "{}{}{}",
             termion::cursor::Hide,
-            termion::cursor::Goto(x as u16, y as u16),
+            termion::cursor::Goto((x + 1) as u16, (y + 1) as u16),
             text
         )
         .unwrap();

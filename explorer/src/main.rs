@@ -120,9 +120,8 @@ fn fix_direction(
 /// Run explorer animation.
 async fn run_animation() {
     let mut sb = ScreenBuffer::new();
-
-    let mut cell_map = vec![vec![Cell::new(); sb.width as usize]; sb.height as usize];
-    let (mut pos_y, mut pos_x) = ((sb.height / 2) as usize, (sb.width / 2) as usize);
+    let mut cell_map = vec![vec![Cell::new(); sb.width]; sb.height];
+    let (mut pos_y, mut pos_x) = (sb.height / 2, sb.width / 2);
     let mut dir = None;
 
     let mut interval = tokio::time::interval(Duration::from_millis(5));
