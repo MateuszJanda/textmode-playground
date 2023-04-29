@@ -4,6 +4,7 @@ use rand::Rng;
 use tokio::time::Duration;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+/// Warm direction.
 enum Direction {
     Up,
     Down,
@@ -11,14 +12,13 @@ enum Direction {
     Right,
 }
 
-
-/// To generate random Direction.
-///
-/// # Example:
-/// ```
-/// let dir: Direction = rand::random();
-/// ```
 impl Distribution<Direction> for Standard {
+    /// To generate random Direction.
+    ///
+    /// # Example:
+    /// ```
+    /// let dir: Direction = rand::random();
+    /// ```
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Direction {
         match rng.gen_range(0..=3) {
             0 => Direction::Up,
@@ -30,6 +30,10 @@ impl Distribution<Direction> for Standard {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+/// Cell represent one char on terminal screen and char is "Box block" with four branches.
+///
+/// # See also:
+/// * https://en.wikipedia.org/wiki/Box_Drawing
 struct Cell {
     up: bool,
     down: bool,
@@ -49,7 +53,6 @@ impl Cell {
     }
 
     /// Get char based on cell settings.
-    /// https://en.wikipedia.org/wiki/Box_Drawing
     fn get_char(&self) -> char {
         match (self.up, self.down, self.left, self.right) {
             (false, false, false, false) => ' ',
@@ -94,12 +97,14 @@ impl Cell {
     }
 }
 
+/// Warm position on terminal screen.
 struct Warm {
     x: usize,
     y: usize,
 }
 
 impl Warm {
+    /// Set stating position for warm.
     fn new(x: usize, y: usize) -> Self {
         Warm { x, y }
     }
