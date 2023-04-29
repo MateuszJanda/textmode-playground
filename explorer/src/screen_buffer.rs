@@ -34,7 +34,6 @@ impl ScreenBuffer {
         write!(self.screen, "{}", termion::clear::All).unwrap();
     }
 
-    #[allow(dead_code)]
     /// Send everything from buffer to screen and clear buffer.
     pub fn flush(&mut self) {
         self.screen.flush().unwrap();
