@@ -3,8 +3,13 @@ use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 use tokio::time::Duration;
 
+/// Number of warms on screen
+const NUM_OF_WARMS: usize = 10;
+/// Delay between moves.    
+const DELAY_IN_MILLISECONDS: u64 = 5;
+
 #[derive(PartialEq, Eq, Clone, Debug)]
-/// Warm direction.
+/// Warm move directions.
 enum Direction {
     Up,
     Down,
@@ -92,6 +97,7 @@ impl Cell {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
 /// Warm position on terminal screen.
 struct Warm {
     x: usize,
@@ -150,25 +156,30 @@ impl Warm {
 async fn run_animation() {
     let mut sb = ScreenBuffer::new();
 
-    let mut warm = Warm::new(sb.width / 2, sb.height / 2);
+    let mut warms = vec![Warm::new(sb.width / 2, sb.height / 2); NUM_OF_WARMS];
     let mut cell_map = vec![vec![Cell::new(); sb.width]; sb.height];
-    cell_map[warm.y][warm.x].update_branches(&warm);
 
-    let mut interval = tokio::time::interval(Duration::from_millis(5));
+    for warm in warms.iter() {
+        cell_map[warm.y][warm.x].update_branches(&warm);
+    }
+
+    let mut interval = tokio::time::interval(Duration::from_millis(DELAY_IN_MILLISECONDS));
     interval.tick().await;
 
     loop {
-        // Restore previous cell look (without warm).
-        let prev_cell = &mut cell_map[warm.prev_y][warm.prev_x];
-        sb.write(warm.prev_y, warm.prev_x, prev_cell.get_char().to_string());
+        for warm in warms.iter_mut() {
+            // Restore previous cell look (without warm).
+            let prev_cell = &mut cell_map[warm.prev_y][warm.prev_x];
+            sb.write(warm.prev_y, warm.prev_x, prev_cell.get_char().to_string());
 
-        // Print warm in current cell
-        sb.write(warm.y, warm.x, "+".to_string());
-        
-        // Move warm and update branches in current cell.
-        let curr_cell = &mut cell_map[warm.y][warm.x];
-        warm.move_randomly(&sb);
-        curr_cell.update_branches(&warm);
+            // Print warm in current cell
+            sb.write(warm.y, warm.x, "+".to_string());
+
+            // Move warm to next cell and update branches in current cell.
+            let curr_cell = &mut cell_map[warm.y][warm.x];
+            warm.move_randomly(&sb);
+            curr_cell.update_branches(&warm);
+        }
 
         sb.flush();
         interval.tick().await;
