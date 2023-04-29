@@ -165,9 +165,10 @@ async fn run_animation() {
         // Print warm in current cell
         sb.write(warm.y, warm.x, "+".to_string());
         
-        // Move warm and update branches in next cell.
+        // Move warm and update branches in current cell.
+        let curr_cell = &mut cell_map[warm.y][warm.x];
         warm.move_randomly(&sb);
-        cell_map[warm.y][warm.x].update_branches(&warm);
+        curr_cell.update_branches(&warm);
 
         sb.flush();
         interval.tick().await;
