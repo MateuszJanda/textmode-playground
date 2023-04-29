@@ -1,4 +1,5 @@
 use explorer::ScreenBuffer;
+use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 use tokio::time::Duration;
 
@@ -8,6 +9,24 @@ enum Direction {
     Down,
     Left,
     Right,
+}
+
+
+/// To generate random Direction.
+///
+/// # Example:
+/// ```
+/// let dir: Direction = rand::random();
+/// ```
+impl Distribution<Direction> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Direction {
+        match rng.gen_range(0..=3) {
+            0 => Direction::Up,
+            1 => Direction::Down,
+            2 => Direction::Left,
+            _ => Direction::Right,
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -53,9 +72,9 @@ impl Cell {
     }
 
     /// Set random direction based on previous cell direction.
-    fn set_random_direction(&mut self, dir: Option<Direction>) -> Direction {
-        if let Some(d) = dir {
-            match d {
+    fn set_random_direction(&mut self, old_dir: Option<Direction>) -> Direction {
+        if let Some(dir) = old_dir {
+            match dir {
                 Direction::Up => self.down = true,
                 Direction::Down => self.up = true,
                 Direction::Left => self.right = true,
@@ -63,24 +82,15 @@ impl Cell {
             }
         }
 
-        match rand::thread_rng().gen_range(0..4) {
-            0 => {
-                self.up = true;
-                Direction::Up
-            }
-            1 => {
-                self.down = true;
-                Direction::Down
-            }
-            2 => {
-                self.left = true;
-                Direction::Left
-            }
-            _ => {
-                self.right = true;
-                Direction::Right
-            }
+        let new_dir: Direction = rand::random();
+        match new_dir {
+            Direction::Up => self.up = true,
+            Direction::Down => self.down = true,
+            Direction::Left => self.left = true,
+            Direction::Right => self.right = true,
         }
+
+        new_dir
     }
 }
 
@@ -95,16 +105,6 @@ impl Warm {
     }
 }
 
-/// Generate new direction.
-fn new_direction() -> Direction {
-    match rand::thread_rng().gen_range(0..4) {
-        0 => Direction::Up,
-        1 => Direction::Down,
-        2 => Direction::Left,
-        _ => Direction::Right,
-    }
-}
-
 /// Change direction in case we reach wall.
 fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, warm: &Warm) -> Direction {
     let mut is_correct = false;
@@ -114,7 +114,7 @@ fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, warm: &Warm) -> Dire
             || (new_dir == Direction::Left && warm.x == 0)
             || (new_dir == Direction::Right && warm.x == sb.width - 1)
         {
-            new_dir = new_direction();
+            new_dir = rand::random();
         } else {
             is_correct = true;
         }
