@@ -74,26 +74,21 @@ impl Cell {
         }
     }
 
-    /// Set random direction based on previous cell direction.
-    fn set_random_direction(&mut self, old_dir: Option<Direction>) -> Direction {
-        if let Some(dir) = old_dir {
-            match dir {
-                Direction::Up => self.down = true,
-                Direction::Down => self.up = true,
-                Direction::Left => self.right = true,
-                Direction::Right => self.left = true,
-            }
+    /// Update branches based on previous warm move.
+    fn update_branches(&mut self, warm: &Warm) {
+        match warm.prev_dir {
+            Direction::Up => self.down = true,
+            Direction::Down => self.up = true,
+            Direction::Left => self.right = true,
+            Direction::Right => self.left = true,
         }
 
-        let new_dir: Direction = rand::random();
-        match new_dir {
+        match warm.dir {
             Direction::Up => self.up = true,
             Direction::Down => self.down = true,
             Direction::Left => self.left = true,
             Direction::Right => self.right = true,
         }
-
-        new_dir
     }
 }
 
@@ -101,59 +96,78 @@ impl Cell {
 struct Warm {
     x: usize,
     y: usize,
+    prev_x: usize,
+    prev_y: usize,
+    dir: Direction,
+    prev_dir: Direction,
 }
 
 impl Warm {
-    /// Set stating position for warm.
+    /// Set starting position and direction for warm.
     fn new(x: usize, y: usize) -> Self {
-        Warm { x, y }
-    }
-}
-
-/// Change direction in case we reach wall.
-fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, warm: &Warm) -> Direction {
-    let mut is_correct = false;
-    while !is_correct {
-        if (new_dir == Direction::Up && warm.y == 0)
-            || (new_dir == Direction::Down && warm.y == sb.height - 1)
-            || (new_dir == Direction::Left && warm.x == 0)
-            || (new_dir == Direction::Right && warm.x == sb.width - 1)
-        {
-            new_dir = rand::random();
-        } else {
-            is_correct = true;
+        Warm {
+            x,
+            y,
+            prev_x: x,
+            prev_y: y,
+            dir: rand::random(),
+            prev_dir: rand::random(),
         }
     }
 
-    new_dir
+    /// Generate new direction and move warm.
+    fn move_randomly(&mut self, sb: &ScreenBuffer) {
+        self.prev_dir = self.dir.clone();
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+
+        let mut new_dir = rand::random();
+        let mut is_correct = false;
+        while !is_correct {
+            // Change direction in case we reach wall.
+            if (new_dir == Direction::Up && self.y == 0)
+                || (new_dir == Direction::Down && self.y == sb.height - 1)
+                || (new_dir == Direction::Left && self.x == 0)
+                || (new_dir == Direction::Right && self.x == sb.width - 1)
+            {
+                new_dir = rand::random();
+            } else {
+                is_correct = true;
+            }
+        }
+
+        self.dir = new_dir;
+        match self.dir {
+            Direction::Up => self.y -= 1,
+            Direction::Down => self.y += 1,
+            Direction::Left => self.x -= 1,
+            Direction::Right => self.x += 1,
+        }
+    }
 }
 
 /// Run explorer animation.
 async fn run_animation() {
     let mut sb = ScreenBuffer::new();
-    let mut cell_map = vec![vec![Cell::new(); sb.width]; sb.height];
+
     let mut warm = Warm::new(sb.width / 2, sb.height / 2);
-    let mut dir = None;
+    let mut cell_map = vec![vec![Cell::new(); sb.width]; sb.height];
+    cell_map[warm.y][warm.x].update_branches(&warm);
 
     let mut interval = tokio::time::interval(Duration::from_millis(5));
     interval.tick().await;
 
     loop {
-        let new_dir = cell_map[warm.y][warm.x].set_random_direction(dir);
-        sb.write(
-            warm.y,
-            warm.x,
-            cell_map[warm.y][warm.x].get_char().to_string(),
-        );
+        // Restore previous cell look (without warm).
+        let prev_cell = &mut cell_map[warm.prev_y][warm.prev_x];
+        sb.write(warm.prev_y, warm.prev_x, prev_cell.get_char().to_string());
 
-        let new_dir = fix_direction(&sb, new_dir, &warm);
-        match new_dir {
-            Direction::Up => warm.y -= 1,
-            Direction::Down => warm.y += 1,
-            Direction::Left => warm.x -= 1,
-            Direction::Right => warm.x += 1,
-        }
-        dir = Some(new_dir);
+        // Print warm in current cell
+        sb.write(warm.y, warm.x, "+".to_string());
+        
+        // Move warm and update branches in next cell.
+        warm.move_randomly(&sb);
+        cell_map[warm.y][warm.x].update_branches(&warm);
 
         sb.flush();
         interval.tick().await;
