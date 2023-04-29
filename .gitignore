@@ -16,3 +16,6 @@ flag.gif
 
 game_of_life
 a.out
+
+target/
+Cargo.lock
