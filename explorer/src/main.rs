@@ -84,6 +84,17 @@ impl Cell {
     }
 }
 
+struct Warm {
+    x: usize,
+    y: usize,
+}
+
+impl Warm {
+    fn new(x: usize, y: usize) -> Self {
+        Warm { x, y }
+    }
+}
+
 /// Generate new direction.
 fn new_direction() -> Direction {
     match rand::thread_rng().gen_range(0..4) {
@@ -94,27 +105,22 @@ fn new_direction() -> Direction {
     }
 }
 
-fn fix_direction(
-    height: usize,
-    width: usize,
-    mut dir: Direction,
-    pos_y: usize,
-    pos_x: usize,
-) -> Direction {
+/// Change direction in case we reach wall.
+fn fix_direction(sb: &ScreenBuffer, mut new_dir: Direction, pos_y: usize, pos_x: usize) -> Direction {
     let mut is_correct = false;
     while !is_correct {
-        if (dir == Direction::Up && pos_y == 0)
-            || (dir == Direction::Down && pos_y == height - 1)
-            || (dir == Direction::Left && pos_x == 0)
-            || (dir == Direction::Right && pos_x == width - 1)
+        if (new_dir == Direction::Up && pos_y == 0)
+            || (new_dir == Direction::Down && pos_y == sb.height - 1)
+            || (new_dir == Direction::Left && pos_x == 0)
+            || (new_dir == Direction::Right && pos_x == sb.width - 1)
         {
-            dir = new_direction();
+            new_dir = new_direction();
         } else {
             is_correct = true;
         }
     }
 
-    dir
+    new_dir
 }
 
 /// Run explorer animation.
@@ -131,7 +137,7 @@ async fn run_animation() {
         let new_dir = cell_map[pos_y][pos_x].set_random_direction(dir);
         sb.write(pos_y, pos_x, cell_map[pos_y][pos_x].get_char().to_string());
 
-        let new_dir = fix_direction(sb.height as usize, sb.width as usize, new_dir, pos_y, pos_x);
+        let new_dir = fix_direction(&sb, new_dir, pos_y, pos_x);
         match new_dir {
             Direction::Up => pos_y -= 1,
             Direction::Down => pos_y += 1,
