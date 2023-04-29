@@ -129,23 +129,17 @@ async fn run_animation() {
     interval.tick().await;
 
     loop {
-        dir = Some(cell_map[pos_y][pos_x].set_random_direction(dir));
+        let new_dir = cell_map[pos_y][pos_x].set_random_direction(dir);
         sb.write(pos_y, pos_x, cell_map[pos_y][pos_x].get_char().to_string());
 
-        dir = Some(fix_direction(
-            sb.height as usize,
-            sb.width as usize,
-            dir.clone().unwrap(),
-            pos_y,
-            pos_x,
-        ));
-
-        match dir.clone().unwrap() {
+        let new_dir = fix_direction(sb.height as usize, sb.width as usize, new_dir, pos_y, pos_x);
+        match new_dir {
             Direction::Up => pos_y += 1,
             Direction::Down => pos_y -= 1,
             Direction::Left => pos_x -= 1,
             Direction::Right => pos_x += 1,
         }
+        dir = Some(new_dir);
 
         sb.flush();
         interval.tick().await;
