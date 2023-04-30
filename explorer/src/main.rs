@@ -5,7 +5,7 @@ use tokio::time::Duration;
 
 /// Number of warms on screen
 const NUM_OF_WARMS: usize = 10;
-/// Delay between moves.    
+/// Delay between moves.
 const DELAY_IN_MILLISECONDS: u64 = 5;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -150,6 +150,16 @@ impl Warm {
             Direction::Right => self.x += 1,
         }
     }
+
+    /// Get warm character.
+    fn get_char(&self) -> char {
+        match self.dir {
+            Direction::Up => '⯅',
+            Direction::Down => '⯆',
+            Direction::Left => '⯇',
+            Direction::Right => '⯈',
+        }
+    }
 }
 
 /// Run explorer animation.
@@ -173,7 +183,7 @@ async fn run_animation() {
             sb.write(warm.prev_y, warm.prev_x, prev_cell.get_char().to_string());
 
             // Print warm in current cell
-            sb.write(warm.y, warm.x, "+".to_string());
+            sb.write(warm.y, warm.x, warm.get_char().to_string());
 
             // Move warm to next cell and update branches in current cell.
             let curr_cell = &mut cell_map[warm.y][warm.x];
