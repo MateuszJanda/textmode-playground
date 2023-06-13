@@ -14,6 +14,8 @@ macro_rules! csi {
 pub struct Xxx;
 
 impl Color for Xxx {
+    // Example:
+    // echo -e "\033[38;2;255;0;0m\033[48;2;0;255;0mXXX"
     #[inline]
     fn write_fg(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(self.fg_str())
@@ -37,9 +39,11 @@ impl Xxx {
     /// Returns the ANSI escape sequences as a string.
     pub fn bg_str(&self) -> &'static str {
         // csi!("48;2;", $value, "m")
-        "\x1B4[8;2;0;255;255m"
+        "\x1B[48;2;0;255;255m"
     }
 }
+
+// TODO: http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
 
 fn main() {
     println!("Hello, world!");
