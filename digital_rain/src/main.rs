@@ -1,9 +1,17 @@
 extern crate termion;
 
 use std::fmt;
+
+use std::io::{stdout, Write};
+// use termion::screen::AlternateScreen;
+use termion::screen::IntoAlternateScreen;
+
 use termion::color::Color;
 use termion::{color, style};
-use tokio::time::Duration;
+
+// use tokio::time::Duration;
+use std::{time, thread};
+
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 
@@ -48,6 +56,7 @@ impl RichColor {
 struct DigitDrop {
     x: u16,
     y: u16,
+    old_y: u16,
     ch: char,
 }
 
@@ -59,15 +68,21 @@ impl DigitDrop {
         DigitDrop {
             x,
             y,
+            old_y: y,
             ch: rand::thread_rng().sample(Alphanumeric) as char,
         }
     }
 
-    fn print(&self) {
-        print!("{}{}", termion::cursor::Goto(self.x, self.y), self.ch,);
+    // fn print(&self) {
+    //     print!("{}{}", termion::cursor::Goto(self.x, self.y), self.ch);
+    // }
+
+    fn text(&self) -> String {
+        format!("{}{}{}{}", termion::cursor::Goto(self.x, self.old_y), " ", termion::cursor::Goto(self.x, self.y), self.ch)
     }
 
     fn go_down(&mut self) {
+        self.old_y = self.y;
         self.y += 1;
     }
 
@@ -75,8 +90,10 @@ impl DigitDrop {
 
 // TODO: http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
 
-#[tokio::main]
-async fn main() {
+fn main() {
+    // let mut screen = AlternateScreen::from(stdout());
+    let mut screen = stdout().into_alternate_screen().unwrap();
+
     // Get terminal size
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
     // Hide cursor
@@ -100,16 +117,20 @@ async fn main() {
         }
     }
 
-    let mut interval = tokio::time::interval(Duration::from_millis(500));
-    interval.tick().await;
+    // let mut interval = tokio::time::interval(Duration::from_millis(500));
+    // interval.tick().await;
     loop {
         for digit_drop in digit_drops.iter_mut() {
             if rand::thread_rng().gen_range(0..10) < 5 {
                 digit_drop.go_down();
             }
-            digit_drop.print();
+            // digit_drop.print();
+
+            write!(screen, "{}", digit_drop.text()).unwrap();
         }
 
-        interval.tick().await;
+        // interval.tick().await;
+        screen.flush().unwrap();
+        thread::sleep(time::Duration::from_millis(500));
     }
 }
