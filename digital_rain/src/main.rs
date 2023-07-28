@@ -10,7 +10,7 @@ use termion::color::Color;
 use termion::{color, style};
 
 // use tokio::time::Duration;
-use std::{time, thread};
+use std::{thread, time};
 
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -53,7 +53,9 @@ impl RichColor {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 struct DigitDrop {
+    num_rows: u16,
     x: u16,
     y: u16,
     old_y: u16,
@@ -62,10 +64,11 @@ struct DigitDrop {
 
 impl DigitDrop {
     /// one-based
-    fn new(x: u16, y: u16) -> Self {
+    fn new(x: u16, y: u16, num_rows: u16) -> Self {
         assert!(x > 0 && y > 0);
 
         DigitDrop {
+            num_rows,
             x,
             y,
             old_y: y,
@@ -78,7 +81,13 @@ impl DigitDrop {
     // }
 
     fn text(&self) -> String {
-        format!("{}{}{}{}", termion::cursor::Goto(self.x, self.old_y), " ", termion::cursor::Goto(self.x, self.y), self.ch)
+        format!(
+            "{}{}{}{}",
+            termion::cursor::Goto(self.x, self.old_y),
+            " ",
+            termion::cursor::Goto(self.x, self.y),
+            self.ch
+        )
     }
 
     fn go_down(&mut self) {
@@ -86,6 +95,9 @@ impl DigitDrop {
         self.y += 1;
     }
 
+    fn is_out_of_screen(&self) -> bool {
+        self.y >= self.num_rows
+    }
 }
 
 // TODO: http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
@@ -107,13 +119,11 @@ fn main() {
     // println!("{}Blue", color::Fg(color::Blue));
     // println!("{}{}RichColor", termion::cursor::Goto(5, 3), color::Fg(RichColor));
 
-
-
     // Init digit_drops
     let mut digit_drops = vec![];
     for x in 0..num_cols {
         if rand::thread_rng().gen_range(0..10) < 5 {
-            digit_drops.push(DigitDrop::new(x + 1, 1));
+            digit_drops.push(DigitDrop::new(x + 1, 1, num_rows));
         }
     }
 
@@ -129,8 +139,20 @@ fn main() {
             write!(screen, "{}", digit_drop.text()).unwrap();
         }
 
+        // Remove all drop out of screen
+        digit_drops.retain(|&digit_drop| !digit_drop.is_out_of_screen());
+
+        // Add new drops
+        if digit_drops.len() < 50 {
+            for x in 0..num_cols {
+                if rand::thread_rng().gen_range(0..10) < 2 {
+                    digit_drops.push(DigitDrop::new(x + 1, 1, num_rows));
+                }
+            }
+        }
+
         // interval.tick().await;
         screen.flush().unwrap();
-        thread::sleep(time::Duration::from_millis(500));
+        thread::sleep(time::Duration::from_millis(10));
     }
 }
