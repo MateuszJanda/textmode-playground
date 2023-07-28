@@ -1,5 +1,5 @@
 [package]
-name = "matrix"
+name = "digital_rain"
 version = "0.1.0"
 edition = "2021"
 authors = ["Mateusz Janda <mateusz.janda@gmail.com>"]
