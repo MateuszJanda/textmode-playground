@@ -46,38 +46,37 @@ impl RichColor {
 }
 
 struct DigitDrop {
-    y: u16,
     x: u16,
+    y: u16,
     ch: char,
 }
 
 impl DigitDrop {
     /// one-based
-    fn new(y: u16, x: u16) -> Self {
+    fn new(x: u16, y: u16) -> Self {
         assert!(x > 0 && y > 0);
 
         DigitDrop {
-            y,
             x,
+            y,
             ch: rand::thread_rng().sample(Alphanumeric) as char,
         }
     }
 
     fn print(&self) {
-        print!("{}{}", termion::cursor::Goto(self.y, self.x), self.ch,);
+        print!("{}{}", termion::cursor::Goto(self.x, self.y), self.ch,);
     }
+
+    fn go_down(&mut self) {
+        self.y += 1;
+    }
+
 }
 
 // TODO: http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
 
 #[tokio::main]
 async fn main() {
-    println!("Hello, world!");
-    println!("Size {:?}", termion::terminal_size());
-    // println!("Size {:?}", termion::terminal_size_pixels());
-    println!("{}Blue", color::Fg(color::Blue));
-    println!("{}RichColor", color::Fg(RichColor));
-
     // Get terminal size
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
     // Hide cursor
@@ -85,18 +84,29 @@ async fn main() {
     // Clear screen
     print!("{}", termion::clear::All);
 
+    // println!("Hello, world!");
+    // println!("Size {:?}", termion::terminal_size());
+    // // println!("Size {:?}", termion::terminal_size_pixels());
+    // println!("{}Blue", color::Fg(color::Blue));
+    // println!("{}{}RichColor", termion::cursor::Goto(5, 3), color::Fg(RichColor));
+
+
+
     // Init digit_drops
     let mut digit_drops = vec![];
-    for y in 0..num_cols {
+    for x in 0..num_cols {
         if rand::thread_rng().gen_range(0..10) < 5 {
-            digit_drops.push(DigitDrop::new(y + 1, 1));
+            digit_drops.push(DigitDrop::new(x + 1, 1));
         }
     }
 
     let mut interval = tokio::time::interval(Duration::from_millis(500));
     interval.tick().await;
     loop {
-        for digit_drop in digit_drops.iter() {
+        for digit_drop in digit_drops.iter_mut() {
+            if rand::thread_rng().gen_range(0..10) < 5 {
+                digit_drop.go_down();
+            }
             digit_drop.print();
         }
 
