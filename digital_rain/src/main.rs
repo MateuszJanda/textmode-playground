@@ -14,6 +14,9 @@ use termion::screen::{AlternateScreen, IntoAlternateScreen};
 //     't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~',
 // ];
 
+/// Matrix characters.
+/// - https://en.wikipedia.org/wiki/Hiragana_(Unicode_block)
+/// - http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
 const MATRIX_CHARS: [char; 91] = [
     'ぁ', 'あ', 'ぃ', 'い', 'ぅ', 'う', 'ぇ', 'え', 'ぉ', 'お', 'か', 'が', 'き', 'ぎ', 'く', 'ぐ',
     'け', 'げ', 'こ', 'ご', 'さ', 'ざ', 'し', 'じ', 'す', 'ず', 'せ', 'ぜ', 'そ', 'ぞ', 'た', 'だ',
@@ -142,10 +145,9 @@ impl DigitDrop {
         }
     }
 
-    /// Move drop down but only if current "step" match "speed_step".
-    /// Method return previous drop/position if something changed.
-    fn go_down(&mut self, step: u32) {
-        // Check if drop should fall in this step.
+    /// Move drop down but only if current "step" match "speed_step" or choose new character if
+    /// "step" match "new_char_step".
+    fn action(&mut self, step: u32) {
         if step % self.speed_step == 0 {
             self.y += 1;
         }
@@ -176,7 +178,6 @@ fn init_screen(screen: &mut AlternateScreen<Stdout>) {
     write!(screen, "{}", termion::clear::All).unwrap();
 }
 
-// TODO: http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
 fn main() {
     // Init screen.
     let mut screen: AlternateScreen<Stdout> = stdout().into_alternate_screen().unwrap();
@@ -198,15 +199,13 @@ fn main() {
         ));
     }
 
-    // digit_drops.push(DigitDrop::new(1, 0, num_rows as usize));
-
     let mut step = 1;
     loop {
         // Trigger all drops to check if the should be moved or not.
         let mut fading_drops: Vec<DigitDrop> = vec![];
         for digit_drop in digit_drops.iter_mut() {
             fading_drops.push(digit_drop.clone());
-            digit_drop.go_down(step);
+            digit_drop.action(step);
             digit_drop.print_drop(&mut screen);
         }
 
