@@ -9,7 +9,7 @@ use std::{thread, time};
 use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 
-const NUM_OF_DROPS: usize = 50;
+const NUM_OF_DROPS: usize = 80;
 const NUM_OF_NEW_DROPS: usize = 10;
 const NUM_OF_FADING_LEVELS: usize = 9;
 const INIT_DROPS_PROB: u32 = 70;
@@ -49,6 +49,7 @@ impl FadeColor {
             2 => "\x1B[38;2;0;205;0m",
             // 2 => "\x1B[38;2;0;205;255m",
             3 => "\x1B[38;2;0;185;0m",
+            // 3 => "\x1B[38;2;0;0;255m",
             4 => "\x1B[38;2;0;165;0m",
             5 => "\x1B[38;2;0;145;0m",
             6 => "\x1B[38;2;0;125;0m",
@@ -87,14 +88,13 @@ impl DigitDrop {
             x,
             y,
             ch,
-            // speed_step: rand::thread_rng().gen_range(1..10),
-            speed_step: 2,
+            speed_step: rand::thread_rng().gen_range(1..10),
+            // speed_step: 3,
         }
     }
 
     /// Print digital drop.
     fn print_drop(&self, screen: &mut AlternateScreen<Stdout>, buffer: &mut Vec<Vec<char>>) {
-
         if self.y >= buffer.len() {
             return;
         }
@@ -112,16 +112,24 @@ impl DigitDrop {
     }
 
     /// Print fading after drop goes down.
-    fn print_fade(&self, screen: &mut AlternateScreen<Stdout>, fade_level: usize) {
+    fn print_fade(
+        &self,
+        screen: &mut AlternateScreen<Stdout>,
+        buffer: &mut Vec<Vec<char>>,
+        fade_level: usize,
+    ) {
         // ANSI position (used by Goto) start from one.
         match fade_level {
             // If this is last fading phase then clear character on screen.
-            NUM_OF_FADING_LEVELS => write!(
-                screen,
-                "{} ",
-                termion::cursor::Goto(self.x as u16 + 1, self.y as u16 + 1),
-            )
-            .unwrap(),
+            NUM_OF_FADING_LEVELS => {
+                write!(
+                    screen,
+                    "{} ",
+                    termion::cursor::Goto(self.x as u16 + 1, self.y as u16 + 1),
+                )
+                .unwrap();
+                // buffer[self.y][self.x] = ' ';
+            }
             _ => write!(
                 screen,
                 "{}{}{}",
@@ -142,8 +150,8 @@ impl DigitDrop {
         }
 
         let prev = self.clone();
-        if self.y + 1 < buffer.len() {
-            self.y += 1;
+        self.y += 1;
+        if self.y < buffer.len() {
             buffer[self.y][self.x] = self.ch;
         }
 
@@ -152,7 +160,11 @@ impl DigitDrop {
 
     /// Check if character in buffer and "digit drop" character at same position are same.
     fn is_in_buffer(&self, buffer: &Vec<Vec<char>>) -> bool {
-        buffer[self.y][self.x] == self.ch
+        if self.y < buffer.len() {
+            return buffer[self.y][self.x] == self.ch;
+        }
+
+        false
     }
 
     /// Check if drop if out of the screen.
@@ -217,9 +229,10 @@ fn main() {
         // Trigger all drops to check if the should be moved or not.
         let mut fading_drops: Vec<DigitDrop> = vec![];
         for digit_drop in digit_drops.iter_mut() {
+            fading_drops.push(digit_drop.clone());
+
             if let Some(prev) = digit_drop.go_down(&mut buffer, step) {
                 digit_drop.print_drop(&mut screen, &mut buffer);
-                fading_drops.push(prev);
             }
         }
 
@@ -234,7 +247,7 @@ fn main() {
         // Draw fading drops.
         for (fade_level, drops) in fades.iter().enumerate() {
             for fade_drop in drops.iter() {
-                fade_drop.print_fade(&mut screen, fade_level + 1);
+                fade_drop.print_fade(&mut screen, &mut buffer, fade_level + 1);
             }
         }
 
@@ -242,9 +255,9 @@ fn main() {
         digit_drops.retain(|digit_drop| !digit_drop.is_out_of_screen());
 
         // Removed overlapping drop fading with real digital drop.
-        for fading_drops in fades.iter_mut() {
-            fading_drops.retain(|fade_drop: &DigitDrop| fade_drop.is_in_buffer(&buffer));
-        }
+        // for fading_drops in fades.iter_mut() {
+        //     fading_drops.retain(|fade_drop: &DigitDrop| fade_drop.is_in_buffer(&buffer));
+        // }
 
         // Remove last fading
         if fades.len() == NUM_OF_FADING_LEVELS {
@@ -253,18 +266,18 @@ fn main() {
 
         // Add new drops.
         let mut i = 0;
-        // while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
-        //     digit_drops.push(DigitDrop::new(
-        //         rand::thread_rng().gen_range(0..num_cols) as usize,
-        //         // 5,
-        //         0,
-        //         &mut buffer,
-        //     ));
-        //     i += 1;
-        // }
+        while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
+            digit_drops.push(DigitDrop::new(
+                rand::thread_rng().gen_range(0..num_cols) as usize,
+                // 5,
+                0,
+                &mut buffer,
+            ));
+            i += 1;
+        }
 
         screen.flush().unwrap();
-        thread::sleep(time::Duration::from_millis(100));
+        thread::sleep(time::Duration::from_millis(20));
         step += 1;
     }
 }
