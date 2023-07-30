@@ -1,6 +1,6 @@
 extern crate termion;
 
-use rand::distributions::Alphanumeric;
+use rand::seq::SliceRandom;
 use rand::Rng;
 use std::collections::VecDeque;
 use std::fmt;
@@ -9,10 +9,24 @@ use std::{thread, time};
 use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 
+// const MATRIX_CHARS: [char; 30] = [
+//     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+//     't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~',
+// ];
+
+const MATRIX_CHARS: [char; 91] = [
+    'ぁ', 'あ', 'ぃ', 'い', 'ぅ', 'う', 'ぇ', 'え', 'ぉ', 'お', 'か', 'が', 'き', 'ぎ', 'く', 'ぐ',
+    'け', 'げ', 'こ', 'ご', 'さ', 'ざ', 'し', 'じ', 'す', 'ず', 'せ', 'ぜ', 'そ', 'ぞ', 'た', 'だ',
+    'ち', 'ぢ', 'っ', 'つ', 'づ', 'て', 'で', 'と', 'ど', 'な', 'に', 'ぬ', 'ね', 'の', 'は', 'ば',
+    'ぱ', 'ひ', 'び', 'ぴ', 'ふ', 'ぶ', 'ぷ', 'へ', 'べ', 'ぺ', 'ほ', 'ぼ', 'ぽ', 'ま', 'み', 'む',
+    'め', 'も', 'ゃ', 'や', 'ゅ', 'ゆ', 'ょ', 'よ', 'ら', 'り', 'る', 'れ', 'ろ', 'ゎ', 'わ', 'ゐ',
+    'ゑ', 'を', 'ん', 'ゔ', 'ゕ', 'ゖ', '゛', '゜', 'ゝ', 'ゞ', 'ゟ',
+];
+
 const NUM_OF_INIT_DROPS: usize = 40;
 const NUM_OF_NEW_DROPS: usize = 10;
 const NUM_OF_FADING_LEVELS: usize = 16;
-const DROPS_IN_SCREEN: f32 = 0.7;
+const DROPS_IN_SCREEN: f32 = 0.5;
 
 /// This type make use of extended ANSI to display "true colors" (24-bit/RGB values)
 /// - https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
@@ -78,17 +92,18 @@ struct DigitDrop {
     num_rows: usize,
     ch: char,
     speed_step: u32,
+    new_char_step: u32,
 }
 
 impl DigitDrop {
     fn new(x: usize, y: usize, num_rows: usize) -> Self {
-        let ch = rand::thread_rng().sample(Alphanumeric) as char;
         DigitDrop {
             x,
             y,
             num_rows,
-            ch,
+            ch: *MATRIX_CHARS.choose(&mut rand::thread_rng()).unwrap(),
             speed_step: rand::thread_rng().gen_range(1..6),
+            new_char_step: rand::thread_rng().gen_range(1..10),
         }
     }
 
@@ -131,11 +146,13 @@ impl DigitDrop {
     /// Method return previous drop/position if something changed.
     fn go_down(&mut self, step: u32) {
         // Check if drop should fall in this step.
-        if step % self.speed_step != 0 {
-            return;
+        if step % self.speed_step == 0 {
+            self.y += 1;
         }
 
-        self.y += 1;
+        if step % self.new_char_step == 0 {
+            self.ch = *MATRIX_CHARS.choose(&mut rand::thread_rng()).unwrap();
+        }
     }
 
     /// Check if drop if out of the screen.
@@ -175,7 +192,7 @@ fn main() {
 
     for _ in 0..NUM_OF_INIT_DROPS {
         digit_drops.push(DigitDrop::new(
-            rand::thread_rng().gen_range(0..num_cols) as usize,
+            rand::thread_rng().gen_range(0..num_cols / 2) as usize * 2,
             0,
             num_rows as usize,
         ));
@@ -215,7 +232,7 @@ fn main() {
         let mut i = 0;
         while i < NUM_OF_NEW_DROPS && digit_drops.len() < num_of_drops {
             digit_drops.push(DigitDrop::new(
-                rand::thread_rng().gen_range(0..num_cols) as usize,
+                rand::thread_rng().gen_range(0..num_cols / 2) as usize * 2,
                 0,
                 num_rows as usize,
             ));
