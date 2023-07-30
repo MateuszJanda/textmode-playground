@@ -10,8 +10,8 @@ use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 
 const NUM_OF_DROPS: usize = 50;
-const NUM_OF_NEW_DROPS: usize = 1;
-const NUM_OF_FADING_LEVELS: usize = 8;
+const NUM_OF_NEW_DROPS: usize = 10;
+const NUM_OF_FADING_LEVELS: usize = 9;
 const INIT_DROPS_PROB: u32 = 70;
 
 /// This type make use of extended ANSI to display "true colors" (24-bit/RGB values)
@@ -45,7 +45,9 @@ impl FadeColor {
         match self.0 {
             0 => "\x1B[38;2;0;255;0m",
             1 => "\x1B[38;2;0;225;0m",
+            // 1 => "\x1B[38;2;255;225;0m",
             2 => "\x1B[38;2;0;205;0m",
+            // 2 => "\x1B[38;2;0;205;255m",
             3 => "\x1B[38;2;0;185;0m",
             4 => "\x1B[38;2;0;165;0m",
             5 => "\x1B[38;2;0;145;0m",
@@ -77,19 +79,27 @@ struct DigitDrop {
 }
 
 impl DigitDrop {
-    fn new(x: usize, y: usize, num_rows: usize) -> Self {
+    fn new(x: usize, y: usize, buffer: &mut Vec<Vec<char>>) -> Self {
+        let ch = rand::thread_rng().sample(Alphanumeric) as char;
+        buffer[y][x] = ch;
         DigitDrop {
-            num_rows,
+            num_rows: buffer.len(),
             x,
             y,
-            ch: rand::thread_rng().sample(Alphanumeric) as char,
+            ch,
             // speed_step: rand::thread_rng().gen_range(1..10),
-            speed_step: 1,
+            speed_step: 2,
         }
     }
 
     /// Print digital drop.
-    fn print_drop(&self, screen: &mut AlternateScreen<Stdout>) {
+    fn print_drop(&self, screen: &mut AlternateScreen<Stdout>, buffer: &mut Vec<Vec<char>>) {
+
+        if self.y >= buffer.len() {
+            return;
+        }
+
+        buffer[self.y][self.x] = self.ch;
         // ANSI position (used by Goto) start from one.
         write!(
             screen,
@@ -124,20 +134,20 @@ impl DigitDrop {
     }
 
     /// Move drop down but only if current "step" match "speed_step".
-    /// Method return if drop was moved or not.
-    fn go_down(&mut self, buffer: &mut Vec<Vec<char>>, step: u32) -> bool {
+    /// Method return previous drop/position if something changed.
+    fn go_down(&mut self, buffer: &mut Vec<Vec<char>>, step: u32) -> Option<DigitDrop> {
         // Check if drop should fall in this step.
         if step % self.speed_step != 0 {
-            return false;
+            return None;
         }
 
-        self.y += 1;
-        if self.y < buffer.len() {
+        let prev = self.clone();
+        if self.y + 1 < buffer.len() {
+            self.y += 1;
             buffer[self.y][self.x] = self.ch;
-            return true;
         }
 
-        false
+        return Some(prev);
     }
 
     /// Check if character in buffer and "digit drop" character at same position are same.
@@ -176,9 +186,9 @@ fn main() {
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
 
     // Init data
-    let mut buffer: Vec<Vec<char>> = vec![vec![' '; num_cols as usize]; num_cols as usize];
+    let mut buffer: Vec<Vec<char>> = vec![vec![' '; num_cols as usize]; num_rows as usize];
     let mut fades: VecDeque<Vec<DigitDrop>> = VecDeque::new();
-    let mut digit_drops = vec![];
+    let mut digit_drops: Vec<DigitDrop> = vec![];
 
     // for x in 0..num_cols as usize {
     //     if rand::thread_rng().gen_range(0..100) < INIT_DROPS_PROB {
@@ -187,46 +197,53 @@ fn main() {
     // }
 
     // for _ in 0..30 {
-
     //     digit_drops.push(DigitDrop::new(
     //         rand::thread_rng().gen_range(0..num_cols) as usize,
     //         0,
-    //         num_rows as usize,
+    //         &mut buffer,
     //     ));
     // }
 
-    digit_drops.push(DigitDrop::new(1, 0, num_rows as usize));
-    digit_drops.push(DigitDrop::new(3, 0, num_rows as usize));
+    digit_drops.push(DigitDrop::new(1, 0, &mut buffer));
+    // digit_drops.push(DigitDrop::new(3, 0, num_rows as usize));
+    // buffer[0][1] = 'x';
 
-    let mut step = 0;
+    // for digit_drop in digit_drops.iter() {
+    //     buffer[digit_drop.y][digit_drop.x] = digit_drop.ch;
+    // }
+
+    let mut step = 1;
     loop {
         // Trigger all drops to check if the should be moved or not.
         let mut fading_drops: Vec<DigitDrop> = vec![];
         for digit_drop in digit_drops.iter_mut() {
-            let is_moved = digit_drop.go_down(&mut buffer, step);
-            if is_moved {
-                fading_drops.push(digit_drop.clone());
+            if let Some(prev) = digit_drop.go_down(&mut buffer, step) {
+                digit_drop.print_drop(&mut screen, &mut buffer);
+                fading_drops.push(prev);
+            }
+        }
+
+        // Update. Digital drops will fade from this point.
+        fades.push_front(fading_drops);
+
+        // // Draw digital drops.
+        // for digit_drop in digit_drops.iter() {
+        //     digit_drop.print_drop(&mut screen);
+        // }
+
+        // Draw fading drops.
+        for (fade_level, drops) in fades.iter().enumerate() {
+            for fade_drop in drops.iter() {
+                fade_drop.print_fade(&mut screen, fade_level + 1);
             }
         }
 
         // Remove all drops that are out of the screen.
         digit_drops.retain(|digit_drop| !digit_drop.is_out_of_screen());
 
-        // Draw digital drops.
-        for digit_drop in digit_drops.iter() {
-            digit_drop.print_drop(&mut screen);
-        }
-
         // Removed overlapping drop fading with real digital drop.
-        for f in fades.iter_mut() {
-            f.retain(|d| d.is_in_buffer(&buffer));
-        }
-
-        // Draw fading drops.
-        for (fade_level, drops) in fades.iter().enumerate() {
-            for drop in drops.iter() {
-                drop.print_fade(&mut screen, fade_level + 1);
-            }
+        for fading_drops in fades.iter_mut() {
+            fading_drops.retain(|fade_drop: &DigitDrop| fade_drop.is_in_buffer(&buffer));
         }
 
         // Remove last fading
@@ -234,22 +251,20 @@ fn main() {
             fades.pop_back();
         }
 
-        // Digital drops will fade from this point.
-        fades.push_front(fading_drops);
-
         // Add new drops.
         let mut i = 0;
-        while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
-            digit_drops.push(DigitDrop::new(
-                rand::thread_rng().gen_range(0..num_cols) as usize,
-                0,
-                num_rows as usize,
-            ));
-            i += 1;
-        }
+        // while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
+        //     digit_drops.push(DigitDrop::new(
+        //         rand::thread_rng().gen_range(0..num_cols) as usize,
+        //         // 5,
+        //         0,
+        //         &mut buffer,
+        //     ));
+        //     i += 1;
+        // }
 
         screen.flush().unwrap();
-        thread::sleep(time::Duration::from_millis(10));
+        thread::sleep(time::Duration::from_millis(100));
         step += 1;
     }
 }
