@@ -10,8 +10,8 @@ use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 
 const NUM_OF_DROPS: usize = 50;
-const NUM_OF_NEW_DROPS: usize = 10;
-const NUM_OF_FADING_LEVELS: usize = 10;
+const NUM_OF_NEW_DROPS: usize = 1;
+const NUM_OF_FADING_LEVELS: usize = 8;
 const INIT_DROPS_PROB: u32 = 70;
 
 /// This type make use of extended ANSI to display "true colors" (24-bit/RGB values)
@@ -39,7 +39,7 @@ impl Color for FadeColor {
 
 impl FadeColor {
     #[inline]
-    /// Returns the ANSI escape sequence as a string (&'static str).
+    /// Returns the ANSI escape sequence for foreground color (RGB) as a string (&'static str).
     pub fn fg_str(&self) -> &'static str {
         // csi!("38;2;", $value, "m")
         match self.0 {
@@ -50,23 +50,20 @@ impl FadeColor {
             4 => "\x1B[38;2;0;165;0m",
             5 => "\x1B[38;2;0;145;0m",
             6 => "\x1B[38;2;0;125;0m",
-            8 => "\x1B[38;2;0;105;0m",
-            9 => "\x1B[38;2;0;85;0m",
-            10 => "\x1B[38;2;0;65;0m",
-            _ => "\x1B[38;2;0;0;0m",
+            7 => "\x1B[38;2;0;105;0m",
+            8 => "\x1B[38;2;0;85;0m",
+            9 => "\x1B[38;2;0;65;0m",
+            10 => "\x1B[38;2;0;45;0m",
+            11 => "\x1B[38;2;0;25;0m",
+            _ => "\x1B[38;2;255;0;0m",
         }
     }
 
     #[inline]
-    /// Returns the ANSI escape sequences as a string (&'static str).
+    /// Returns the ANSI escape sequences for background RGB color (black) as a string (&'static str).
     pub fn bg_str(&self) -> &'static str {
         // csi!("48;2;", $value, "m")
         "\x1B[48;2;0;0;0m"
-
-        // match self.0 {
-        //     0 => "\x1B[48;2;255;255;255m",
-        //     _ => "\x1B[48;2;0;0;0m",
-        // }
     }
 }
 
@@ -87,7 +84,7 @@ impl DigitDrop {
             y,
             ch: rand::thread_rng().sample(Alphanumeric) as char,
             // speed_step: rand::thread_rng().gen_range(1..10),
-            speed_step: 2,
+            speed_step: 1,
         }
     }
 
@@ -241,18 +238,18 @@ fn main() {
         fades.push_front(fading_drops);
 
         // Add new drops.
-        // let mut i = 0;
-        // while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
-        //     digit_drops.push(DigitDrop::new(
-        //         rand::thread_rng().gen_range(0..num_cols) as usize,
-        //         0,
-        //         num_rows as usize,
-        //     ));
-        //     i += 1;
-        // }
+        let mut i = 0;
+        while i < NUM_OF_NEW_DROPS && digit_drops.len() < NUM_OF_DROPS {
+            digit_drops.push(DigitDrop::new(
+                rand::thread_rng().gen_range(0..num_cols) as usize,
+                0,
+                num_rows as usize,
+            ));
+            i += 1;
+        }
 
         screen.flush().unwrap();
-        thread::sleep(time::Duration::from_millis(100));
+        thread::sleep(time::Duration::from_millis(10));
         step += 1;
     }
 }
