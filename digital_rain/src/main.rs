@@ -9,9 +9,9 @@ use std::{thread, time};
 use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 
-const NUM_OF_DROPS: usize = 5;
-const NUM_OF_NEW_DROPS: usize = 1;
-const NUM_OF_FADING_LEVELS: usize = 5;
+const NUM_OF_DROPS: usize = 50;
+const NUM_OF_NEW_DROPS: usize = 10;
+const NUM_OF_FADING_LEVELS: usize = 10;
 const INIT_DROPS_PROB: u32 = 70;
 
 /// This type make use of extended ANSI to display "true colors" (24-bit/RGB values)
@@ -43,8 +43,17 @@ impl FadeColor {
     pub fn fg_str(&self) -> &'static str {
         // csi!("38;2;", $value, "m")
         match self.0 {
-            0 => "\x1B[38;2;255;255;0m",
-            _ => "\x1B[38;2;255;0;0m",
+            0 => "\x1B[38;2;0;255;0m",
+            1 => "\x1B[38;2;0;225;0m",
+            2 => "\x1B[38;2;0;205;0m",
+            3 => "\x1B[38;2;0;185;0m",
+            4 => "\x1B[38;2;0;165;0m",
+            5 => "\x1B[38;2;0;145;0m",
+            6 => "\x1B[38;2;0;125;0m",
+            8 => "\x1B[38;2;0;105;0m",
+            9 => "\x1B[38;2;0;85;0m",
+            10 => "\x1B[38;2;0;65;0m",
+            _ => "\x1B[38;2;0;0;0m",
         }
     }
 
@@ -52,7 +61,12 @@ impl FadeColor {
     /// Returns the ANSI escape sequences as a string (&'static str).
     pub fn bg_str(&self) -> &'static str {
         // csi!("48;2;", $value, "m")
-        "\x1B[48;2;0;255;255m"
+        "\x1B[48;2;0;0;0m"
+
+        // match self.0 {
+        //     0 => "\x1B[48;2;255;255;255m",
+        //     _ => "\x1B[48;2;0;0;0m",
+        // }
     }
 }
 
@@ -72,7 +86,8 @@ impl DigitDrop {
             x,
             y,
             ch: rand::thread_rng().sample(Alphanumeric) as char,
-            speed_step: rand::thread_rng().gen_range(1..10),
+            // speed_step: rand::thread_rng().gen_range(1..10),
+            speed_step: 2,
         }
     }
 
@@ -139,6 +154,7 @@ impl DigitDrop {
     }
 }
 
+/// Init screen (set background, hide cursor and clear screen).
 fn init_screen(screen: &mut AlternateScreen<Stdout>) {
     // Set background color to black.
     write!(
@@ -171,6 +187,15 @@ fn main() {
     //     if rand::thread_rng().gen_range(0..100) < INIT_DROPS_PROB {
     //         digit_drops.push(DigitDrop::new(x, 0, num_rows as usize));
     //     }
+    // }
+
+    // for _ in 0..30 {
+
+    //     digit_drops.push(DigitDrop::new(
+    //         rand::thread_rng().gen_range(0..num_cols) as usize,
+    //         0,
+    //         num_rows as usize,
+    //     ));
     // }
 
     digit_drops.push(DigitDrop::new(1, 0, num_rows as usize));
