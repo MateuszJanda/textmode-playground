@@ -11,3 +11,11 @@ repository = "https://github.com/MateuszJanda/textmode-playground"
 [dependencies]
 termion = "2.0"
 rand = "0.8"
+
+[dependencies.tokio]
+version = "1.29"
+features = [
+    "rt-multi-thread",
+    "macros",
+    "time",
+]

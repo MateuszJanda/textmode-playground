@@ -5,9 +5,9 @@ use rand::Rng;
 use std::collections::VecDeque;
 use std::fmt;
 use std::io::{stdout, Stdout, Write};
-use std::{thread, time};
 use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
+use tokio::time::Duration;
 
 // const MATRIX_CHARS: [char; 30] = [
 //     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
@@ -30,6 +30,9 @@ const NUM_OF_INIT_DROPS: usize = 40;
 const NUM_OF_NEW_DROPS: usize = 10;
 const NUM_OF_FADING_LEVELS: usize = 16;
 const DROPS_IN_SCREEN: f32 = 0.5;
+// Hiragana characters occupy two normal characters widths.
+const CHAR_WIDTH: usize = 2;
+const DELAY_IN_MS: u64 = 20;
 
 /// This type make use of extended ANSI to display "true colors" (24-bit/RGB values)
 /// - https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters
@@ -80,8 +83,8 @@ impl FadeColor {
         }
     }
 
-    #[inline]
     /// Returns the ANSI escape sequences for background RGB color (black) as a string (&'static str).
+    #[inline]
     pub fn bg_str(&self) -> &'static str {
         // csi!("48;2;", $value, "m")
         "\x1B[48;2;0;0;0m"
@@ -92,56 +95,36 @@ impl FadeColor {
 struct DigitDrop {
     x: usize,
     y: usize,
-    num_rows: usize,
+    height: usize,
     ch: char,
     speed_step: u32,
     new_char_step: u32,
 }
 
 impl DigitDrop {
-    fn new(x: usize, y: usize, num_rows: usize) -> Self {
+    fn new(x: usize, y: usize, height: usize) -> Self {
         DigitDrop {
             x,
             y,
-            num_rows,
+            height,
             ch: *MATRIX_CHARS.choose(&mut rand::thread_rng()).unwrap(),
             speed_step: rand::thread_rng().gen_range(1..6),
-            new_char_step: rand::thread_rng().gen_range(1..10),
+            new_char_step: rand::thread_rng().gen_range(3..10),
         }
     }
 
-    /// Print digital drop.
-    fn print_drop(&self, screen: &mut AlternateScreen<Stdout>) {
-        // ANSI position (used by Goto) start from one.
-        write!(
-            screen,
-            "{}{}{}",
-            termion::cursor::Goto(self.x as u16 + 1, self.y as u16 + 1),
-            termion::color::Fg(FadeColor(0)),
-            self.ch
-        )
-        .unwrap();
-    }
+    /// Print drop and fading to buffer.
+    fn print(&self, buffer: &mut Vec<Vec<String>>, fade_level: usize) {
+        if self.y >= buffer.len() {
+            return;
+        }
 
-    /// Print fading after drop goes down.
-    fn print_fade(&self, screen: &mut AlternateScreen<Stdout>, fade_level: usize) {
         // ANSI position (used by Goto) start from one.
-        match fade_level {
-            // If this is last fading phase then clear character on screen.
-            NUM_OF_FADING_LEVELS => write!(
-                screen,
-                "{} ",
-                termion::cursor::Goto(self.x as u16 + 1, self.y as u16 + 1),
-            )
-            .unwrap(),
-            _ => write!(
-                screen,
-                "{}{}{}",
-                termion::cursor::Goto(self.x as u16 + 1, self.y as u16 + 1),
-                termion::color::Fg(FadeColor(fade_level)),
-                self.ch
-            )
-            .unwrap(),
+        buffer[self.y][self.x] = match fade_level {
+            // If this is last fading phase then clear character (two space because Hiragana occupy
+            // two normal width) on screen.
+            NUM_OF_FADING_LEVELS => format!("{}  ", termion::color::Fg(FadeColor(0))),
+            _ => format!("{}{}", termion::color::Fg(FadeColor(fade_level)), self.ch),
         }
     }
 
@@ -159,7 +142,7 @@ impl DigitDrop {
 
     /// Check if drop if out of the screen.
     fn is_out_of_screen(&self) -> bool {
-        self.y > self.num_rows
+        self.y >= self.height
     }
 }
 
@@ -178,7 +161,8 @@ fn init_screen(screen: &mut AlternateScreen<Stdout>) {
     write!(screen, "{}", termion::clear::All).unwrap();
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Init screen.
     let mut screen: AlternateScreen<Stdout> = stdout().into_alternate_screen().unwrap();
     init_screen(&mut screen);
@@ -186,38 +170,55 @@ fn main() {
     // Get terminal size
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
     let num_of_drops: usize = ((num_cols * num_rows) as f32 * DROPS_IN_SCREEN) as usize;
+    let height = num_rows as usize;
+    let width = num_cols as usize / CHAR_WIDTH;
 
     // Init data
+    let mut buffer: Vec<Vec<String>> = vec![vec!["  ".into(); width]; height];
     let mut fades: VecDeque<Vec<DigitDrop>> = VecDeque::new();
     let mut digit_drops: Vec<DigitDrop> = vec![];
 
+    // Add few characters at the start.
     for _ in 0..NUM_OF_INIT_DROPS {
         digit_drops.push(DigitDrop::new(
-            rand::thread_rng().gen_range(0..num_cols / 2) as usize * 2,
+            rand::thread_rng().gen_range(0..width),
             0,
-            num_rows as usize,
+            height,
         ));
     }
 
     let mut step = 1;
+    let mut interval = tokio::time::interval(Duration::from_millis(DELAY_IN_MS));
+    interval.tick().await;
     loop {
         // Trigger all drops to check if the should be moved or not.
         let mut fading_drops: Vec<DigitDrop> = vec![];
         for digit_drop in digit_drops.iter_mut() {
             fading_drops.push(digit_drop.clone());
             digit_drop.action(step);
-            digit_drop.print_drop(&mut screen);
+            digit_drop.print(&mut buffer, 0);
+        }
+
+        // Print fading drops into buffer.
+        for (fade_level, drops) in fades.iter().enumerate() {
+            for fade_drop in drops.iter() {
+                fade_drop.print(&mut buffer, fade_level + 1);
+            }
+        }
+
+        // Draw on screen line by line.
+        for (y, row) in buffer.iter().enumerate() {
+            write!(
+                screen,
+                "{}{}",
+                termion::cursor::Goto(1, y as u16 + 1),
+                row.join("")
+            )
+            .unwrap();
         }
 
         // Update. Digital drops will fade from this point.
         fades.push_front(fading_drops);
-
-        // Draw fading drops.
-        for (fade_level, drops) in fades.iter().enumerate() {
-            for fade_drop in drops.iter() {
-                fade_drop.print_fade(&mut screen, fade_level + 1);
-            }
-        }
 
         // Remove all drops that are out of the screen.
         digit_drops.retain(|digit_drop| !digit_drop.is_out_of_screen());
@@ -231,15 +232,15 @@ fn main() {
         let mut i = 0;
         while i < NUM_OF_NEW_DROPS && digit_drops.len() < num_of_drops {
             digit_drops.push(DigitDrop::new(
-                rand::thread_rng().gen_range(0..num_cols / 2) as usize * 2,
+                rand::thread_rng().gen_range(0..width),
                 0,
-                num_rows as usize,
+                height,
             ));
             i += 1;
         }
 
         screen.flush().unwrap();
-        thread::sleep(time::Duration::from_millis(20));
         step += 1;
+        interval.tick().await;
     }
 }
