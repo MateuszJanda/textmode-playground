@@ -27,8 +27,8 @@ const MATRIX_CHARS: [char; 91] = [
 const NUM_OF_INIT_DROPS: usize = 40;
 const NUM_OF_NEW_DROPS: usize = 10;
 const NUM_OF_FADING_LEVELS: usize = 16;
-/// Number of drops = width * height * DROPS_ON_SCREEN_FACTOR
-const DROPS_ON_SCREEN_FACTOR: f32 = 0.06;
+/// Number of drops = (width/CHAR_WIDTH) * height * DROPS_ON_SCREEN_FACTOR
+const DROPS_ON_SCREEN_FACTOR: f32 = 0.16;
 /// Hiragana characters occupy two normal characters widths.
 const CHAR_WIDTH: usize = 2;
 const DELAY_IN_MS: u64 = 20;
@@ -168,7 +168,8 @@ async fn main() {
 
     // Get terminal size
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
-    let num_of_drops: usize = ((num_cols * num_rows) as f32 * DROPS_ON_SCREEN_FACTOR) as usize;
+    let num_of_drops: usize =
+        ((num_cols / CHAR_WIDTH as u16 * num_rows) as f32 * DROPS_ON_SCREEN_FACTOR) as usize;
     let height = num_rows as usize;
     let width = num_cols as usize / CHAR_WIDTH;
 
