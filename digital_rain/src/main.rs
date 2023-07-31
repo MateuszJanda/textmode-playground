@@ -9,10 +9,9 @@ use termion::color::Color;
 use termion::screen::{AlternateScreen, IntoAlternateScreen};
 use tokio::time::Duration;
 
-// const MATRIX_CHARS: [char; 30] = [
-//     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
-//     't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~',
-// ];
+/// References:
+/// - https://www.youtube.com/watch?v=F7nSAEbJGLo
+
 
 /// Matrix characters.
 /// - https://en.wikipedia.org/wiki/Hiragana_(Unicode_block)
@@ -29,8 +28,9 @@ const MATRIX_CHARS: [char; 91] = [
 const NUM_OF_INIT_DROPS: usize = 40;
 const NUM_OF_NEW_DROPS: usize = 10;
 const NUM_OF_FADING_LEVELS: usize = 16;
-const DROPS_IN_SCREEN: f32 = 0.5;
-// Hiragana characters occupy two normal characters widths.
+/// Number of drops = width * height * DROPS_ON_SCREEN_FACTOR
+const DROPS_ON_SCREEN_FACTOR: f32 = 0.06;
+/// Hiragana characters occupy two normal characters widths.
 const CHAR_WIDTH: usize = 2;
 const DELAY_IN_MS: u64 = 20;
 
@@ -79,7 +79,7 @@ impl FadeColor {
             13 => "\x1B[38;2;0;48;0m",
             14 => "\x1B[38;2;0;32;0m",
             15 => "\x1B[38;2;0;16;0m",
-            _ => "\x1B[38;2;255;0;0m",
+            _ => "\x1B[38;2;0;0;0m",
         }
     }
 
@@ -109,7 +109,7 @@ impl DigitDrop {
             height,
             ch: *MATRIX_CHARS.choose(&mut rand::thread_rng()).unwrap(),
             speed_step: rand::thread_rng().gen_range(1..6),
-            new_char_step: rand::thread_rng().gen_range(3..10),
+            new_char_step: rand::thread_rng().gen_range(1..10),
         }
     }
 
@@ -169,7 +169,7 @@ async fn main() {
 
     // Get terminal size
     let (num_cols, num_rows) = termion::terminal_size().unwrap();
-    let num_of_drops: usize = ((num_cols * num_rows) as f32 * DROPS_IN_SCREEN) as usize;
+    let num_of_drops: usize = ((num_cols * num_rows) as f32 * DROPS_ON_SCREEN_FACTOR) as usize;
     let height = num_rows as usize;
     let width = num_cols as usize / CHAR_WIDTH;
 
@@ -191,19 +191,19 @@ async fn main() {
     let mut interval = tokio::time::interval(Duration::from_millis(DELAY_IN_MS));
     interval.tick().await;
     loop {
+        // Print fading drops into buffer.
+        for (fade_level, drops) in fades.iter().enumerate() {
+            for fade_drop in drops.iter() {
+                fade_drop.print(&mut buffer, fade_level + 1);
+            }
+        }
+
         // Trigger all drops to check if the should be moved or not.
         let mut fading_drops: Vec<DigitDrop> = vec![];
         for digit_drop in digit_drops.iter_mut() {
             fading_drops.push(digit_drop.clone());
             digit_drop.action(step);
             digit_drop.print(&mut buffer, 0);
-        }
-
-        // Print fading drops into buffer.
-        for (fade_level, drops) in fades.iter().enumerate() {
-            for fade_drop in drops.iter() {
-                fade_drop.print(&mut buffer, fade_level + 1);
-            }
         }
 
         // Draw on screen line by line.
