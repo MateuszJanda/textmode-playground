@@ -12,7 +12,6 @@ use tokio::time::Duration;
 /// References:
 /// - https://www.youtube.com/watch?v=F7nSAEbJGLo
 
-
 /// Matrix characters.
 /// - https://en.wikipedia.org/wiki/Hiragana_(Unicode_block)
 /// - http://www.rikai.com/library/kanjitables/kanji_codes.unicode.shtml
@@ -239,8 +238,8 @@ async fn main() {
             i += 1;
         }
 
+        interval.tick().await;
         screen.flush().unwrap();
         step += 1;
-        interval.tick().await;
     }
 }
