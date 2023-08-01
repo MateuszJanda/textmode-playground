@@ -1,3 +1,7 @@
+// Author: Mateusz Janda <mateusz janda at gmail com>
+// Site: github.com/MateuszJanda/textmode-playground
+// Ad maiorem Dei gloriam
+
 extern crate termion;
 
 use rand::seq::SliceRandom;
