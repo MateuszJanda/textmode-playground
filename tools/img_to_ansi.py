@@ -14,6 +14,9 @@ BLOCK_HEIGHT = BLOCK_WIDTH
 
 
 def main():
+    """
+    $ echo -e `python img_to_ansi.py`
+    """
     file_name = "predator2.jpg"
     input_arr = read_img_in_grayscale(file_name)
     print(f"Image resolution: {input_arr.shape[1]}x{input_arr.shape[0]}")
