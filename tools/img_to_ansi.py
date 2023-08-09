@@ -18,21 +18,25 @@ def main():
     $ echo -e `python img_to_ansi.py`
     """
     file_name = "predator2.jpg"
-    input_arr = read_img_in_grayscale(file_name)
-    print(f"Image resolution: {input_arr.shape[1]}x{input_arr.shape[0]}")
+    input_arr = cv2.imread(file_name)
+    print(f"Image resolution: {input_arr.shape}")
 
     input_arr = trim_image(input_arr)
-    print(f"Trim image to resolution: {input_arr.shape[1]}x{input_arr.shape[0]}")
+    print(f"Trim image to resolution: {input_arr.shape}")
 
     mean_arr = mean_values_array(input_arr)
-    print(f"Output resolution: {mean_arr.shape[1]}x{mean_arr.shape[0]}")
+    print(f"Output resolution: {mean_arr.shape}")
 
     line = ""
     for row in range(0, mean_arr.shape[0], 2):
         for col in range(0, mean_arr.shape[1]):
-            bg_color = int(mean_arr[row, col])
-            fg_color = int(mean_arr[row + 1, col])
-            line += f"\\e[38;2;{bg_color};{bg_color};{bg_color}m\\e[48;2;{fg_color};{fg_color};{fg_color}m▄"
+            bg_r = mean_arr[row, col, 0]
+            bg_g = mean_arr[row, col, 1]
+            bg_b = mean_arr[row, col, 2]
+            fg_r = mean_arr[row + 1, col, 0]
+            fg_g = mean_arr[row + 1, col, 1]
+            fg_b = mean_arr[row + 1, col, 2]
+            line += f"\\e[38;2;{bg_r};{bg_g};{bg_b}m\\e[48;2;{fg_r};{fg_g};{fg_b}m▄"
         line += "\\e[m\\n"
     print(line)
 
@@ -64,9 +68,10 @@ def mean_values_array(input_arr: npt.ArrayLike) -> np.ndarray:
     mean_height = input_arr.shape[0] // BLOCK_HEIGHT
     mean_width = input_arr.shape[1] // BLOCK_WIDTH
     return (
-        input_arr.reshape([mean_height, BLOCK_HEIGHT, mean_width, BLOCK_WIDTH])
-        .mean(3)
-        .mean(1)
+        input_arr.reshape([mean_height, BLOCK_HEIGHT, mean_width, BLOCK_WIDTH, 3])
+        .mean(axis=3)
+        .mean(axis=1)
+        .astype(int)
     )
 
 
