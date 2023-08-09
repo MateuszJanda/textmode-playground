@@ -4,29 +4,35 @@
 # Site: github.com/MateuszJanda/textmode-playground
 # Ad maiorem Dei gloriam
 
+import argparse
 import cv2
 import numpy as np
 import numpy.typing as npt
 
 
-BLOCK_WIDTH = 8
-BLOCK_HEIGHT = BLOCK_WIDTH
+class CustomFormatter(
+    argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter
+):
+    pass
 
 
 def main():
     """
     $ echo -e `python img_to_ansi.py`
     """
-    file_name = "predator2.jpg"
-    input_arr = cv2.imread(file_name)
-    print(f"Image resolution: {input_arr.shape}")
+    # Parse arguments
+    args = parse_args()
 
-    input_arr = trim_image(input_arr)
-    print(f"Trim image to resolution: {input_arr.shape}")
+    # Read image
+    input_arr = cv2.imread(args.input_path)
 
-    mean_arr = mean_values_array(input_arr)
-    print(f"Output resolution: {mean_arr.shape}")
+    # Trim image. Resolution should be a multiple of the block size
+    input_arr = trim_image(input_arr, args.block_size)
 
+    # Reduce image size. Values are averages of their neighbors
+    mean_arr = mean_values_array(input_arr, args.block_size)
+
+    # Create ANSI string
     line = ""
     for row in range(0, mean_arr.shape[0], 2):
         for col in range(0, mean_arr.shape[1]):
@@ -41,34 +47,54 @@ def main():
     print(line)
 
 
-def read_img_in_grayscale(path: str):
-    """Get input image (gray scale) as numpy array."""
-    return cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+def parse_args() -> argparse.Namespace:
+    """
+    Parse command line arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Convert RGB image to ANSI\n"
+        "\n"
+        "Example:\n"
+        "$ echo -e `python img_to_ansi.py --block-size 8 --input-path cat.jpg`\n",
+        usage="Please try to use -h, --help for more information's",
+        epilog=" \n",
+        formatter_class=CustomFormatter,
+    )
+    parser.add_argument(
+        "-i", "--input-path", required=True, action="store", help="Path to input file."
+    )
+    parser.add_argument(
+        "-b",
+        "--block-size",
+        required=True,
+        action="store",
+        type=int,
+        help="Size of block (pixels) that will be converted to ANSI half block.",
+    )
+    return parser.parse_args()
 
 
-def trim_image(input_arr: npt.ArrayLike) -> np.ndarray:
+def trim_image(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
     """Trim image."""
-    if (input_arr.shape[0] // BLOCK_HEIGHT) % 2 == 0:
-        trim_height = (input_arr.shape[0] // BLOCK_HEIGHT) * BLOCK_HEIGHT
+    if (input_arr.shape[0] // block_size) % 2 == 0:
+        trim_height = (input_arr.shape[0] // block_size) * block_size
     else:
-        trim_height = (
-            (input_arr.shape[0] - BLOCK_HEIGHT) // BLOCK_HEIGHT
-        ) * BLOCK_HEIGHT
+        trim_height = ((input_arr.shape[0] - block_size) // block_size) * block_size
 
-    if (input_arr.shape[1] // BLOCK_WIDTH) % 2 == 0:
-        trim_width = (input_arr.shape[1] // BLOCK_WIDTH) * BLOCK_WIDTH
+    if (input_arr.shape[1] // block_size) % 2 == 0:
+        trim_width = (input_arr.shape[1] // block_size) * block_size
     else:
-        trim_width = ((input_arr.shape[1] - BLOCK_WIDTH) // BLOCK_WIDTH) * BLOCK_WIDTH
+        trim_width = ((input_arr.shape[1] - block_size) // block_size) * block_size
 
     return input_arr[:trim_height, :trim_width]
 
 
-def mean_values_array(input_arr: npt.ArrayLike) -> np.ndarray:
+def mean_values_array(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
     """Small array with mean values."""
-    mean_height = input_arr.shape[0] // BLOCK_HEIGHT
-    mean_width = input_arr.shape[1] // BLOCK_WIDTH
+    mean_height = input_arr.shape[0] // block_size
+    mean_width = input_arr.shape[1] // block_size
     return (
-        input_arr.reshape([mean_height, BLOCK_HEIGHT, mean_width, BLOCK_WIDTH, 3])
+        input_arr.reshape([mean_height, block_size, mean_width, block_size, 3])
         .mean(axis=3)
         .mean(axis=1)
         .astype(int)
