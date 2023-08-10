@@ -14,20 +14,20 @@ IMG_WIDTH = 14
 
 
 def main() -> None:
-    cmp = CharComparator()
+    cmp = CharComparator("DejaVuSansMono")
     cmp.dist("x", "X")  # Ok
     cmp.dist("a", "X")  # Error
 
 
 class CharComparator:
-    def __init__(self) -> None:
-        self.font = ImageFont.truetype("DejaVuSansMono", size=12)
+    def __init__(self, font_name: str) -> None:
+        self._font = ImageFont.truetype(font_name, size=12)
 
     def _create_img(self, ch: str, start_x: int = 3, start_y: int = 3) -> np.ndarray:
         """Draw character glyph."""
         img = Image.new("L", color=0, size=(IMG_WIDTH, IMG_HEIGHT))
         draw = ImageDraw.Draw(img)
-        draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self.font, spacing=0)
+        draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self._font, spacing=0)
         # img.save(f"{ch}.png")
         # return np.array(img)
         return img
