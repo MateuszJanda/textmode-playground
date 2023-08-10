@@ -24,7 +24,7 @@ class CharComparator:
         self.font = ImageFont.truetype("DejaVuSansMono", size=12)
 
     def _create_img(self, ch: str, start_x: int = 3, start_y: int = 3) -> np.ndarray:
-        """Draw character glyph image."""
+        """Draw character glyph."""
         img = Image.new("L", color=0, size=(IMG_WIDTH, IMG_HEIGHT))
         draw = ImageDraw.Draw(img)
         draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self.font, spacing=0)
