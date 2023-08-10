@@ -23,7 +23,7 @@ def main():
     # Parse arguments
     args = parse_args()
 
-    # Read image
+    # Read image in BGR order
     input_arr = cv2.imread(args.input_path)
 
     # Trim image. Resolution should be a multiple of the block size
@@ -36,12 +36,12 @@ def main():
     line = ""
     for row in range(0, mean_arr.shape[0], 2):
         for col in range(0, mean_arr.shape[1]):
-            bg_r = mean_arr[row, col, 0]
+            bg_r = mean_arr[row, col, 2]
             bg_g = mean_arr[row, col, 1]
-            bg_b = mean_arr[row, col, 2]
-            fg_r = mean_arr[row + 1, col, 0]
+            bg_b = mean_arr[row, col, 0]
+            fg_r = mean_arr[row + 1, col, 2]
             fg_g = mean_arr[row + 1, col, 1]
-            fg_b = mean_arr[row + 1, col, 2]
+            fg_b = mean_arr[row + 1, col, 0]
             line += f"\\e[38;2;{bg_r};{bg_g};{bg_b}m\\e[48;2;{fg_r};{fg_g};{fg_b}m▄"
         line += "\\e[m\\n"
     print(line)
