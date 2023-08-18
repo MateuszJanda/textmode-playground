@@ -60,9 +60,7 @@ def main():
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Parse command line arguments.
-    """
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Convert RGB image to ANSI\n"
         "\n"

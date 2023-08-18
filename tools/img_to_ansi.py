@@ -23,7 +23,7 @@ def main():
     # Parse arguments
     args = parse_args()
 
-    # Read image in BGR order
+    # Read image as BGR (not RGB!)
     input_arr = cv2.imread(args.input_path)
 
     # Trim image. Resolution should be a multiple of the block size
@@ -48,9 +48,7 @@ def main():
 
 
 def parse_args() -> argparse.Namespace:
-    """
-    Parse command line arguments.
-    """
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Convert RGB image to ANSI\n"
         "\n"
@@ -90,7 +88,7 @@ def trim_image(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
 
 
 def mean_values_array(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
-    """Small array with mean values."""
+    """Array with reduced shape and mean values of their neighbors."""
     mean_height = input_arr.shape[0] // block_size
     mean_width = input_arr.shape[1] // block_size
     return (
