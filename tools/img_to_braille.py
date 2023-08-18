@@ -30,14 +30,15 @@ def main():
     # Read image and convert to grayscale
     input_arr = cv2.imread(args.input_path, cv2.IMREAD_GRAYSCALE)
 
-    # Trim image. Resolution should be a multiple of the block size
+    # Trim image. Resolution should be a multiple of the block size * cell size
     input_arr = trim_image(input_arr, args.block_size)
 
     # Reduce image size. Values are averages of their neighbors
     mean_arr = mean_values_array(input_arr, args.block_size)
 
-    # Create braille strings
+    # Set 1 to all values above threshold, otherwise 0
     pixel_arr = np.where(mean_arr > args.threshold, 1, 0)
+    # Create braille strings
     line = ""
     for row in range(0, pixel_arr.shape[0], CELL_HEIGHT):
         for col in range(0, pixel_arr.shape[1], CELL_WIDTH):
@@ -66,8 +67,8 @@ def parse_args() -> argparse.Namespace:
         description="Convert RGB image to ANSI\n"
         "\n"
         "Example:\n"
-        "$ echo -e `python img_to_ansi.py --block-size 8 --input-path cat.jpg`\n",
-        usage="Please try to use -h, --help for more information's",
+        "$ echo -e `python img_to_braille.py --block-size 8 --threshold 120 --input-path cat.jpg`\n",
+        usage="Please try to use -h or --help for more information's",
         epilog=" \n",
         formatter_class=CustomFormatter,
     )
@@ -80,7 +81,7 @@ def parse_args() -> argparse.Namespace:
         required=True,
         action="store",
         type=int,
-        help="Threshold for grayscale image.",
+        help="Threshold (0, 255) for grayscale image.",
     )
     parser.add_argument(
         "-b",
@@ -88,22 +89,20 @@ def parse_args() -> argparse.Namespace:
         required=True,
         action="store",
         type=int,
-        help="Size of block (pixels) that will be converted to ANSI half block.",
+        help="Size of block (pixels) that will be converted to braille dot.",
     )
     return parser.parse_args()
 
 
 def trim_image(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
     """Trim image."""
-    # Least common multiple (.pl NWW) for height
-    height = np.lcm(block_size, CELL_HEIGHT)
+    height = block_size * CELL_HEIGHT
     if (input_arr.shape[0] // height) % 2 == 0:
         trim_height = (input_arr.shape[0] // height) * height
     else:
         trim_height = ((input_arr.shape[0] - height) // height) * height
 
-    # Least common multiple (.pl NWW) for width
-    width = np.lcm(block_size, CELL_WIDTH)
+    width = block_size * CELL_WIDTH
     if (input_arr.shape[1] // width) % 2 == 0:
         trim_width = (input_arr.shape[1] // width) * width
     else:
@@ -113,7 +112,7 @@ def trim_image(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
 
 
 def mean_values_array(input_arr: npt.ArrayLike, block_size: int) -> np.ndarray:
-    """Array with reduced shape and mean values of it neighbors."""
+    """Array with reduced shape and mean values of their neighbors."""
     mean_height = input_arr.shape[0] // block_size
     mean_width = input_arr.shape[1] // block_size
     return (
