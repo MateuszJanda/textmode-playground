@@ -62,7 +62,7 @@ def main():
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Convert RGB image to ANSI\n"
+        description="Convert image to braille dots.\n"
         "\n"
         "Example:\n"
         "$ echo -e `python img_to_braille.py --block-size 8 --threshold 120 --input-path cat.jpg`\n",
