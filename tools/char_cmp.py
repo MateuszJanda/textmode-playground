@@ -10,13 +10,10 @@ import cv2
 import numpy as np
 import typing as t
 
-IMG_HEIGHT = 17
-IMG_WIDTH = 14
-
 
 def main() -> None:
-    cmp = CharComparator("DejaVuSansMono")
-    print(cmp.font_shape("DejaVuSansMono", 12, 48, 48))
+    cmp = CharComparator("DejaVuSansMono", 12, 48, 48)
+    print(cmp.font_area())
     # cmp.dist("x", "X")  # Ok
     # cmp.dist("a", "X")  # Error
 
@@ -24,52 +21,56 @@ def main() -> None:
 class CharComparator:
     """Compare characters similarities."""
 
-    def __init__(self, font_name: str) -> None:
-        self._font = ImageFont.truetype(font_name, size=12)
+    def __init__(
+        self,
+        font_name: str,
+        font_size: int = 12,
+        img_width: int = 14,
+        img_height: int = 17,
+    ) -> None:
+        self._font = ImageFont.truetype(font_name, size=font_size)
+        self._img_width = img_width
+        self._img_height = img_height
 
-    @staticmethod
-    def font_shape(
-        font_name: str, font_size: int, img_width: int, img_height: int
-    ) -> t.Tuple[int, int, int, int]:
+    def font_area(self) -> t.Tuple[int, int, int, int]:
         """
-        Estimate shape size, that could be occupied by glyph. █ character is used as in theory
+        Estimate font area size, that could be occupied by glyph. █ character is used as in theory
         should occupy all available space.
         """
         start_x = 4
         start_y = 4
-        assert img_width > start_x
-        assert img_height > start_y
+        assert self._img_width > start_x
+        assert self._img_height > start_y
 
-        img = Image.new("L", color=0, size=(img_width, img_height))
+        img = Image.new("L", color=0, size=(self._img_width, self._img_height))
         draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype(font_name, size=font_size)
-        draw.text(xy=(start_x, start_y), text="█", fill=255, font=font, spacing=0)
+        draw.text(xy=(start_x, start_y), text="█", fill=255, font=self._font, spacing=0)
         img = np.array(img)
 
         # Top-left x
         x1 = None
-        for col in range(0, img_width):
+        for col in range(0, self._img_width):
             if img[start_y + 1, col] != 0:
                 x1 = col
                 break
 
         # Top-left y
         y1 = None
-        for row in range(0, img_height):
+        for row in range(0, self._img_height):
             if img[row, start_x + 1] != 0:
                 y1 = row
                 break
 
         # Top-right x
         x2 = None
-        for col in range(img_width - 1, -1, -1):
+        for col in range(self._img_width - 1, -1, -1):
             if img[start_y + 1, col] != 0:
                 x2 = col
                 break
 
         # Bottom-left y
         y2 = None
-        for row in range(img_height - 1, -1, -1):
+        for row in range(self._img_height - 1, -1, -1):
             if img[row, start_x + 1] != 0:
                 y2 = row
                 break
@@ -78,7 +79,7 @@ class CharComparator:
 
     def _create_img(self, ch: str, start_x: int = 3, start_y: int = 3) -> np.ndarray:
         """Draw character glyph."""
-        img = Image.new("L", color=0, size=(IMG_WIDTH, IMG_HEIGHT))
+        img = Image.new("L", color=0, size=(self._img_width, self._im_height))
         draw = ImageDraw.Draw(img)
         draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self._font, spacing=0)
         # img.save(f"{ch}.png")
