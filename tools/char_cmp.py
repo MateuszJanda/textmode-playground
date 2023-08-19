@@ -92,6 +92,29 @@ class CharComparator:
 
         return x1, y1, x2, y2
 
+    def is_wide_glyph(self, ch: str, mono_width: int) -> bool:
+        """Check if glyph occupies more area than standard character."""
+        start_x = 4
+        start_y = 4
+        assert self._img_width > start_x
+        assert self._img_height > start_y
+        assert self._img_width > mono_width
+
+        img = Image.new("L", color=0, size=(self._img_width, self._img_height))
+        draw = ImageDraw.Draw(img)
+        draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self._font, spacing=0)
+        img = np.array(img)
+
+        # Select non zero columns
+        nonzero_columns = np.nonzero(np.any(img != 0, axis=0))[0]
+
+        for col in nonzero_columns:
+            if col > mono_width:
+                return True
+
+        return False
+
+
     def _create_img(self, ch: str, start_x: int = 4, start_y: int = 4) -> np.ndarray:
         """Draw character glyph."""
         img = Image.new("L", color=0, size=(self._img_width, self._img_height))
