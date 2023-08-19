@@ -12,10 +12,10 @@ import typing as t
 
 
 def main() -> None:
-    cmp = CharComparator("DejaVuSansMono", 12, 48, 48)
+    cmp = CharComparator("DejaVuSansMono", 64, 128, 128)
     print(cmp.font_area())
-    # cmp.dist("x", "X")  # Ok
-    # cmp.dist("a", "X")  # Error
+    print(cmp.dist("x", "X"))  # Ok
+    cmp.dist("a", "X")  # Error
 
 
 class CharComparator:
@@ -24,9 +24,9 @@ class CharComparator:
     def __init__(
         self,
         font_name: str,
-        font_size: int = 12,
-        img_width: int = 14,
-        img_height: int = 17,
+        font_size: int = 22,
+        img_width: int = 32,
+        img_height: int = 32,
     ) -> None:
         self._font = ImageFont.truetype(font_name, size=font_size)
         self._img_width = img_width
@@ -79,22 +79,29 @@ class CharComparator:
 
     def _create_img(self, ch: str, start_x: int = 3, start_y: int = 3) -> np.ndarray:
         """Draw character glyph."""
-        img = Image.new("L", color=0, size=(self._img_width, self._im_height))
+        img = Image.new("L", color=0, size=(self._img_width, self._img_height))
         draw = ImageDraw.Draw(img)
         draw.text(xy=(start_x, start_y), text=ch, fill=255, font=self._font, spacing=0)
         # img.save(f"{ch}.png")
         return np.array(img)
 
-    def dist(self, ch1: str, ch2: str) -> None:
+    def dist(self, ch1: str, ch2: str) -> float:
         """Calculate distance between two characters glyph."""
         img1 = self._create_img(ch1)
         img2 = self._create_img(ch2)
         con1, _ = cv2.findContours(img1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
         con2, _ = cv2.findContours(img2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
-        hd = cv2.createHausdorffDistanceExtractor()
-        sd = cv2.createShapeContextDistanceExtractor()
-        print(f"HD: {ch1} <-> {ch2} == {hd.computeDistance(con1[0], con2[0])}")
-        print(f"SD: {ch1} <-> {ch2} == {sd.computeDistance(con1[0], con2[0])}")
+
+        print(con1[0].any())
+        print(con2[0].any())
+
+        # hd = cv2.createHausdorffDistanceExtractor()
+        scd = cv2.createShapeContextDistanceExtractor()
+        # print(f"HD: {ch1} <-> {ch2} == {hd.computeDistance(con1[0], con2[0])}")
+        distance = scd.computeDistance(con1[0], con2[0])
+        print(f"SD: {ch1} <-> {ch2} == {distance}")
+
+        return distance
 
 
 if __name__ == "__main__":
