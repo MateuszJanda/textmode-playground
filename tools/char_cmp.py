@@ -9,13 +9,28 @@ from PIL import Image, ImageDraw, ImageFont
 import cv2
 import numpy as np
 import typing as t
+import string
 
 
 def main() -> None:
-    cmp = CharComparator("DejaVuSansMono", 64, 128, 128)
-    print(cmp.font_area())
-    print(cmp.dist("x", "X"))  # Ok
-    cmp.dist("a", "X")  # Error
+    cmp = CharComparator("DejaVuSansMono", 128, 256, 256)
+    print(f"Font area: {cmp.font_area()}")
+
+    count = 0
+    count_fail = 0
+    for ch1 in string.printable:
+        for ch2 in string.printable:
+            count += 1
+            try:
+                print(f"{ch1} <-> {ch2}: {cmp.distance(ch1, ch2)}")
+            except:
+                count_fail += 1
+
+    print(
+        f"All cases: {count}, failed: {count_fail}, success rate: {(count - count_fail)/count}"
+    )
+    # cmp.distance("x", "X")  # Ok
+    # cmp.distance("a", "X")  # Error
 
 
 class CharComparator:
@@ -77,7 +92,7 @@ class CharComparator:
 
         return x1, y1, x2, y2
 
-    def _create_img(self, ch: str, start_x: int = 3, start_y: int = 3) -> np.ndarray:
+    def _create_img(self, ch: str, start_x: int = 4, start_y: int = 4) -> np.ndarray:
         """Draw character glyph."""
         img = Image.new("L", color=0, size=(self._img_width, self._img_height))
         draw = ImageDraw.Draw(img)
@@ -85,23 +100,15 @@ class CharComparator:
         # img.save(f"{ch}.png")
         return np.array(img)
 
-    def dist(self, ch1: str, ch2: str) -> float:
-        """Calculate distance between two characters glyph."""
+    def distance(self, ch1: str, ch2: str) -> float:
+        """Calculate distance between two characters glyphs."""
         img1 = self._create_img(ch1)
         img2 = self._create_img(ch2)
         con1, _ = cv2.findContours(img1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
         con2, _ = cv2.findContours(img2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
-
-        print(con1[0].any())
-        print(con2[0].any())
-
-        # hd = cv2.createHausdorffDistanceExtractor()
         scd = cv2.createShapeContextDistanceExtractor()
-        # print(f"HD: {ch1} <-> {ch2} == {hd.computeDistance(con1[0], con2[0])}")
-        distance = scd.computeDistance(con1[0], con2[0])
-        print(f"SD: {ch1} <-> {ch2} == {distance}")
-
-        return distance
+        dist = scd.computeDistance(con1[0], con2[0])
+        return dist
 
 
 if __name__ == "__main__":
