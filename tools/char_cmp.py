@@ -10,17 +10,18 @@ import cv2
 import numpy as np
 import typing as t
 import string
+import itertools
 
 
 def main() -> None:
-    # gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
-    # print(f"Font area: {gly.get_area()}")
+    gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
+    print(f"Font area: {gly.get_area()}")
 
-    # gly.distance("x", "X")  # Ok
-    # gly.distance("a", "X")  # Error
+    gly.distance("x", "X")  # Ok
+    gly.distance("a", "Z")  # Error
 
     # compare_chars(string.printable, string.printable)
-    compare_chars(string.ascii_letters, string.ascii_letters)
+    # compare_chars(string.ascii_letters)
 
 
 def is_wide_char(font_name: str, ch: str) -> bool:
@@ -40,7 +41,7 @@ def is_wide_char(font_name: str, ch: str) -> bool:
     return gly.is_wide(ch, mono_width)
 
 
-def compare_chars(ch_set1: str, ch_set2: str) -> None:
+def compare_chars(ch_set: str) -> None:
     """
     Compare characters similarities between two sets.
     """
@@ -49,14 +50,14 @@ def compare_chars(ch_set1: str, ch_set2: str) -> None:
 
     count = 0
     count_fail = 0
-    for ch1 in ch_set1:
-        for ch2 in ch_set2:
-            count += 1
-            try:
-                dist = gly.distance(ch1, ch2)
-                # print(f"{ch1} <-> {ch2}: {dist}")
-            except:
-                count_fail += 1
+    for ch1, ch2 in itertools.combinations(ch_set, 2):
+        count += 1
+        try:
+            dist = gly.distance(ch1, ch2)
+            # print(f"{ch1} <-> {ch2}: {dist}")
+        except:
+            # print(f"{ch1} <-> {ch2}: Error")
+            count_fail += 1
 
     print(
         f"All cases: {count}, failed: {count_fail}, success rate: {((count - count_fail) / count) * 100:.2f}%"
@@ -166,11 +167,29 @@ class GlyphShape:
         """
         img_arr1 = np.array(self._create_img(ch1))
         img_arr2 = np.array(self._create_img(ch2))
-        con1, _ = cv2.findContours(img_arr1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
-        con2, _ = cv2.findContours(img_arr2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
+        contours1, _ = cv2.findContours(
+            img_arr1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS
+        )
+        contours2, _ = cv2.findContours(
+            img_arr2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS
+        )
+        self._save_with_contours(ch1, img_arr1, contours1)
+
         scd = cv2.createShapeContextDistanceExtractor()
-        dist = scd.computeDistance(con1[0], con2[0])
+        dist = scd.computeDistance(contours1[0], contours2[0])
         return dist
+
+    def _save_with_contours(
+        self, file_name: str, img_arr: np.ndarray, contours: t.Tuple
+    ) -> None:
+        """
+        Draw counters and save image. For debug only.
+        """
+        img_rgb = cv2.cvtColor(img_arr, cv2.COLOR_GRAY2RGB)
+        cv2.drawContours(
+            img_rgb, contours, contourIdx=-1, color=(0, 0, 255), thickness=2
+        )
+        cv2.imwrite(f"{file_name}.png", img_rgb)
 
 
 if __name__ == "__main__":
