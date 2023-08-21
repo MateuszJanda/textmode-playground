@@ -9,6 +9,7 @@ import csv
 import itertools
 import random
 import string
+import subprocess
 import typing as t
 from collections import defaultdict
 
@@ -17,30 +18,71 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
 
+r"""
+Print glyph (⢧):
+$ echo -e '\U28a7'
+
+Print all (:) fonts supporting given character (file path, family and fontformat
+(e.g. TrueType)):
+$ fc-list :charset=0x28a7 file family fontformat
+
+Print font ranges supported by given font:
+$ fc-query /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf --format='%{charset}\n'
+"""
+
 
 def main() -> None:
-    # gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
-    # print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
+    gly = GlyphShape(
+        "DejaVuSansMono",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        350,
+        256,
+        350,
+    )
+    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
+    print(gly.is_supported("a"))
+    print(gly.is_supported("⢧"))
+    # print_distance = lambda ch1, ch2: print(f'Dst {ch1} <-> {ch2}: {gly.distance(ch1, ch2)}')
+    # print_distance("x", "x")
+    # print_distance("x", "X")
+    # print_distance("x", "q")
+    # print_distance(".", ",")
+    # print_distance(".", "`")
+    # print_distance("1", "|")
+    # print_distance("1", "l")
+    # print_distance("1", "-")
 
-    # gly.distance("x", "X")  # Ok
-    # gly.distance("a", "Z")  # Error
-    # gly.distance("i", "I")  # Error
+    gly = GlyphShape(
+        "DejaVuSans",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        350,
+        256,
+        350,
+    )
+    print(gly.is_supported("a"))
+    print(gly.is_supported("⢧"))
 
     # compare_chars(string.printable)
     # compare_chars(string.ascii_letters)
-    compare_chars(string.digits)
+    # compare_chars(string.digits)
 
 
 def is_wide_char(font_name: str, ch: str) -> bool:
     """
     Check if character for given font is wider than standard one.
     """
-    font_size = 128
+    font_size = 350
     img_width = 256
-    img_height = 256
+    img_height = 350
 
     # Standard area of monospace font
-    standard_gly = GlyphShape("DejaVuSansMono", font_size, img_width, img_height)
+    standard_gly = GlyphShape(
+        "DejaVuSansMono",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        font_size,
+        img_width,
+        img_height,
+    )
     x1, _, x2, _ = standard_gly.get_area()
     mono_width = x2 - x1 + 1
 
@@ -52,7 +94,13 @@ def compare_chars(ch_set: str) -> None:
     """
     Compare characters similarities between two sets.
     """
-    gly = GlyphShape("DejaVuSansMono", 64, 128, 128)
+    gly = GlyphShape(
+        "DejaVuSansMono",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        350,
+        256,
+        350,
+    )
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
     count_fail = 0
@@ -105,11 +153,13 @@ class GlyphShape:
     def __init__(
         self,
         font_name: str,
+        font_path: str,
         font_size: int,
         img_width: int,
         img_height: int,
     ) -> None:
         self._font = ImageFont.truetype(font_name, size=font_size)
+        self._font_path = font_path
         self._img_width = img_width
         self._img_height = img_height
         self._start_x = 14
@@ -195,6 +245,25 @@ class GlyphShape:
         """
         Check if character is supported by configured font.
         """
+        ch_number = ord(ch)
+
+        result = subprocess.run(
+            ["fc-query", f"{self._font_path}", r"--format=%{charset}\n"],
+            stdout=subprocess.PIPE,
+        )
+        for line in result.stdout.decode("utf-8").strip().split("\n"):
+            if not line:
+                continue
+
+            for charset in line.split():
+                if "-" in charset:
+                    first, last = charset.split("-")
+                    if int(first, 16) <= ch_number <= int(last, 16):
+                        return True
+                else:
+                    if ch_number == int(charset, 16):
+                        return True
+        return False
 
     def distance(self, ch1: str, ch2: str) -> float:
         """
@@ -213,7 +282,7 @@ class GlyphShape:
         dist = scd.computeDistance(simple_contour1, simple_contour2)
         return dist
 
-    def _simple_contour(self, contours: t.Tuple, n: int = 300) -> np.ndarray:
+    def _simple_contour(self, contours: t.Tuple, num_of_contours: int = 300) -> np.ndarray:
         """
         Create simple contour.
 
@@ -225,13 +294,13 @@ class GlyphShape:
 
         # In case actual number of points is less than n, add element from the beginning
         for idx in itertools.cycle(range(len(tmp_contours))):
-            if len(tmp_contours) >= n:
+            if len(tmp_contours) >= num_of_contours:
                 break
             tmp_contours.append(tmp_contours[idx])
 
         # Uniformly sampling
         random.shuffle(tmp_contours)
-        out_contours = [tmp_contours[idx] for idx in range(n)]
+        out_contours = [tmp_contours[idx] for idx in range(num_of_contours)]
         return np.array(out_contours)
 
     def _save_with_contours(
