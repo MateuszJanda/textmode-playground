@@ -19,10 +19,9 @@ from tqdm import tqdm
 
 
 def main() -> None:
-    gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
-    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
+    # gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
+    # print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
-    # print(np.array(a), np.array(b))
     # gly.distance("x", "X")  # Ok
     # gly.distance("a", "Z")  # Error
     # gly.distance("i", "I")  # Error
