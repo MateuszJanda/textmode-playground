@@ -12,6 +12,7 @@ import typing as t
 import string
 import itertools
 import random
+from tqdm import tqdm
 
 
 def main() -> None:
@@ -51,10 +52,9 @@ def compare_chars(ch_set: str) -> None:
     gly = GlyphShape("DejaVuSansMono", 360, 256, 512)
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
-    count = 0
     count_fail = 0
-    for ch1, ch2 in itertools.combinations(ch_set, 2):
-        count += 1
+    all_pairs = list(itertools.combinations(ch_set, 2))
+    for ch1, ch2 in tqdm(all_pairs):
         try:
             dist = gly.distance(ch1, ch2)
             # print(f"{ch1} <-> {ch2}: {dist}")
@@ -63,7 +63,9 @@ def compare_chars(ch_set: str) -> None:
             count_fail += 1
 
     print(
-        f"All cases: {count}, failed: {count_fail}, success rate: {((count - count_fail) / count) * 100:.2f}%"
+        f"All cases: {len(all_pairs)}, "
+        f"failed: {count_fail}, "
+        f"success rate: {((len(all_pairs) - count_fail) / len(all_pairs)) * 100:.2f}%"
     )
 
 
@@ -176,14 +178,14 @@ class GlyphShape:
         contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         simple_contour1 = self._simple_contour(contours1)
         simple_contour2 = self._simple_contour(contours2)
-        self._save_with_contours(ch1, img_arr1, simple_contour1)
-        self._save_with_contours(ch2, img_arr2, simple_contour2)
+        # self._save_with_contours(ch1, img_arr1, simple_contour1)
+        # self._save_with_contours(ch2, img_arr2, simple_contour2)
 
         scd = cv2.createShapeContextDistanceExtractor()
         dist = scd.computeDistance(simple_contour1, simple_contour2)
         return dist
 
-    def _simple_contour(self, contours: t.List, n: int = 900) -> t.List:
+    def _simple_contour(self, contours: t.Tuple, n: int = 300) -> np.ndarray:
         """
         Create simple contour.
 
@@ -194,12 +196,15 @@ class GlyphShape:
             tmp_contours.extend(contours[border])
 
         # In case actual number of points is less than n, add element from the beginning
-        tmp_contours += [tmp_contours[idx] for idx in range(n - len(tmp_contours))]
+        for idx in itertools.cycle(range(len(tmp_contours))):
+            if len(tmp_contours) >= n:
+                break
+            tmp_contours.append(tmp_contours[idx])
 
         # Uniformly sampling
         random.shuffle(tmp_contours)
         out_contours = [tmp_contours[idx] for idx in range(n)]
-        return out_contours
+        return np.array(out_contours)
 
     def _save_with_contours(
         self, file_name: str, img_arr: np.ndarray, contours: t.List
