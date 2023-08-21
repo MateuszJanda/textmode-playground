@@ -5,13 +5,16 @@
 # Ad maiorem Dei gloriam
 
 
-from PIL import Image, ImageDraw, ImageFont
-import cv2
-import numpy as np
-import typing as t
-import string
+import csv
 import itertools
 import random
+import string
+import typing as t
+from collections import defaultdict
+
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
 
 
@@ -25,7 +28,8 @@ def main() -> None:
     # gly.distance("i", "I")  # Error
 
     # compare_chars(string.printable)
-    compare_chars(string.ascii_letters)
+    # compare_chars(string.ascii_letters)
+    compare_chars(string.digits)
 
 
 def is_wide_char(font_name: str, ch: str) -> bool:
@@ -49,24 +53,49 @@ def compare_chars(ch_set: str) -> None:
     """
     Compare characters similarities between two sets.
     """
-    gly = GlyphShape("DejaVuSansMono", 360, 256, 512)
+    gly = GlyphShape("DejaVuSansMono", 64, 128, 128)
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
     count_fail = 0
     all_pairs = list(itertools.combinations(ch_set, 2))
+    distances = defaultdict(dict)
     for ch1, ch2 in tqdm(all_pairs):
         try:
             dist = gly.distance(ch1, ch2)
+            distances[ch1][ch2] = dist
+            distances[ch2][ch1] = dist
             # print(f"{ch1} <-> {ch2}: {dist}")
         except:
+            distances[ch1][ch2] = -1
+            distances[ch2][ch1] = -1
             # print(f"{ch1} <-> {ch2}: Error")
             count_fail += 1
+
+    for ch in ch_set:
+        distances[ch][ch] = 0
+
+    export_distances(distances)
 
     print(
         f"All cases: {len(all_pairs)}, "
         f"failed: {count_fail}, "
         f"success rate: {((len(all_pairs) - count_fail) / len(all_pairs)) * 100:.2f}%"
     )
+
+
+def export_distances(distances: t.Dict, file_name: str = "distances") -> None:
+    """
+    Export shape distances to .csv.
+    """
+    with open(f"{file_name}.csv", "w", newline="") as csv_file:
+        writer = csv.writer(csv_file)
+        # Write columns
+        writer.writerow([f"0x{ord(ch):04x}" for ch in sorted(distances.keys())])
+        # Write values
+        for ch1 in sorted(distances.keys()):
+            writer.writerow(
+                [f"{distances[ch1][ch2]:.4f}" for ch2 in sorted(distances.keys())]
+            )
 
 
 class GlyphShape:
