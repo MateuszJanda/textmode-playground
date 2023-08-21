@@ -11,17 +11,20 @@ import numpy as np
 import typing as t
 import string
 import itertools
+import random
 
 
 def main() -> None:
     gly = GlyphShape("DejaVuSansMono", 128, 256, 256)
-    print(f"Font area: {gly.get_area()}")
+    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
-    gly.distance("x", "X")  # Ok
-    gly.distance("a", "Z")  # Error
+    # print(np.array(a), np.array(b))
+    # gly.distance("x", "X")  # Ok
+    # gly.distance("a", "Z")  # Error
+    # gly.distance("i", "I")  # Error
 
-    # compare_chars(string.printable, string.printable)
-    # compare_chars(string.ascii_letters)
+    # compare_chars(string.printable)
+    compare_chars(string.ascii_letters)
 
 
 def is_wide_char(font_name: str, ch: str) -> bool:
@@ -105,7 +108,9 @@ class GlyphShape:
         Estimate area size, that could be occupied by glyph. █ character is used as in theory
         should occupy all available space.
         """
-        img_arr = np.array(self._create_img("█"))
+        img = self._create_img("█")
+        # img.save("area.png")
+        img_arr = np.array(img)
 
         # Top-left x
         x1 = None
@@ -167,20 +172,37 @@ class GlyphShape:
         """
         img_arr1 = np.array(self._create_img(ch1))
         img_arr2 = np.array(self._create_img(ch2))
-        contours1, _ = cv2.findContours(
-            img_arr1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS
-        )
-        contours2, _ = cv2.findContours(
-            img_arr2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS
-        )
-        self._save_with_contours(ch1, img_arr1, contours1)
+        contours1, _ = cv2.findContours(img_arr1, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        simple_contour1 = self._simple_contour(contours1)
+        simple_contour2 = self._simple_contour(contours2)
+        self._save_with_contours(ch1, img_arr1, simple_contour1)
+        self._save_with_contours(ch2, img_arr2, simple_contour2)
 
         scd = cv2.createShapeContextDistanceExtractor()
-        dist = scd.computeDistance(contours1[0], contours2[0])
+        dist = scd.computeDistance(simple_contour1, simple_contour2)
         return dist
 
+    def _simple_contour(self, contours: t.List, n: int = 900) -> t.List:
+        """
+        Create simple contour.
+
+        https://docs.opencv.org/4.8.0/d0/d38/modules_2shape_2samples_2shape_example_8cpp-example.html
+        """
+        tmp_contours = []
+        for border in range(len(contours)):
+            tmp_contours.extend(contours[border])
+
+        # In case actual number of points is less than n, add element from the beginning
+        tmp_contours += [tmp_contours[idx] for idx in range(n - len(tmp_contours))]
+
+        # Uniformly sampling
+        random.shuffle(tmp_contours)
+        out_contours = [tmp_contours[idx] for idx in range(n)]
+        return out_contours
+
     def _save_with_contours(
-        self, file_name: str, img_arr: np.ndarray, contours: t.Tuple
+        self, file_name: str, img_arr: np.ndarray, contours: t.List
     ) -> None:
         """
         Draw counters and save image. For debug only.
