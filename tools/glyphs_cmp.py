@@ -32,6 +32,7 @@ $ fc-query /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf --format='%{charset}\
 
 
 def main() -> None:
+    gly_cmp = GlyphCmp()
     gly = GlyphDrawer(
         font_name="DejaVuSansMono",
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -42,9 +43,9 @@ def main() -> None:
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
     print(gly.is_supported("a"))
     print(gly.is_supported("⢧"))
-    # print_distance = lambda ch1, ch2: print(f'Dst {ch1} <-> {ch2}: {gly.distance(ch1, ch2)}')
-    # print_distance("x", "x")
-    # print_distance("x", "X")
+    print_distance = lambda ch1, ch2: print(f'Dst {ch1} <-> {ch2}: {gly_cmp.distance(ch1, gly, ch2, gly)}')
+    print_distance("x", "x")
+    print_distance("x", "X")
     # print_distance("x", "q")
     # print_distance(".", ",")
     # print_distance(".", "`")
@@ -67,7 +68,7 @@ def main() -> None:
     # compare_chars(string.digits)
 
 
-def is_wide_char(font_name: str, ch: str) -> bool:
+def is_wide_char(font_name: str, font_path: str, ch: str) -> bool:
     """
     Check if character for given font is wider than standard one.
     """
@@ -86,7 +87,7 @@ def is_wide_char(font_name: str, ch: str) -> bool:
     x1, _, x2, _ = standard_gly.get_area()
     mono_width = x2 - x1 + 1
 
-    gly = GlyphDrawer(font_name, font_size, img_width, img_height)
+    gly = GlyphDrawer(font_name, font_path, font_size, img_width, img_height)
     return gly.is_wide(ch, mono_width)
 
 
