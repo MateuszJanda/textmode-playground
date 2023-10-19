@@ -137,6 +137,74 @@ def distance_of_standardized_subset() -> None:
     unicode_subset += [chr(code) for code in range(0x1ff2, 0x1ff4 + 1)]
     unicode_subset += [chr(code) for code in range(0x1ff6, 0x1ffe + 1)]
     # General Punctuation (00–6F)
+    unicode_subset += [chr(code) for code in range(0x2013, 0x2014 + 1)]
+    unicode_subset += [chr(code) for code in [0x2015, 0x2017]]
+    unicode_subset += [chr(code) for code in range(0x2018, 0x2019 + 1)]
+    unicode_subset += [chr(code) for code in range(0x201a, 0x201b + 1)]
+    unicode_subset += [chr(code) for code in range(0x201c, 0x201d + 1)]
+    unicode_subset += [chr(code) for code in [0x201e]]
+    unicode_subset += [chr(code) for code in range(0x2020, 0x2022 + 1)]
+    unicode_subset += [chr(code) for code in [0x2026, 0x2030, ]]
+    unicode_subset += [chr(code) for code in range(0x2032, 0x2033 + 1)]
+    unicode_subset += [chr(code) for code in range(0x2039, 0x203a + 1)]
+    unicode_subset += [chr(code) for code in [0x203c, 0x203e, 0x2044, 0x204A ]]
+    # Superscripts and Subscripts (70–9F)
+    unicode_subset += [chr(code) for code in [0x207f, 0x2082, ]]
+    # Currency Symbols (A0–CF)
+    unicode_subset += [chr(code) for code in range(0x20a3, 0x20a4 + 1)]
+    unicode_subset += [chr(code) for code in [0x20a7, 0x20ac, 0x20af, ]]
+    # Letterlike Symbols (00–4F)
+    unicode_subset += [chr(code) for code in [0x2105, 0x2113, 0x2116, 0x2122, 0x2126, 0x212e, ]]
+    # Number Forms (50–8F)
+    unicode_subset += [chr(code) for code in range(0x2150, 0x218f + 1)]
+    # Arrows (90–FF)
+    unicode_subset += [chr(code) for code in range(0x2190, 0x2193 + 1)]
+    unicode_subset += [chr(code) for code in range(0x2194, 0x2195 + 1)]
+    unicode_subset += [chr(code) for code in [0x21a8 ]]
+    # Mathematical Operators (00–FF)
+    unicode_subset += [chr(code) for code in [0x2200, 0x2202,0x2203,0x2206,   ]]
+    unicode_subset += [chr(code) for code in range(0x2208, 0x2209 + 1)]
+    unicode_subset += [chr(code) for code in [0x220f   ]]
+    unicode_subset += [chr(code) for code in range(0x2211, 0x2212 + 1)]
+    unicode_subset += [chr(code) for code in [0x2215   ]]
+    unicode_subset += [chr(code) for code in range(0x2219, 0x221a + 1)]
+    unicode_subset += [chr(code) for code in range(0x221e, 0x221f + 1)]
+    unicode_subset += [chr(code) for code in range(0x2227, 0x2228 + 1)]
+    unicode_subset += [chr(code) for code in [0x2229,0x222a,0x222b,0x2248,0x2259,       ]]
+    unicode_subset += [chr(code) for code in range(0x2260, 0x2261 + 1)]
+    unicode_subset += [chr(code) for code in range(0x2264, 0x2265 + 1)]
+    unicode_subset += [chr(code) for code in range(0x2282, 0x2283 + 1)]
+    unicode_subset += [chr(code) for code in [0x2295,0x2297,]]
+    # Miscellaneous Technical (00–FF)
+    unicode_subset += [chr(code) for code in [0x2302,0x230a,]]
+    unicode_subset += [chr(code) for code in range(0x2320, 0x2321 + 1)]
+    unicode_subset += [chr(code) for code in range(0x2329, 0x232a + 1)]
+    # Box Drawing (00–7F)
+    unicode_subset += [chr(code) for code in [0x2500,0x2502, 0x250c, 0x2510, 0x2514, 0x2518, 0x251c, 0x2524, 0x252c, 0x2534, 0x253c]]
+    unicode_subset += [chr(code) for code in range(0x2550, 0x256c + 1)]
+    # Block Elements (80–9F)
+    unicode_subset += [chr(code) for code in [0x2580,0x2584, 0x2588, 0x258c]]
+    unicode_subset += [chr(code) for code in range(0x2590, 0x2593 + 1)]
+    # Geometric Shapes (A0–FF)
+    # A0–A1, AA–AC, B2, BA, BC, C4, CA–CB, CF, D8–D9, E6
+    unicode_subset += [chr(code) for code in range(0x25a0, 0x25a1 + 1)]
+    unicode_subset += [chr(code) for code in range(0x25aa, 0x25ac + 1)]
+    unicode_subset += [chr(code) for code in [0x25b2, 0x25ba, 0x25bc, 0x25c4, ]]
+    unicode_subset += [chr(code) for code in range(0x25ca, 0x25cb + 1)]
+    unicode_subset += [chr(code) for code in [0x25cf ]]
+    unicode_subset += [chr(code) for code in range(0x25d8, 0x25d9 + 1)]
+    unicode_subset += [chr(code) for code in [0x25e6 ]]
+    # Miscellaneous Symbols (00–FF)
+    unicode_subset += [chr(code) for code in range(0x263a, 0x263c + 1)]
+    unicode_subset += [chr(code) for code in [0x2640,0x2642, 0x2660, 0x2663,   ]]
+    unicode_subset += [chr(code) for code in range(0x2665, 0x2666 + 1)]
+    unicode_subset += [chr(code) for code in [0x266a,0x266b     ]]
+    # Private Use Area (00–FF ...)
+    unicode_subset += [chr(code) for code in range(0x0f01, 0x0f02 + 1)]
+    # Alphabetic Presentation Forms (00–4F)
+
+
+
 
     compare_chars(unicode_subset)
 
