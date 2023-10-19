@@ -68,6 +68,79 @@ def main() -> None:
     # compare_chars(string.digits)
 
 
+def distance_of_standardized_subset() -> None:
+    """
+    https://en.wikipedia.org/wiki/Unicode#Standardized_subsets
+    """
+    # Basic Latin (00–7F)
+    unicode_subset = [chr(code) for code in range(0x0020, 0x007F + 1)]
+    # Latin-1 Supplement (80–FF)
+    unicode_subset += [chr(code) for code in range(0x0080, 0x0077 + 1)]
+    # Latin Extended-A (00–7F)
+    unicode_subset += [chr(code) for code in range(0x0100, 0x017F + 1)]
+    # Latin Extended-B (80–FF ...)
+    unicode_subset += [chr(code) for code in [0x018F, 0x0192,0x01B7,0x018F]]
+    unicode_subset += [chr(code) for code in range(0x01DE, 0x01EF + 1)]
+    unicode_subset += [chr(code) for code in range(0x01FA, 0x01FF + 1)]
+    # Latin Extended-B (... 00–4F)
+    unicode_subset += [chr(code) for code in range(0x0218, 0x021B + 1)]
+    unicode_subset += [chr(code) for code in range(0x021E, 0x021F + 1)]
+    # IPA Extensions (50–AF)
+    unicode_subset += [chr(code) for code in [0x0259, 0x027c, 0x0292]]
+    # Spacing Modifier Letters (B0–FF)
+    unicode_subset += [chr(code) for code in range(0x02BB, 0x02bd + 1)]
+    unicode_subset += [chr(code) for code in [0x02c6, 0x02c7, 0x02c8, 0x02c9, 0x02d6, ]]
+    unicode_subset += [chr(code) for code in range(0x02d8, 0x02db + 1)]
+    unicode_subset += [chr(code) for code in [0x02dc, 0x02dd, 0x02df, 0x02ee, ]]
+    # Greek (70–FF)
+    unicode_subset += [chr(code) for code in range(0x0374, 0x0375 + 1)]
+    unicode_subset += [chr(code) for code in [0x037a, 0x037e, ]]
+    unicode_subset += [chr(code) for code in range(0x0384, 0x038a + 1)]
+    unicode_subset += [chr(code) for code in [0x038c]]
+    unicode_subset += [chr(code) for code in range(0x038e, 0x03a1 + 1)]
+    unicode_subset += [chr(code) for code in range(0x03a3, 0x03c3 + 1)]
+    unicode_subset += [chr(code) for code in [0x03d7]]
+    unicode_subset += [chr(code) for code in range(0x03da, 0x03e1 + 1)]
+    # Cyrillic (00–FF)
+    unicode_subset += [chr(code) for code in range(0x0400, 0x045f + 1)]
+    unicode_subset += [chr(code) for code in range(0x0490, 0x0491 + 1)]
+    unicode_subset += [chr(code) for code in range(0x0492, 0x04c4 + 1)]
+    unicode_subset += [chr(code) for code in range(0x04c7, 0x04c8 + 1)]
+    unicode_subset += [chr(code) for code in range(0x04cb, 0x04cc + 1)]
+    unicode_subset += [chr(code) for code in range(0x04d0, 0x04eb + 1)]
+    unicode_subset += [chr(code) for code in range(0x04ee, 0x04f5 + 1)]
+    unicode_subset += [chr(code) for code in range(0x04f8, 0x04f9 + 1)]
+    # Latin Extended Additional (00–FF)
+    unicode_subset += [chr(code) for code in range(0x1e02, 0x1e03 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e0a, 0x1e0b + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e1e, 0x1e1f + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e40, 0x1e41 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e56, 0x1e57 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e60, 0x1e61 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e6a, 0x1e6b + 1)]
+    unicode_subset += [chr(code) for code in range(0x1e80, 0x1e85 + 1)]
+    unicode_subset += [chr(code) for code in [0x1e9b]]
+    unicode_subset += [chr(code) for code in range(0x1ef2, 0x1ef3 + 1)]
+    # Greek Extended (00–FF)
+    unicode_subset += [chr(code) for code in range(0x1f00, 0x1f15 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f18, 0x1f1d + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f20, 0x1f45 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f48, 0x1f4d + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f50, 0x1f57 + 1)]
+    unicode_subset += [chr(code) for code in [0x1f59, 0x1f5b,0x1f5d,  ]]
+    unicode_subset += [chr(code) for code in range(0x1f5f, 0x1f7d + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f80, 0x1fb4 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1f86, 0x1fc4 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1fc6, 0x1fd3 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1fd6, 0x1fdb + 1)]
+    unicode_subset += [chr(code) for code in range(0x1fdd, 0x1fef + 1)]
+    unicode_subset += [chr(code) for code in range(0x1ff2, 0x1ff4 + 1)]
+    unicode_subset += [chr(code) for code in range(0x1ff6, 0x1ffe + 1)]
+    # General Punctuation (00–6F)
+
+    compare_chars(unicode_subset)
+
+
 def is_wide_char(font_name: str, font_path: str, ch: str) -> bool:
     """
     Check if character for given font is wider than standard one.
