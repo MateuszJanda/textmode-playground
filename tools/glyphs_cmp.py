@@ -69,6 +69,8 @@ def main() -> None:
     # compare_chars(string.ascii_letters)
     # compare_chars(string.digits)
 
+    distance_of_standardized_subset()
+
 
 def distance_of_standardized_subset() -> None:
     """
@@ -76,7 +78,8 @@ def distance_of_standardized_subset() -> None:
     """
 
     # Basic Latin (00–7F)
-    unicode_subset = [chr(code) for code in range(0x0020, 0x007F + 1)]
+    unicode_subset = []
+    unicode_subset += [chr(code) for code in range(0x0020, 0x007F + 1)]
     # Latin-1 Supplement (80–FF)
     unicode_subset += [chr(code) for code in range(0x0080, 0x00FF + 1)]
     # Latin Extended-A (00–7F)
@@ -112,7 +115,7 @@ def distance_of_standardized_subset() -> None:
     # Mathematical Operators (00–FF)
     unicode_subset += [chr(code) for code in range(0x2200, 0x22FF + 1)]
     # Miscellaneous Technical (00–FF)
-    unicode_subset += [chr(code) for code in range(0x2300, 0x23FF + 1)]
+    # unicode_subset += [chr(code) for code in range(0x2300, 0x23FF + 1)]
     # Box Drawing (00–7F)
     unicode_subset += [chr(code) for code in range(0x2500, 0x257F + 1)]
     # Block Elements (80–9F)
@@ -120,7 +123,7 @@ def distance_of_standardized_subset() -> None:
     # Geometric Shapes (A0–FF)
     unicode_subset += [chr(code) for code in range(0x25A0, 0x25FF + 1)]
     # Miscellaneous Symbols (00–FF)
-    unicode_subset += [chr(code) for code in range(0x2600, 0x26FF + 1)]
+    # unicode_subset += [chr(code) for code in range(0x2600, 0x26FF + 1)]
     # Private Use Area (00–FF ...)
     # unicode_subset += [chr(code) for code in range(0xF000, 0xF0FF + 1)]
     # Alphabetic Presentation Forms (00–4F)
@@ -128,7 +131,7 @@ def distance_of_standardized_subset() -> None:
     # Specials
     # unicode_subset += [0xFFFD]
 
-    compare_chars(unicode_subset)
+    # compare_chars(unicode_subset)
 
 
 def is_wide_char(font_name: str, font_path: str, ch: str) -> bool:
