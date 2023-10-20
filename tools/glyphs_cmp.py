@@ -46,8 +46,9 @@ def main() -> None:
     print_distance = lambda ch1, ch2: print(
         f"Dst {ch1} <-> {ch2}: {gly_cmp.distance(ch1, gly, ch2, gly)}"
     )
-    print_distance("x", "x")
-    print_distance("x", "X")
+    # print_distance("x", "x")
+    # print_distance("x", "X")
+    # print_distance(" ", "x")
     # print_distance("x", "q")
     # print_distance(".", ",")
     # print_distance(".", "`")
@@ -62,14 +63,16 @@ def main() -> None:
         img_width=256,
         img_height=350,
     )
-    print(gly.is_supported("a"))
-    print(gly.is_supported("⢧"))
+    # print(gly.is_supported("a"))
+    # print(gly.is_supported("⢧"))
 
+    print_distance("⢧", "⢧")
+    print_distance("⢧", "⢷")
     # compare_chars(string.printable)
     # compare_chars(string.ascii_letters)
     # compare_chars(string.digits)
 
-    distance_of_standardized_subset()
+    # distance_of_standardized_subset()
 
 
 def distance_of_standardized_subset() -> None:
@@ -357,9 +360,13 @@ class GlyphCmp:
         img_arr2 = gly2.create_img(ch2)
         contours1, _ = cv2.findContours(img_arr1, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        if (len(contours1) == 0 or len(contours2) == 0):
+            return 0
+
         simple_contour1 = self._simple_contour(contours1)
         simple_contour2 = self._simple_contour(contours2)
-        # self._save_with_contours(ch1, img_arr1, simple_contour1)
+        self._save_with_contours(ch1, img_arr1, simple_contour1)
         # self._save_with_contours(ch2, img_arr2, simple_contour2)
         scd = cv2.createShapeContextDistanceExtractor()
         dist = scd.computeDistance(simple_contour1, simple_contour2)
@@ -389,7 +396,7 @@ class GlyphCmp:
         return np.array(out_contours)
 
     def _save_with_contours(
-        self, file_name: str, img_arr: np.ndarray, contours: t.List
+        self, ch: str, img_arr: np.ndarray, contours: t.List
     ) -> None:
         """
         Draw counters and save image. For debug only.
@@ -398,7 +405,7 @@ class GlyphCmp:
         cv2.drawContours(
             img_rgb, contours, contourIdx=-1, color=(0, 0, 255), thickness=2
         )
-        cv2.imwrite(f"{file_name}.png", img_rgb)
+        cv2.imwrite(f"0x{ord(ch):04X}.png", img_rgb)
 
 
 if __name__ == "__main__":
