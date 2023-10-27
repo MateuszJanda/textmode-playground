@@ -405,7 +405,7 @@ class GlyphCmp:
         cv2.drawContours(
             img_rgb, contours, contourIdx=-1, color=(0, 0, 255), thickness=2
         )
-        cv2.imwrite(f"0x{ord(ch):04X}.png", img_rgb)
+        cv2.imwrite(f"0x{ord(ch):04x}.png", img_rgb)
 
 
 if __name__ == "__main__":
