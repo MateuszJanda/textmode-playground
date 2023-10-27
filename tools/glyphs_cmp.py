@@ -41,8 +41,8 @@ def main() -> None:
         img_height=350,
     )
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
-    print(gly.is_supported("a"))
-    print(gly.is_supported("⢧"))
+    # print(gly.is_supported("a"))
+    # print(gly.is_supported("⢧"))
     print_distance = lambda ch1, ch2: print(
         f"Dst {ch1} <-> {ch2}: {gly_cmp.distance(ch1, gly, ch2, gly)}"
     )
@@ -59,15 +59,39 @@ def main() -> None:
     gly = GlyphDrawer(
         font_name="DejaVuSans",
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        font_size=350,
-        img_width=256,
-        img_height=350,
+        font_size=200,
+        img_width=300,
+        img_height=310,
     )
     # print(gly.is_supported("a"))
     # print(gly.is_supported("⢧"))
 
-    print_distance("⢧", "⢧")
-    print_distance("⢧", "⢷")
+    # print_distance("⢧", "⢧")
+    # print_distance("⢧", "⢧")
+    # print_distance("⢷", "⢧")
+    # print_distance("⢧", "⢷")
+    # print_distance("⢧", "⢷")
+    # print_distance("⢧", "⢷")
+    # print_distance("⢧", "⢷")
+    # print_distance("i", "⢷")
+    # print_distance("X", "x")
+    # print_distance("X", "X")
+    print_distance("0", "o")
+    print_distance("0", "o")
+    print_distance("0", "o")
+    print_distance("o", "0")
+    print_distance("o", "0")
+    print_distance("o", "0")
+    # print_distance("X", "⢷")
+    # print_distance("/", "/")
+    # print_distance("/", "/")
+    # print_distance("/", "/")
+    # print_distance("/", "|")
+    # print_distance("/", "|")
+    # print_distance("/", "|")
+    # print_distance("/", "\\")
+    # print_distance("/", "\\")
+    # print_distance("/", "\\")
     # compare_chars(string.printable)
     # compare_chars(string.ascii_letters)
     # compare_chars(string.digits)
@@ -232,8 +256,8 @@ class GlyphDrawer:
         self._font_path = font_path
         self._img_width = img_width
         self._img_height = img_height
-        self._start_x = 14
-        self._start_y = 14
+        self._start_x = 64
+        self._start_y = 24
 
         assert self._img_width > self._start_x
         assert self._img_height > self._start_y
@@ -358,18 +382,26 @@ class GlyphCmp:
         """
         img_arr1 = gly1.create_img(ch1)
         img_arr2 = gly2.create_img(ch2)
-        contours1, _ = cv2.findContours(img_arr1, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-        contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        # Dilatate to join glyph parts
+        dil_arr1 = cv2.dilate(img_arr1, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23)))
+        dil_arr2 = cv2.dilate(img_arr2, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23)))
+
+        # contours1, _ = cv2.findContours(img_arr1, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        # contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        contours1, _ = cv2.findContours(dil_arr1, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        contours2, _ = cv2.findContours(dil_arr2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
         if (len(contours1) == 0 or len(contours2) == 0):
             return 0
 
-        simple_contour1 = self._simple_contour(contours1)
-        simple_contour2 = self._simple_contour(contours2)
-        self._save_with_contours(ch1, img_arr1, simple_contour1)
-        # self._save_with_contours(ch2, img_arr2, simple_contour2)
+        contour1 = self._simple_contour(contours1)
+        contour2 = self._simple_contour(contours2)
+
+        self._save_with_contours(ch1, img_arr1, contour1)
+        # self._save_with_contours(ch2, img_arr2, contour2)
         scd = cv2.createShapeContextDistanceExtractor()
-        dist = scd.computeDistance(simple_contour1, simple_contour2)
+        dist = scd.computeDistance(contour1, contour2)
         return dist
 
     def _simple_contour(
@@ -380,20 +412,20 @@ class GlyphCmp:
 
         https://docs.opencv.org/4.8.0/d0/d38/modules_2shape_2samples_2shape_example_8cpp-example.html
         """
-        tmp_contours = []
-        for border in range(len(contours)):
-            tmp_contours.extend(contours[border])
+        tmp_contour = []
+        for contour in contours:
+            tmp_contour.extend(contour)
 
         # In case actual number of points is less than n, add element from the beginning
-        for idx in itertools.cycle(range(len(tmp_contours))):
-            if len(tmp_contours) >= num_of_contours:
+        for idx in itertools.cycle(range(len(tmp_contour))):
+            if len(tmp_contour) >= num_of_contours:
                 break
-            tmp_contours.append(tmp_contours[idx])
+            tmp_contour.append(tmp_contour[idx])
 
         # Uniformly sampling
-        random.shuffle(tmp_contours)
-        out_contours = [tmp_contours[idx] for idx in range(num_of_contours)]
-        return np.array(out_contours)
+        random.shuffle(tmp_contour)
+        ret_contour = [tmp_contour[idx] for idx in range(num_of_contours)]
+        return np.array(ret_contour)
 
     def _save_with_contours(
         self, ch: str, img_arr: np.ndarray, contours: t.List
