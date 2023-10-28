@@ -49,13 +49,15 @@ def main() -> None:
     # )
 
     # print_distance = lambda ch1, ch2: print(
-    #     f"Dst {ch1} <-> {ch2} : {gly_cmp.distance(ch1, gly, ch2, gly)}"
+    #     f"Distance {ch1} <-> {ch2} : {gly_cmp.distance(ch1, gly, ch2, gly)}"
     # )
 
     # print_distance("i", "⢷")
     # assert is_wide_char('█', "DejaVuSans", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf") == False
 
-    calc_distances("abc", "123")
+    # calc_distances("abc", "123", "1.txt")
+    calc_distances("abc", "abc", "2.txt")
+    calc_distances_all("abc", "3.txt")
 
 
 def unicode_standardized_subset() -> t.List:
@@ -136,11 +138,9 @@ def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
     return gly.is_wide(ch, mono_width)
 
 
-def calc_distances(
-    ch_set1: str, ch_set2: str, file_name: str = "distances.csv"
-) -> None:
+def calc_distances(key_set1: str, value_set: str, file_name: str) -> None:
     """
-    Compare characters similarities (distances) between two sets.
+    Calculate distances between all characters.
     """
     gly = GlyphDrawer(
         font_name="DejaVuSansMono",
@@ -153,11 +153,58 @@ def calc_distances(
     count_not_supported = 0
 
     distances = defaultdict(dict)
-    all_pairs = list(itertools.product(ch_set1, ch_set2))
+    all_pairs = list(itertools.product(key_set1, value_set))
+    for key_ch, val_ch in tqdm(all_pairs):
+        if key_ch == val_ch:
+            distances[key_ch][val_ch] = 0
+        elif key_ch in distances and val_ch in distances[key_ch]:
+            # Distances already calculated, so skip
+            continue
+        elif not gly.is_supported(key_ch) or not gly.is_supported(val_ch):
+            # If one of the chars is not supported then can't calculate distance
+            print(f"Not supported : {key_ch} <-> {val_ch}")
+            distances[key_ch][val_ch] = -1
+            count_not_supported += 1
+        else:
+            try:
+                dist = gly_cmp.distance(key_ch, gly, val_ch, gly)
+                distances[key_ch][val_ch] = dist
+                # print(f"Distance : {key_ch} <-> {val_ch} : {dist}")
+            except:
+                print(f"Fail : {key_ch} <-> {val_ch}")
+                distances[key_ch][val_ch] = -1
+                count_fail += 1
+
+    export_distances_to_csv(distances, file_name)
+
+    print(f"All cases: {len(all_pairs)}")
+    print(f"Failed: {count_fail}, ")
+    print(f"Not supported: {count_not_supported}")
+    print(
+        f"Success rate: {((len(all_pairs) - (count_fail + count_not_supported)) / len(all_pairs)) * 100:.2f}%"
+    )
+
+
+def calc_distances_all(ch_set: str, file_name: str) -> None:
+    """
+    Calculate distances between all characters.
+    """
+    gly = GlyphDrawer(
+        font_name="DejaVuSansMono",
+        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+    )
+    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
+
+    gly_cmp = GlyphCmp()
+    count_fail = 0
+    count_not_supported = 0
+
+    distances = defaultdict(dict)
+    all_pairs = list(itertools.combinations(ch_set, 2))
     for ch1, ch2 in tqdm(all_pairs):
-        if ch1 == ch2:
-            distances[ch1][ch2] = 0
-        elif ch1 in distances and ch2 in distances[ch1]:
+        if (ch1 in distances and ch2 in distances[ch1]) or (
+            ch2 in distances and ch1 in distances[ch2]
+        ):
             # Distances already calculated, so skip
             continue
         elif not gly.is_supported(ch1) or not gly.is_supported(ch2):
@@ -171,12 +218,17 @@ def calc_distances(
                 dist = gly_cmp.distance(ch1, gly, ch2, gly)
                 distances[ch1][ch2] = dist
                 distances[ch2][ch1] = dist
+                # print(f"Distance : {ch1} <-> {ch2} : {dist}")
             except:
                 print(f"Fail : {ch1} <-> {ch2}")
                 distances[ch1][ch2] = -1
                 distances[ch2][ch1] = -1
                 count_fail += 1
 
+    for ch in ch_set:
+        distances[ch][ch] = 0
+
+    print(distances)
     export_distances_to_csv(distances, file_name)
 
     print(f"All cases: {len(all_pairs)}")
@@ -193,13 +245,20 @@ def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
     """
     with open(f"{file_name}", "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        # Write columns
-        writer.writerow([f"0x{ord(ch):04x}" for ch in sorted(distances.keys())])
-        # Write values
-        for ch1 in sorted(distances.keys()):
-            writer.writerow(
-                [f"{distances[ch1][ch2]:.4f}" for ch2 in sorted(distances.keys())]
-            )
+        # Write row with columns names
+        writer.writerow(
+            [f"0x{0:04x}"]
+            + [f"0x{ord(col_ch):04x}" for col_ch in sorted(distances.keys())]
+        )
+        # Write rows with values. First value is char code
+        first_key = list(distances.keys())[1]
+        values_keys = sorted(distances[first_key].keys())
+        for row_ch in values_keys:
+            row = [f"0x{ord(row_ch):04x}"] + [
+                f"{distances[col_ch][row_ch]:.4f}"
+                for col_ch in sorted(distances.keys())
+            ]
+            writer.writerow(row)
 
 
 class GlyphDrawer:
