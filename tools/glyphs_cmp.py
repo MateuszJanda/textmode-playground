@@ -59,9 +59,8 @@ def main() -> None:
 
     # ==========================================================================
 
-
-    calc_distances_all(ascii_all(), "ascii_all.csv")
-    # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    # calc_distances_all(ascii_all(), "ascii_all.csv")
+    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
     # calc_distances(
     #     unicode_braille(),
     #     unicode_standardized_subset(),
@@ -162,7 +161,7 @@ def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
     return gly.is_wide(ch, mono_width)
 
 
-def calc_distances(key_set1: str, value_set: str, file_name: str) -> None:
+def calc_distances(from_set: str, to_set: str, file_name: str) -> None:
     """
     Calculate distances between all characters.
     """
@@ -181,26 +180,26 @@ def calc_distances(key_set1: str, value_set: str, file_name: str) -> None:
     count_not_supported = 0
 
     distances = defaultdict(dict)
-    all_pairs = list(itertools.product(key_set1, value_set))
-    for key_ch, val_ch in tqdm(all_pairs):
-        if key_ch == val_ch:
-            distances[key_ch][val_ch] = 0
-        elif key_ch in distances and val_ch in distances[key_ch]:
+    all_pairs = list(itertools.product(from_set, to_set))
+    for from_ch, to_ch in tqdm(all_pairs):
+        if from_ch == to_ch:
+            distances[from_ch][to_ch] = 0
+        elif from_ch in distances and to_ch in distances[from_ch]:
             # Distances already calculated, so skip
             continue
-        elif not gly.is_supported(key_ch) or not gly.is_supported(val_ch):
+        elif not gly.is_supported(from_ch) or not gly.is_supported(to_ch):
             # If one of the chars is not supported then can't calculate distance
-            print(f"Not supported : {key_ch} <-> {val_ch}")
-            distances[key_ch][val_ch] = -1
+            print(f"Not supported : 0x{ord(from_ch):04x} <-> 0x{ord(to_ch):04x}")
+            distances[from_ch][to_ch] = -1
             count_not_supported += 1
         else:
             try:
-                dist = gly_cmp.distance(key_ch, gly, val_ch, gly)
-                distances[key_ch][val_ch] = dist
-                # print(f"Distance : {key_ch} <-> {val_ch} : {dist}")
+                dist = gly_cmp.distance(from_ch, gly, to_ch, gly)
+                distances[from_ch][to_ch] = dist
+                # print(f"Distance : {from_ch} <-> {to_ch} : {dist}")
             except:
-                print(f"Fail : {key_ch} <-> {val_ch}")
-                distances[key_ch][val_ch] = -1
+                print(f"Fail : {from_ch} <-> {to_ch}")
+                distances[from_ch][to_ch] = -1
                 count_fail += 1
 
     export_distances_to_csv(distances, file_name)
@@ -272,18 +271,21 @@ def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
     """
     with open(f"{file_name}", "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        # Write row with values codes
-        first_key = list(distances.keys())[0]
+        # Write row with "to" character codes
+        first_from_code = list(distances.keys())[0]
         writer.writerow(
             [f"0x{0:04x}"]
-            + [f"0x{ord(col_ch):04x}" for col_ch in sorted(distances[first_key].keys())]
+            + [
+                f"0x{ord(col_ch):04x}"
+                for col_ch in sorted(distances[first_from_code].keys())
+            ]
         )
-        # Write rows with distances for for each key (code)
-        keys = sorted(distances.keys())
-        for key_ch in keys:
-            row = [f"0x{ord(key_ch):04x}"] + [
-                f"{distances[key_ch][val_ch]:.4f}"
-                for val_ch in sorted(distances[key_ch].keys())
+        # Write rows with distances for for each "from" character code
+        from_codes = sorted(distances.keys())
+        for from_ch in from_codes:
+            row = [f"0x{ord(from_ch):04x}"] + [
+                f"{distances[from_ch][to_ch]:.4f}"
+                for to_ch in sorted(distances[from_ch].keys())
             ]
             writer.writerow(row)
 
