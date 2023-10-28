@@ -55,9 +55,10 @@ def main() -> None:
     # print_distance("i", "⢷")
     # assert is_wide_char('█', "DejaVuSans", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf") == False
 
-    # calc_distances("abc", "123", "1.txt")
-    calc_distances("abc", "abc", "2.txt")
-    calc_distances_all("abc", "3.txt")
+    # ==========================================================================
+
+    # calc_distances_all(ascii_all(), "ascii_all.csv")
+    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
 
 
 def unicode_standardized_subset() -> t.List:
@@ -120,6 +121,21 @@ def unicode_standardized_subset() -> t.List:
     # unicode_subset += [0xFFFD]
 
     return unicode_subset
+
+
+def unicode_braille() -> t.List:
+    """
+    https://en.wikipedia.org/wiki/Braille_Patterns
+    """
+
+    return [chr(code) for code in range(0x2800, 0x28FF)]
+
+
+def ascii_all() -> t.List:
+    """
+    https://en.wikipedia.org/wiki/ASCII
+    """
+    return list(string.digits + string.ascii_letters + string.punctuation)
 
 
 def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
@@ -228,7 +244,6 @@ def calc_distances_all(ch_set: str, file_name: str) -> None:
     for ch in ch_set:
         distances[ch][ch] = 0
 
-    print(distances)
     export_distances_to_csv(distances, file_name)
 
     print(f"All cases: {len(all_pairs)}")
