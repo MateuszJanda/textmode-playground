@@ -443,7 +443,7 @@ class GlyphCmp:
         contours2, _ = cv2.findContours(dil_arr2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
         if len(contours1) == 0 or len(contours2) == 0:
-            return 0
+            return -1
 
         contour1 = self._simple_contour(contours1)
         contour2 = self._simple_contour(contours2)
