@@ -60,12 +60,12 @@ def main() -> None:
     # ==========================================================================
 
     # calc_distances_all(ascii_all(), "ascii_all.csv")
-    # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
-    calc_distances(
-        unicode_braille(),
-        unicode_standardized_subset(),
-        "braille_to_unicode_subset.csv",
-    )
+    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    # calc_distances(
+    #     unicode_braille(),
+    #     unicode_standardized_subset(),
+    #     "braille_to_unicode_subset.csv",
+    # )
 
 
 def unicode_standardized_subset() -> t.List:
