@@ -158,9 +158,13 @@ def calc_distances(key_set1: str, value_set: str, file_name: str) -> None:
     """
     Calculate distances between all characters.
     """
+    # gly = GlyphDrawer(
+    #     font_name="DejaVuSansMono",
+    #     font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+    # )
     gly = GlyphDrawer(
-        font_name="DejaVuSansMono",
-        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+        font_name="DejaVuSans",
+        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     )
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
