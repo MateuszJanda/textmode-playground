@@ -31,75 +31,34 @@ $ fc-query /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf --format='%{charset}\
 """
 
 
+FONT_SIZE = 200
+IMG_WIDTH = 300
+IMG_HEIGHT = 300
+
+
 def main() -> None:
-    gly_cmp = GlyphCmp()
-    gly = GlyphDrawer(
-        font_name="DejaVuSansMono",
-        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-        font_size=350,
-        img_width=256,
-        img_height=350,
-    )
-    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
-    # print(gly.is_supported("a"))
-    # print(gly.is_supported("⢧"))
-    print_distance = lambda ch1, ch2: print(
-        f"Dst {ch1} <-> {ch2}: {gly_cmp.distance(ch1, gly, ch2, gly)}"
-    )
-    # print_distance("x", "x")
-    # print_distance("x", "X")
-    # print_distance(" ", "x")
-    # print_distance("x", "q")
-    # print_distance(".", ",")
-    # print_distance(".", "`")
-    # print_distance("1", "|")
-    # print_distance("1", "l")
-    # print_distance("1", "-")
+    # gly_cmp = GlyphCmp()
+    # gly = GlyphDrawer(
+    #     font_name="DejaVuSansMono",
+    #     font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+    # )
 
-    gly = GlyphDrawer(
-        font_name="DejaVuSans",
-        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        font_size=200,
-        img_width=300,
-        img_height=310,
-    )
-    # print(gly.is_supported("a"))
-    # print(gly.is_supported("⢧"))
+    # gly = GlyphDrawer(
+    #     font_name="DejaVuSans",
+    #     font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    # )
 
-    # print_distance("⢧", "⢧")
-    # print_distance("⢧", "⢧")
-    # print_distance("⢷", "⢧")
-    # print_distance("⢧", "⢷")
-    # print_distance("⢧", "⢷")
-    # print_distance("⢧", "⢷")
-    # print_distance("⢧", "⢷")
+    # print_distance = lambda ch1, ch2: print(
+    #     f"Dst {ch1} <-> {ch2} : {gly_cmp.distance(ch1, gly, ch2, gly)}"
+    # )
+
     # print_distance("i", "⢷")
-    # print_distance("X", "x")
-    # print_distance("X", "X")
-    print_distance("0", "o")
-    print_distance("0", "o")
-    print_distance("0", "o")
-    print_distance("o", "0")
-    print_distance("o", "0")
-    print_distance("o", "0")
-    # print_distance("X", "⢷")
-    # print_distance("/", "/")
-    # print_distance("/", "/")
-    # print_distance("/", "/")
-    # print_distance("/", "|")
-    # print_distance("/", "|")
-    # print_distance("/", "|")
-    # print_distance("/", "\\")
-    # print_distance("/", "\\")
-    # print_distance("/", "\\")
-    # compare_chars(string.printable)
-    # compare_chars(string.ascii_letters)
-    # compare_chars(string.digits)
+    # assert is_wide_char('█', "DejaVuSans", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf") == False
 
-    # distance_of_standardized_subset()
+    calc_distances("abc", "123")
 
 
-def distance_of_standardized_subset() -> None:
+def unicode_standardized_subset() -> t.List:
     """
     https://en.wikipedia.org/wiki/Unicode#Standardized_subsets
     """
@@ -158,77 +117,81 @@ def distance_of_standardized_subset() -> None:
     # Specials
     # unicode_subset += [0xFFFD]
 
-    # compare_chars(unicode_subset)
+    return unicode_subset
 
 
-def is_wide_char(font_name: str, font_path: str, ch: str) -> bool:
+def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
     """
     Check if character for given font is wider than standard one.
     """
-    font_size = 350
-    img_width = 256
-    img_height = 350
-
     # Standard area of monospace font
     standard_gly = GlyphDrawer(
         font_name="DejaVuSansMono",
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-        font_size=font_size,
-        img_width=img_width,
-        img_height=img_height,
     )
     x1, _, x2, _ = standard_gly.get_area()
     mono_width = x2 - x1 + 1
 
-    gly = GlyphDrawer(font_name, font_path, font_size, img_width, img_height)
+    gly = GlyphDrawer(font_name, font_path)
     return gly.is_wide(ch, mono_width)
 
 
-def compare_chars(ch_set: str) -> None:
+def calc_distances(
+    ch_set1: str, ch_set2: str, file_name: str = "distances.csv"
+) -> None:
     """
-    Compare characters similarities between two sets.
+    Compare characters similarities (distances) between two sets.
     """
     gly = GlyphDrawer(
         font_name="DejaVuSansMono",
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-        font_size=350,
-        img_width=256,
-        img_height=350,
     )
     print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
     gly_cmp = GlyphCmp()
     count_fail = 0
-    all_pairs = list(itertools.combinations(ch_set, 2))
+    count_not_supported = 0
+
     distances = defaultdict(dict)
+    all_pairs = list(itertools.product(ch_set1, ch_set2))
     for ch1, ch2 in tqdm(all_pairs):
-        try:
-            dist = gly_cmp.distance(ch1, gly, ch2, gly)
-            distances[ch1][ch2] = dist
-            distances[ch2][ch1] = dist
-        except:
+        if ch1 == ch2:
+            distances[ch1][ch2] = 0
+        elif ch1 in distances and ch2 in distances[ch1]:
+            # Distances already calculated, so skip
+            continue
+        elif not gly.is_supported(ch1) or not gly.is_supported(ch2):
+            # If one of the chars is not supported then can't calculate distance
+            print(f"Not supported : {ch1} <-> {ch2}")
             distances[ch1][ch2] = -1
             distances[ch2][ch1] = -1
-            print(f"{ch1} <-> {ch2}: Error")
-            count_fail += 1
+            count_not_supported += 1
+        else:
+            try:
+                dist = gly_cmp.distance(ch1, gly, ch2, gly)
+                distances[ch1][ch2] = dist
+                distances[ch2][ch1] = dist
+            except:
+                print(f"Fail : {ch1} <-> {ch2}")
+                distances[ch1][ch2] = -1
+                distances[ch2][ch1] = -1
+                count_fail += 1
 
-    for ch in ch_set:
-        distances[ch][ch] = 0
+    export_distances_to_csv(distances, file_name)
 
-    export_distances_to_csv(distances)
-
+    print(f"All cases: {len(all_pairs)}")
+    print(f"Failed: {count_fail}, ")
+    print(f"Not supported: {count_not_supported}")
     print(
-        f"All cases: {len(all_pairs)}, "
-        f"failed: {count_fail}, "
-        f"success rate: {((len(all_pairs) - count_fail) / len(all_pairs)) * 100:.2f}%"
+        f"Success rate: {((len(all_pairs) - (count_fail + count_not_supported)) / len(all_pairs)) * 100:.2f}%"
     )
 
 
-def export_distances_to_csv(distances: t.Dict, file_name: str = "distances") -> None:
+def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
     """
     Export shape distances to .csv.
     """
-    with open(f"{file_name}.csv", "w", newline="") as csv_file:
+    with open(f"{file_name}", "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
         # Write columns
         writer.writerow([f"0x{ord(ch):04x}" for ch in sorted(distances.keys())])
@@ -248,9 +211,9 @@ class GlyphDrawer:
         self,
         font_name: str,
         font_path: str,
-        font_size: int,
-        img_width: int,
-        img_height: int,
+        font_size: int = FONT_SIZE,
+        img_width: int = IMG_WIDTH,
+        img_height: int = IMG_HEIGHT,
     ) -> None:
         self._font = ImageFont.truetype(font_name, size=font_size)
         self._font_path = font_path
@@ -384,22 +347,25 @@ class GlyphCmp:
         img_arr2 = gly2.create_img(ch2)
 
         # Dilatate to join glyph parts
-        dil_arr1 = cv2.dilate(img_arr1, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23)))
-        dil_arr2 = cv2.dilate(img_arr2, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23)))
+        dil_arr1 = cv2.dilate(
+            img_arr1, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))
+        )
+        dil_arr2 = cv2.dilate(
+            img_arr2, cv2.getStructuringElement(cv2.MORPH_RECT, (23, 23))
+        )
 
-        # contours1, _ = cv2.findContours(img_arr1, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-        # contours2, _ = cv2.findContours(img_arr2, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         contours1, _ = cv2.findContours(dil_arr1, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         contours2, _ = cv2.findContours(dil_arr2, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
 
-        if (len(contours1) == 0 or len(contours2) == 0):
+        if len(contours1) == 0 or len(contours2) == 0:
             return 0
 
         contour1 = self._simple_contour(contours1)
         contour2 = self._simple_contour(contours2)
 
-        self._save_with_contours(ch1, img_arr1, contour1)
+        # self._save_with_contours(ch1, img_arr1, contour1)
         # self._save_with_contours(ch2, img_arr2, contour2)
+
         scd = cv2.createShapeContextDistanceExtractor()
         dist = scd.computeDistance(contour1, contour2)
         return dist
@@ -413,8 +379,8 @@ class GlyphCmp:
         https://docs.opencv.org/4.8.0/d0/d38/modules_2shape_2samples_2shape_example_8cpp-example.html
         """
         tmp_contour = []
-        for contour in contours:
-            tmp_contour.extend(contour)
+        for border in contours:
+            tmp_contour.extend(border)
 
         # In case actual number of points is less than n, add element from the beginning
         for idx in itertools.cycle(range(len(tmp_contour))):
