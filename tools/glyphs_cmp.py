@@ -53,12 +53,19 @@ def main() -> None:
     # )
 
     # print_distance("i", "⢷")
+
+    # TODO: Maybe '_' should be used to calculate area?
     # assert is_wide_char('█', "DejaVuSans", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf") == False
 
     # ==========================================================================
 
     # calc_distances_all(ascii_all(), "ascii_all.csv")
-    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    calc_distances(
+        unicode_braille(),
+        unicode_standardized_subset(),
+        "braille_to_unicode_subset.csv",
+    )
 
 
 def unicode_standardized_subset() -> t.List:
