@@ -59,8 +59,9 @@ def main() -> None:
 
     # ==========================================================================
 
-    # calc_distances_all(ascii_all(), "ascii_all.csv")
-    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+
+    calc_distances_all(ascii_all(), "ascii_all.csv")
+    # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
     # calc_distances(
     #     unicode_braille(),
     #     unicode_standardized_subset(),
@@ -271,18 +272,18 @@ def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
     """
     with open(f"{file_name}", "w", newline="") as csv_file:
         writer = csv.writer(csv_file)
-        # Write row with columns names
+        # Write row with values codes
+        first_key = list(distances.keys())[0]
         writer.writerow(
             [f"0x{0:04x}"]
-            + [f"0x{ord(col_ch):04x}" for col_ch in sorted(distances.keys())]
+            + [f"0x{ord(col_ch):04x}" for col_ch in sorted(distances[first_key].keys())]
         )
-        # Write rows with values. First value is char code
-        first_key = list(distances.keys())[1]
-        values_keys = sorted(distances[first_key].keys())
-        for row_ch in values_keys:
-            row = [f"0x{ord(row_ch):04x}"] + [
-                f"{distances[col_ch][row_ch]:.4f}"
-                for col_ch in sorted(distances.keys())
+        # Write rows with distances for for each key (code)
+        keys = sorted(distances.keys())
+        for key_ch in keys:
+            row = [f"0x{ord(key_ch):04x}"] + [
+                f"{distances[key_ch][val_ch]:.4f}"
+                for val_ch in sorted(distances[key_ch].keys())
             ]
             writer.writerow(row)
 
