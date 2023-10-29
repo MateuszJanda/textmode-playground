@@ -137,7 +137,7 @@ def unicode_braille() -> t.List:
     https://en.wikipedia.org/wiki/Braille_Patterns
     """
 
-    return [chr(code) for code in range(0x2800, 0x28FF)]
+    return [chr(code) for code in range(0x2800, 0x28FF + 1)]
 
 
 def ascii_all() -> t.List:
@@ -168,23 +168,23 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
     Calculate distances between all characters.
     """
 
-    result = []
+    distances = {}
+    count_all = 0
+    count_failed = 0
+    count_not_supported = 0
     with Pool(processes=10) as pool:
         input_data = []
         for from_ch in from_set:
             input_data.append((from_ch, to_set))
 
-        result = pool.map(worker_calc_distance, input_data)
-
-    distances = {}
-    count_all = 0
-    count_failed = 0
-    count_not_supported = 0
-    for from_ch, dists, failed, not_supported in result:
-        distances[from_ch] = dists
-        count_all += len(dists)
-        count_failed += failed
-        count_not_supported += not_supported
+        async_result = pool.map_async(worker_calc_distance, input_data)
+        with tqdm(total=len(from_set)) as bar:
+            for from_ch, dists, failed, not_supported in async_result.get():
+                bar.update(1)
+                distances[from_ch] = dists
+                count_all += len(dists)
+                count_failed += failed
+                count_not_supported += not_supported
 
     export_distances_to_csv(distances, file_name)
 
