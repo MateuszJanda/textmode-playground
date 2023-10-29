@@ -303,6 +303,36 @@ def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
             writer.writerow(row)
 
 
+def read_distances_from_csv(file_name: str) -> None:
+    """
+    Read shape distances from .csv.
+    """
+    result = {}
+
+    with open(f"{file_name}", "r") as csv_file:
+        reader = csv.reader(csv_file, delimiter=',')
+        to_codes = []
+        is_first_row = True
+        for row in reader:
+            if is_first_row:
+                is_first_row = False
+                to_codes = [chr(int(code, 16)) for code in row[1:]]
+            else:
+                from_code = chr(int(row[0], 16))
+                row = [float(value) for value in row[1:]]
+
+                min_value = 10_000
+                best_idx = 0
+                for idx, value in enumerate(row):
+                    if value >= 0 and value < min_value:
+                        min_value = value
+                        best_idx = idx
+
+                result[from_code] = to_codes[best_idx]
+
+    print(result)
+
+
 class GlyphDrawer:
     """
     Glyph drawer by specified font.
