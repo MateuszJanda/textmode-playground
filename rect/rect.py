@@ -51,7 +51,8 @@ def main(scr: t.Any) -> None:
         rect1_points = rotate_points(angle, rect1_center, rect1_points)
         rect2_points = rotate_points(angle, rect2_center, rect2_points)
         draw_figure(rect1_points, code_buffer, screen_buffer, code_to_braille)
-        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_char)
+        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_ascii)
+        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_unicode_subset)
 
         refresh_screen(scr, screen_buffer)
         time.sleep(0.02)
@@ -185,7 +186,7 @@ def code_to_braille(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> No
     screen_buffer[row][col] = chr(BLANK_BRAILLE | code_buffer[row][col])
 
 
-def code_to_char(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+def code_to_ascii(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
     code_replacement = ['!', '.', '.', '.', '.', ';', '.', '.', '.', '_', '.', 'r', ':', 'r', 'r', \
                         'r', '.', '.', '-', 'L', '.', '"', '.', '+', '.', '-', "'", '=', '.', 'F', \
                         ',', '"', '.', '.', '.', '.', '-', ',', '>', 'L', ';', '-', 'c', '=', '-', \
@@ -203,6 +204,17 @@ def code_to_char(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
                         'F', 'F', '=', 's', 'F', 'l', '`', '`', ',', 'e', '6', '_', '_', 's', "'", \
                         ',', ',', '\\', '=', 'P', '"', 'L', "'", ',', "'", '.', 'E', '5', '*', '5',\
                         "'", ',', ',', 't', ',', 'c', 'c', 't', "'", '7', '.', 'F', "'", "'", ',', 'E']
+
+    row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
+    if row < 0:
+        return
+
+    col = int(pt.x / CELL_WIDTH)
+    screen_buffer[row][col] = code_replacement[code_buffer[row][col]]
+
+
+def code_to_unicode_subset(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+    code_replacement = [' ', '‧', '‧', '‧', '‧', ':', '‧', '⁝', '‧', '‥', '˙', 'ͱ', ':', '┎', '‧', 'г', '‧', '˙', '‥', '↳', '·', 'ͱ', '↱', 'ʺ', '.', '⁖', '͵', '=', '˓', 'ℴ', 'ⅎ', '∍', '‧', 'ˑ', '˙', '╰', '‥', '∴', 'ʱ', '└', ':', '˦', '⁖', 'דּ', '˨', '‥', 'ⅎ', '϶', ':', '·', '⁖', '⁘', '⁖', 'ₕ', 'ʰ', 'ͱ', '⁝', '͵', '‵', 'דּ', '’', 'ʻ', 'ⅎ', '⁼', '‧', ';', ';', '⁝', '.', '‧', '⁝', '·', '⁚', '′', '′', '┌', '․', '˗', '᾽', '˙', '∶', 'Ͱ', '∵', 'Ͱ', '˙', 'Γ', '┌', '⋅', '⁝', '´', 'ˈ', '⊧', '᾽', 'P', '᾽', '⊦', '‧', '′', 'ͱ', '╵', '↱', 'ˑ', 'ʺ', '∙', '⋅', 'ƨ', 'ʽ', 'F', '˙', 'ͱ', '·', 'פּ', '˩', '`', 'ℐ', 'ͱ', '⁘', 'ͱ', '┈', 'ʱ', '‘', 'ʻ', '·', ',', ',', 'ͺ', '◜', 'ͱ', '‧', '˓', '⁚', 'ʿ', '.', 'ʹ', 'רּ', '͵', ';', '᾿', '·', '₋', '⁖', 'ʗ', 'ⅎ', 'ɽ', ';', ',', '∵', 'ךּ', '⁖', 'Ŀ', 'ϛ', '‵', '⁝', '´', '⁖', 'ךּ', '˨', 'Ĳ', 'ˊ', 'ⅽ', '․', '‧', '․', '⋅', '⁖', 'ͺ', '⁘', '˙', '⁝', '‘', ',', '˧', ',', ';', 'דּ', 'ɴ', '⁝', 'ʹ', '͵', '‚', '⁖', ',', '‘', 'ₒ', '·', '᾽', '˙', 'ʹ', 'ʹ', 'ʼ', '‚', '⁷', '‥', '╴', '‐', 'Ĺ', 'ь', '└', 'ʟ', '⁽', '᾿', '⁚', '′', '·', '–', '╺', '∍', 'קּ', '∴', '‑', '⁚', '‼', 'Ⅎ', 'в', '϶', '‼', '᾽', 'ˑ', '῀', '‼', '┚', '‒', '‼', '‼', '’', 'ʻ', 'ₕ', '⊦', '=', 'ь', 'ͱ', 'ı', '‘', 'ʹ', 'ℐ', '.', 'Ⅎ', '‒', 'ɔ', 'ℐ', 'ʹ', 'ʻ', '‚', 'ʾ', '⁖', '΄', 'ₒ', 'ʰ', '͵', ',', '.', 'ʼ', '⁖', 'ʼ', 'ₚ', 'ₒ']
 
     row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
     if row < 0:
