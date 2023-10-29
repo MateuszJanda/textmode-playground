@@ -51,7 +51,7 @@ def main(scr: t.Any) -> None:
         rect1_points = rotate_points(angle, rect1_center, rect1_points)
         rect2_points = rotate_points(angle, rect2_center, rect2_points)
         draw_figure(rect1_points, code_buffer, screen_buffer, code_to_braille)
-        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_braille)
+        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_char)
 
         refresh_screen(scr, screen_buffer)
         time.sleep(0.02)
@@ -184,6 +184,14 @@ def code_to_braille(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> No
     col = int(pt.x / CELL_WIDTH)
     screen_buffer[row][col] = chr(BLANK_BRAILLE | code_buffer[row][col])
 
+
+def code_to_char(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+    row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
+    if row < 0:
+        return
+
+    col = int(pt.x / CELL_WIDTH)
+    screen_buffer[row][col] = 'a'
 
 def empty_code_buffer() -> t.List:
     code_buffer = []
