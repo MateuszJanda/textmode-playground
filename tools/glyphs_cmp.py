@@ -167,19 +167,19 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
     """
     Calculate distances between all characters.
     """
-
     distances = {}
     count_all = 0
     count_failed = 0
     count_not_supported = 0
-    with Pool(processes=10) as pool:
+    with Pool(processes=16) as pool:
         input_data = []
         for from_ch in from_set:
             input_data.append((from_ch, to_set))
 
-        async_result = pool.map_async(worker_calc_distance, input_data)
         with tqdm(total=len(from_set)) as bar:
-            for from_ch, dists, failed, not_supported in async_result.get():
+            for from_ch, dists, failed, not_supported in pool.imap(
+                worker_calc_distance, input_data
+            ):
                 bar.update(1)
                 distances[from_ch] = dists
                 count_all += len(dists)
@@ -197,6 +197,11 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
 
 
 def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
+    """
+    Worker used by multiprocessing pool. Calculate distance for single char "from" with chars "to_set"
+    """
+    from_ch, to_set = args
+
     # gly = GlyphDrawer(
     #     font_name="DejaVuSansMono",
     #     font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -207,10 +212,9 @@ def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
     )
 
     gly_cmp = GlyphCmp()
-    count_fail = 0
+    count_failed = 0
     count_not_supported = 0
 
-    from_ch, to_set = args
     distances = {}
     for to_ch in to_set:
         if from_ch == to_ch:
@@ -231,9 +235,9 @@ def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
             except:
                 print(f"Fail : {from_ch} <-> {to_ch}")
                 distances[to_ch] = -1
-                count_fail += 1
+                count_failed += 1
 
-    return (from_ch, distances, count_fail, count_not_supported)
+    return (from_ch, distances, count_failed, count_not_supported)
 
 
 def calc_distances_all(ch_set: t.List, file_name: str) -> None:
