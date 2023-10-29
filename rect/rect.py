@@ -13,7 +13,8 @@ import curses
 import locale
 
 
-BLANK_BRAILLE = "\u2800"
+BLANK_BRAILLE = 0x2800
+BLANK_VALUE = 0x00
 CELL_WIDTH = 2
 CELL_HEIGHT = 4
 
@@ -126,23 +127,15 @@ def draw_line(screen_buf, pt1, pt2):
 
 
 def draw_point(screen_buf, pt):
-    if curses.LINES - 1 - int(pt.y / CELL_HEIGHT) < 0:
+    row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
+    if row < 0:
         return
-    uchar = ord(
-        screen_buf[curses.LINES - 1 - int(pt.y / CELL_HEIGHT)][int(pt.x / CELL_WIDTH)]
-    )
-    screen_buf[curses.LINES - 1 - int(pt.y / CELL_HEIGHT)][
-        int(pt.x / CELL_WIDTH)
-    ] = unicode_char(uchar | relative_uchar(pt.y, pt.x))
+
+    col = int(pt.x / CELL_WIDTH)
+    screen_buf[row][col] |= point_to_code(pt.y, pt.x)
 
 
-def unicode_char(param):
-    if sys.version_info[0] == 2:
-        return unichr(param)
-    return chr(param)
-
-
-def relative_uchar(y, x):
+def point_to_code(y, x):
     bx = x % CELL_WIDTH
     by = y % CELL_HEIGHT
 
@@ -161,7 +154,7 @@ def relative_uchar(y, x):
 def empty_screen_buf():
     screen_buf = []
     for _ in range(curses.LINES):
-        screen_buf.append((list(BLANK_BRAILLE * (curses.COLS - 1))))
+        screen_buf.append([BLANK_VALUE] * (curses.COLS - 1))
 
     return screen_buf
 
@@ -171,7 +164,8 @@ def refresh_screen(scr, screen_buf):
     scr.erase()
 
     for num, line in enumerate(screen_buf):
-        scr.addstr(num, 0, "".join(line).encode("utf-8"))
+        line_with_chars = [chr(BLANK_BRAILLE | code) for code in line]
+        scr.addstr(num, 0, "".join(line_with_chars).encode("utf-8"))
 
     scr.refresh()
 
