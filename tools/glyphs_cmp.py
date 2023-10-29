@@ -197,7 +197,7 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
 
 def calc_distances_all(ch_set: t.List, file_name: str) -> None:
     """
-    Calculate distances between all characters in ch_set.
+    Calculate distances between all characters in "ch_set".
     """
     distances = {}
     count_failed = 0
