@@ -60,13 +60,15 @@ def main() -> None:
     # ==========================================================================
 
     # calc_distances_all(ascii_all(), "ascii_all.csv")
+    calc_distances_all("1234", "2.csv")
+
     # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
-    # calc_distances("abc", "1234", "1.txt")
-    calc_distances(
-        unicode_braille(),
-        unicode_standardized_subset(),
-        "braille_to_unicode_subset.csv",
-    )
+    # calc_distances("abc", "1234", "1.csv")
+    # calc_distances(
+    #     unicode_braille(),
+    #     unicode_standardized_subset(),
+    #     "braille_to_unicode_subset.csv",
+    # )
 
 
 def unicode_standardized_subset() -> t.List:
@@ -220,7 +222,7 @@ def calc_distances_all(ch_set: t.List, file_name: str) -> None:
         for ch2 in distances[ch1]:
             distances[ch2][ch1] = distances[ch1][ch2]
 
-    count_all = sum(len(row) for row in distances)
+    count_all = sum(len(distances[ch]) for ch in distances)
 
     export_distances_to_csv(distances, file_name)
 
