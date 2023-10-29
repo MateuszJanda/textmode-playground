@@ -188,7 +188,7 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
 
     export_distances_to_csv(distances, file_name)
 
-    print(f"All cases: {count_all}")
+    print(f"All cases: {count_all}, should be {len(from_set) * len(to_set)}")
     print(f"Failed: {count_failed}, ")
     print(f"Not supported: {count_not_supported}")
     print(
