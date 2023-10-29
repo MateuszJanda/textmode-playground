@@ -2,7 +2,7 @@
 Playground for console (ASCII/Unicode) animations (intros).
 
 ## Requirements
-Tested on GNOME Terminal (default DejaVu Sans Mono font) with braille font support.
+Tested on GNOME Terminal (DejaVu Sans Mono font) with fonts fallback and 24-bits ("true color") [ANSI codes](https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit) support.
 
 For Python:
 ```bash
