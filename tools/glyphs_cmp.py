@@ -11,7 +11,6 @@ import random
 import string
 import subprocess
 import typing as t
-from collections import defaultdict
 from multiprocessing import Pool
 
 import cv2
@@ -61,13 +60,13 @@ def main() -> None:
     # ==========================================================================
 
     # calc_distances_all(ascii_all(), "ascii_all.csv")
-    calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
     # calc_distances("abc", "1234", "1.txt")
-    # calc_distances(
-    #     unicode_braille(),
-    #     unicode_standardized_subset(),
-    #     "braille_to_unicode_subset.csv",
-    # )
+    calc_distances(
+        unicode_braille(),
+        unicode_standardized_subset(),
+        "braille_to_unicode_subset.csv",
+    )
 
 
 def unicode_standardized_subset() -> t.List:
@@ -165,18 +164,18 @@ def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
 
 def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
     """
-    Calculate distances between all characters.
+    Calculate distances mapping between "from_set" characters to "to_set" characters.
     """
     distances = {}
     count_all = 0
     count_failed = 0
     count_not_supported = 0
-    with Pool(processes=16) as pool:
+    with Pool(processes=14) as pool:
         input_data = []
         for from_ch in from_set:
             input_data.append((from_ch, to_set))
 
-        with tqdm(total=len(from_set)) as bar:
+        with tqdm(total=len(input_data)) as bar:
             for from_ch, dists, failed, not_supported in pool.imap(
                 worker_calc_distance, input_data
             ):
@@ -189,6 +188,43 @@ def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
     export_distances_to_csv(distances, file_name)
 
     print(f"All cases: {count_all}, should be {len(from_set) * len(to_set)}")
+    print(f"Failed: {count_failed}, ")
+    print(f"Not supported: {count_not_supported}")
+    print(
+        f"Success rate: {((count_all - (count_failed + count_not_supported)) / count_all) * 100:.2f}%"
+    )
+
+
+def calc_distances_all(ch_set: t.List, file_name: str) -> None:
+    """
+    Calculate distances between all characters in ch_set.
+    """
+    distances = {}
+    count_failed = 0
+    count_not_supported = 0
+    with Pool(processes=14) as pool:
+        input_data = []
+        for idx, ch in enumerate(ch_set):
+            input_data.append((ch, ch_set[idx:]))
+
+        with tqdm(total=len(input_data)) as bar:
+            for from_ch, dists, failed, not_supported in pool.imap(
+                worker_calc_distance, input_data
+            ):
+                bar.update(1)
+                distances[from_ch] = dists
+                count_failed += failed
+                count_not_supported += not_supported
+
+    for ch1 in ch_set:
+        for ch2 in distances[ch1]:
+            distances[ch2][ch1] = distances[ch1][ch2]
+
+    count_all = sum(len(row) for row in distances)
+
+    export_distances_to_csv(distances, file_name)
+
+    print(f"All cases: {count_all}, should be {len(ch_set) * len(ch_set)}")
     print(f"Failed: {count_failed}, ")
     print(f"Not supported: {count_not_supported}")
     print(
@@ -224,7 +260,7 @@ def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
             continue
         elif not gly.is_supported(from_ch) or not gly.is_supported(to_ch):
             # If one of the chars is not supported then can't calculate distance
-            print(f"Not supported : 0x{ord(from_ch):04x} <-> 0x{ord(to_ch):04x}")
+            # print(f"Not supported : 0x{ord(from_ch):04x} <-> 0x{ord(to_ch):04x}")
             distances[to_ch] = -1
             count_not_supported += 1
         else:
@@ -238,59 +274,6 @@ def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
                 count_failed += 1
 
     return (from_ch, distances, count_failed, count_not_supported)
-
-
-def calc_distances_all(ch_set: t.List, file_name: str) -> None:
-    """
-    Calculate distances between all characters.
-    """
-    gly = GlyphDrawer(
-        font_name="DejaVuSansMono",
-        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-    )
-    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
-
-    gly_cmp = GlyphCmp()
-    count_fail = 0
-    count_not_supported = 0
-
-    distances = defaultdict(dict)
-    all_pairs = list(itertools.combinations(ch_set, 2))
-    for ch1, ch2 in tqdm(all_pairs):
-        if (ch1 in distances and ch2 in distances[ch1]) or (
-            ch2 in distances and ch1 in distances[ch2]
-        ):
-            # Distances already calculated, so skip
-            continue
-        elif not gly.is_supported(ch1) or not gly.is_supported(ch2):
-            # If one of the chars is not supported then can't calculate distance
-            print(f"Not supported : {ch1} <-> {ch2}")
-            distances[ch1][ch2] = -1
-            distances[ch2][ch1] = -1
-            count_not_supported += 1
-        else:
-            try:
-                dist = gly_cmp.distance(ch1, gly, ch2, gly)
-                distances[ch1][ch2] = dist
-                distances[ch2][ch1] = dist
-                # print(f"Distance : {ch1} <-> {ch2} : {dist}")
-            except:
-                print(f"Fail : {ch1} <-> {ch2}")
-                distances[ch1][ch2] = -1
-                distances[ch2][ch1] = -1
-                count_fail += 1
-
-    for ch in ch_set:
-        distances[ch][ch] = 0
-
-    export_distances_to_csv(distances, file_name)
-
-    print(f"All cases: {len(all_pairs)}")
-    print(f"Failed: {count_fail}, ")
-    print(f"Not supported: {count_not_supported}")
-    print(
-        f"Success rate: {((len(all_pairs) - (count_fail + count_not_supported)) / len(all_pairs)) * 100:.2f}%"
-    )
 
 
 def export_distances_to_csv(distances: t.Dict, file_name: str) -> None:
