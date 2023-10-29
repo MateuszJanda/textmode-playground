@@ -26,20 +26,31 @@ def main(scr: t.Any) -> None:
     setup_curses()
     scr.erase()
 
-    center_pt = Point(60, 50)
-    points = [
-        Point(60, 80),
-        Point(90, 50),
-        Point(60, 20),
-        Point(30, 50),
+    rect1_center = Point(40, 50)
+    rect1_points = [
+        Point(40, 80),
+        Point(70, 50),
+        Point(40, 20),
+        Point(10, 50),
     ]
+
+    rect2_center = Point(110, 50)
+    rect2_points = [
+        Point(110, 80),
+        Point(140, 50),
+        Point(110, 20),
+        Point(80, 50),
+    ]
+
     angle = 0.1 / (2 * math.pi)
 
     while True:
         buffer = empty_buffer()
 
-        points = rotate_points(angle, center_pt, points)
-        draw_figure(buffer, points)
+        rect1_points = rotate_points(angle, rect1_center, rect1_points)
+        rect2_points = rotate_points(angle, rect2_center, rect2_points)
+        draw_figure(buffer, rect1_points)
+        draw_figure(buffer, rect2_points)
 
         refresh_screen(scr, buffer)
         time.sleep(0.02)
