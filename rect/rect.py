@@ -13,11 +13,11 @@ import curses
 import locale
 
 
-BLANK_BRAILLE = u'\u2800'
+BLANK_BRAILLE = "\u2800"
 CELL_WIDTH = 2
 CELL_HEIGHT = 4
 
-Point = co.namedtuple('Point', ['x', 'y'])
+Point = co.namedtuple("Point", ["x", "y"])
 
 
 def main(scr):
@@ -72,8 +72,8 @@ def draw_figure(screen_buf, points):
 
 
 def draw_line(screen_buf, pt1, pt2):
-    """ Bresenham's line algorithm
-    https://pl.wikipedia.org/wiki/Algorytm_Bresenhama """
+    """Bresenham's line algorithm
+    https://pl.wikipedia.org/wiki/Algorytm_Bresenhama"""
     x, y = pt1.x, pt1.y
 
     # Drawing direction
@@ -84,7 +84,7 @@ def draw_line(screen_buf, pt1, pt2):
         xi = -1
         dx = pt1.x - pt2.x
 
-    if (pt1.y < pt2.y):
+    if pt1.y < pt2.y:
         yi = 1
         dy = pt2.y - pt1.y
     else:
@@ -126,10 +126,14 @@ def draw_line(screen_buf, pt1, pt2):
 
 
 def draw_point(screen_buf, pt):
-    if curses.LINES - 1 - int(pt.y/CELL_HEIGHT) < 0:
+    if curses.LINES - 1 - int(pt.y / CELL_HEIGHT) < 0:
         return
-    uchar = ord(screen_buf[curses.LINES - 1 - int(pt.y/CELL_HEIGHT)][int(pt.x/CELL_WIDTH)])
-    screen_buf[curses.LINES - 1 - int(pt.y/CELL_HEIGHT)][int(pt.x/CELL_WIDTH)] = unicode_char(uchar | relative_uchar(pt.y, pt.x))
+    uchar = ord(
+        screen_buf[curses.LINES - 1 - int(pt.y / CELL_HEIGHT)][int(pt.x / CELL_WIDTH)]
+    )
+    screen_buf[curses.LINES - 1 - int(pt.y / CELL_HEIGHT)][
+        int(pt.x / CELL_WIDTH)
+    ] = unicode_char(uchar | relative_uchar(pt.y, pt.x))
 
 
 def unicode_char(param):
@@ -151,7 +155,7 @@ def relative_uchar(y, x):
         if by == 0:
             return 0x80
         else:
-            return 0x20 >> (by -1)
+            return 0x20 >> (by - 1)
 
 
 def empty_screen_buf():
@@ -167,14 +171,14 @@ def refresh_screen(scr, screen_buf):
     scr.erase()
 
     for num, line in enumerate(screen_buf):
-        scr.addstr(num, 0, u''.join(line).encode('utf-8'))
+        scr.addstr(num, 0, "".join(line).encode("utf-8"))
 
     scr.refresh()
 
 
 def setup_stderr():
     """Redirect stderr to other terminal. Run tty command, to get terminal id."""
-    sys.stderr = open('/dev/pts/2', 'w')
+    sys.stderr = open("/dev/pts/2", "w")
 
 
 def eprint(*args, **kwargs):
@@ -182,7 +186,7 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr)
 
 
-if __name__ == '__main__':
-    locale.setlocale(locale.LC_ALL, '')
+if __name__ == "__main__":
+    locale.setlocale(locale.LC_ALL, "")
     # setup_stderr()
     curses.wrapper(main)
