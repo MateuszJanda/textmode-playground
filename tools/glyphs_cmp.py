@@ -12,6 +12,7 @@ import string
 import subprocess
 import typing as t
 from collections import defaultdict
+from multiprocessing import Pool
 
 import cv2
 import numpy as np
@@ -61,6 +62,7 @@ def main() -> None:
 
     # calc_distances_all(ascii_all(), "ascii_all.csv")
     calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
+    # calc_distances("abc", "1234", "1.txt")
     # calc_distances(
     #     unicode_braille(),
     #     unicode_standardized_subset(),
@@ -161,10 +163,40 @@ def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
     return gly.is_wide(ch, mono_width)
 
 
-def calc_distances(from_set: str, to_set: str, file_name: str) -> None:
+def calc_distances(from_set: t.List, to_set: t.List, file_name: str) -> None:
     """
     Calculate distances between all characters.
     """
+
+    result = []
+    with Pool(processes=10) as pool:
+        input_data = []
+        for from_ch in from_set:
+            input_data.append((from_ch, to_set))
+
+        result = pool.map(worker_calc_distance, input_data)
+
+    distances = {}
+    count_all = 0
+    count_failed = 0
+    count_not_supported = 0
+    for from_ch, dists, failed, not_supported in result:
+        distances[from_ch] = dists
+        count_all += len(dists)
+        count_failed += failed
+        count_not_supported += not_supported
+
+    export_distances_to_csv(distances, file_name)
+
+    print(f"All cases: {count_all}")
+    print(f"Failed: {count_failed}, ")
+    print(f"Not supported: {count_not_supported}")
+    print(
+        f"Success rate: {((count_all - (count_failed + count_not_supported)) / count_all) * 100:.2f}%"
+    )
+
+
+def worker_calc_distance(args: t.Tuple) -> t.Tuple[str, t.List, int, int]:
     # gly = GlyphDrawer(
     #     font_name="DejaVuSansMono",
     #     font_path="/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -173,46 +205,38 @@ def calc_distances(from_set: str, to_set: str, file_name: str) -> None:
         font_name="DejaVuSans",
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     )
-    print(f"Font area (x1, y1, x2, y2): {gly.get_area()}")
 
     gly_cmp = GlyphCmp()
     count_fail = 0
     count_not_supported = 0
 
-    distances = defaultdict(dict)
-    all_pairs = list(itertools.product(from_set, to_set))
-    for from_ch, to_ch in tqdm(all_pairs):
+    from_ch, to_set = args
+    distances = {}
+    for to_ch in to_set:
         if from_ch == to_ch:
-            distances[from_ch][to_ch] = 0
-        elif from_ch in distances and to_ch in distances[from_ch]:
+            distances[to_ch] = 0
+        elif to_ch in distances:
             # Distances already calculated, so skip
             continue
         elif not gly.is_supported(from_ch) or not gly.is_supported(to_ch):
             # If one of the chars is not supported then can't calculate distance
             print(f"Not supported : 0x{ord(from_ch):04x} <-> 0x{ord(to_ch):04x}")
-            distances[from_ch][to_ch] = -1
+            distances[to_ch] = -1
             count_not_supported += 1
         else:
             try:
                 dist = gly_cmp.distance(from_ch, gly, to_ch, gly)
-                distances[from_ch][to_ch] = dist
+                distances[to_ch] = dist
                 # print(f"Distance : {from_ch} <-> {to_ch} : {dist}")
             except:
                 print(f"Fail : {from_ch} <-> {to_ch}")
-                distances[from_ch][to_ch] = -1
+                distances[to_ch] = -1
                 count_fail += 1
 
-    export_distances_to_csv(distances, file_name)
-
-    print(f"All cases: {len(all_pairs)}")
-    print(f"Failed: {count_fail}, ")
-    print(f"Not supported: {count_not_supported}")
-    print(
-        f"Success rate: {((len(all_pairs) - (count_fail + count_not_supported)) / len(all_pairs)) * 100:.2f}%"
-    )
+    return (from_ch, distances, count_fail, count_not_supported)
 
 
-def calc_distances_all(ch_set: str, file_name: str) -> None:
+def calc_distances_all(ch_set: t.List, file_name: str) -> None:
     """
     Calculate distances between all characters.
     """
