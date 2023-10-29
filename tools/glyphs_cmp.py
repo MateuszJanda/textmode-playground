@@ -59,8 +59,8 @@ def main() -> None:
 
     # ==========================================================================
 
-    # calc_distances_all(ascii_all(), "ascii_all.csv")
-    calc_distances_all("1234", "2.csv")
+    calc_distances_all(ascii_all(), "ascii_to_ascii.csv")
+    # calc_distances_all("1234", "2.csv")
 
     # calc_distances(unicode_braille(), ascii_all(), "braille_to_ascii.csv")
     # calc_distances("abc", "1234", "1.csv")
