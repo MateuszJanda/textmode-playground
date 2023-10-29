@@ -11,6 +11,7 @@ import sys
 import time
 import curses
 import locale
+import typing as t
 
 
 BLANK_BRAILLE = 0x2800
@@ -21,7 +22,7 @@ CELL_HEIGHT = 4
 Point = co.namedtuple("Point", ["x", "y"])
 
 
-def main(scr):
+def main(scr: t.Any) -> None:
     setup_curses()
     scr.erase()
 
@@ -35,25 +36,25 @@ def main(scr):
     angle = 0.1 / (2 * math.pi)
 
     while True:
-        screen_buf = empty_screen_buf()
+        buffer = empty_buffer()
 
         points = rotate_points(angle, center_pt, points)
-        draw_figure(screen_buf, points)
+        draw_figure(buffer, points)
 
-        refresh_screen(scr, screen_buf)
+        refresh_screen(scr, buffer)
         time.sleep(0.02)
 
     curses.endwin()
 
 
-def setup_curses():
+def setup_curses() -> None:
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
     curses.curs_set(False)
 
 
-def rotate_points(angle, center_pt, points):
+def rotate_points(angle: float, center_pt: Point, points: t.List) -> t.List:
     result = []
     for pt in points:
         vec = Point(pt.x - center_pt.x, pt.y - center_pt.y)
@@ -65,14 +66,14 @@ def rotate_points(angle, center_pt, points):
     return result
 
 
-def draw_figure(screen_buf, points):
+def draw_figure(buffer: t.List, points: t.List) -> None:
     for start, end in zip(points, points[1:] + [points[0]]):
         start = Point(int(start.x), int(start.y))
         end = Point(int(end.x), int(end.y))
-        draw_line(screen_buf, start, end)
+        draw_line(buffer, start, end)
 
 
-def draw_line(screen_buf, pt1, pt2):
+def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
     """Bresenham's line algorithm
     https://pl.wikipedia.org/wiki/Algorytm_Bresenhama"""
     x, y = pt1.x, pt1.y
@@ -92,7 +93,7 @@ def draw_line(screen_buf, pt1, pt2):
         yi = -1
         dy = pt1.y - pt2.y
 
-    draw_point(screen_buf, Point(x, y))
+    draw_point(buffer, Point(x, y))
 
     # X axis
     if dx > dy:
@@ -108,7 +109,7 @@ def draw_line(screen_buf, pt1, pt2):
             else:
                 d += bi
                 x += xi
-            draw_point(screen_buf, Point(x, y))
+            draw_point(buffer, Point(x, y))
     # Y axis
     else:
         ai = (dx - dy) * 2
@@ -123,19 +124,19 @@ def draw_line(screen_buf, pt1, pt2):
             else:
                 d += bi
                 y += yi
-            draw_point(screen_buf, Point(x, y))
+            draw_point(buffer, Point(x, y))
 
 
-def draw_point(screen_buf, pt):
+def draw_point(buffer: t.List, pt: Point) -> None:
     row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
     if row < 0:
         return
 
     col = int(pt.x / CELL_WIDTH)
-    screen_buf[row][col] |= point_to_code(pt.y, pt.x)
+    buffer[row][col] |= point_to_code(pt.y, pt.x)
 
 
-def point_to_code(y, x):
+def point_to_code(y: int, x: int) -> int:
     bx = x % CELL_WIDTH
     by = y % CELL_HEIGHT
 
@@ -151,31 +152,31 @@ def point_to_code(y, x):
             return 0x20 >> (by - 1)
 
 
-def empty_screen_buf():
-    screen_buf = []
+def empty_buffer() -> t.List:
+    buffer = []
     for _ in range(curses.LINES):
-        screen_buf.append([BLANK_VALUE] * (curses.COLS - 1))
+        buffer.append([BLANK_VALUE] * (curses.COLS - 1))
 
-    return screen_buf
+    return buffer
 
 
-def refresh_screen(scr, screen_buf):
+def refresh_screen(scr: t.Any, buffer: t.List) -> None:
     # https://stackoverflow.com/questions/24964940/python-curses-tty-screen-blink
     scr.erase()
 
-    for num, line in enumerate(screen_buf):
+    for num, line in enumerate(buffer):
         line_with_chars = [chr(BLANK_BRAILLE | code) for code in line]
         scr.addstr(num, 0, "".join(line_with_chars).encode("utf-8"))
 
     scr.refresh()
 
 
-def setup_stderr():
+def setup_stderr() -> None:
     """Redirect stderr to other terminal. Run tty command, to get terminal id."""
     sys.stderr = open("/dev/pts/2", "w")
 
 
-def eprint(*args, **kwargs):
+def eprint(*args: t.Tuple, **kwargs: t.Dict) -> None:
     """Print on stderr"""
     print(*args, file=sys.stderr)
 
