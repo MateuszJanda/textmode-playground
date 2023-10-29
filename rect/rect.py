@@ -45,14 +45,15 @@ def main(scr: t.Any) -> None:
     angle = 0.1 / (2 * math.pi)
 
     while True:
-        buffer = empty_buffer()
+        code_buffer = empty_code_buffer()
+        screen_buffer = empty_screen_buffer()
 
         rect1_points = rotate_points(angle, rect1_center, rect1_points)
         rect2_points = rotate_points(angle, rect2_center, rect2_points)
-        draw_figure(buffer, rect1_points)
-        draw_figure(buffer, rect2_points)
+        draw_figure(rect1_points, code_buffer, screen_buffer, code_to_braille)
+        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_braille)
 
-        refresh_screen(scr, buffer)
+        refresh_screen(scr, screen_buffer)
         time.sleep(0.02)
 
     curses.endwin()
@@ -77,14 +78,22 @@ def rotate_points(angle: float, center_pt: Point, points: t.List) -> t.List:
     return result
 
 
-def draw_figure(buffer: t.List, points: t.List) -> None:
+def draw_figure(
+    points: t.List, code_buffer: t.List, screen_buffer: t.List, draw_code: t.Callable
+) -> None:
     for start, end in zip(points, points[1:] + [points[0]]):
         start = Point(int(start.x), int(start.y))
         end = Point(int(end.x), int(end.y))
-        draw_line(buffer, start, end)
+        draw_line(start, end, code_buffer, screen_buffer, draw_code)
 
 
-def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
+def draw_line(
+    pt1: Point,
+    pt2: Point,
+    code_buffer: t.List,
+    screen_buffer: t.List,
+    draw_code: t.Callable,
+) -> None:
     """Bresenham's line algorithm
     https://pl.wikipedia.org/wiki/Algorytm_Bresenhama"""
     x, y = pt1.x, pt1.y
@@ -104,7 +113,8 @@ def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
         yi = -1
         dy = pt1.y - pt2.y
 
-    draw_point(buffer, Point(x, y))
+    set_point(Point(x, y), code_buffer)
+    draw_code(Point(x, y), code_buffer, screen_buffer)
 
     # X axis
     if dx > dy:
@@ -112,7 +122,7 @@ def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
         bi = dy * 2
         d = bi - dx
         while x != pt2.x:
-            # coordinate test
+            # Coordinate test
             if d >= 0:
                 x += xi
                 y += yi
@@ -120,14 +130,15 @@ def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
             else:
                 d += bi
                 x += xi
-            draw_point(buffer, Point(x, y))
+            set_point(Point(x, y), code_buffer)
+            draw_code(Point(x, y), code_buffer, screen_buffer)
     # Y axis
     else:
         ai = (dx - dy) * 2
         bi = dx * 2
         d = bi - dy
         while y != pt2.y:
-            # coordinate test
+            # Coordinate test
             if d >= 0:
                 x += xi
                 y += yi
@@ -135,19 +146,21 @@ def draw_line(buffer: t.List, pt1: Point, pt2: Point) -> None:
             else:
                 d += bi
                 y += yi
-            draw_point(buffer, Point(x, y))
+            set_point(Point(x, y), code_buffer)
+            draw_code(Point(x, y), code_buffer, screen_buffer)
 
 
-def draw_point(buffer: t.List, pt: Point) -> None:
+def set_point(pt: Point, code_buffer: t.List) -> None:
     row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
     if row < 0:
         return
 
     col = int(pt.x / CELL_WIDTH)
-    buffer[row][col] |= point_to_code(pt.y, pt.x)
+    code_buffer[row][col] |= point_to_code(pt.y, pt.x)
 
 
 def point_to_code(y: int, x: int) -> int:
+    """Braille dot numbering only."""
     bx = x % CELL_WIDTH
     by = y % CELL_HEIGHT
 
@@ -163,21 +176,37 @@ def point_to_code(y: int, x: int) -> int:
             return 0x20 >> (by - 1)
 
 
-def empty_buffer() -> t.List:
-    buffer = []
+def code_to_braille(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+    row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
+    if row < 0:
+        return
+
+    col = int(pt.x / CELL_WIDTH)
+    screen_buffer[row][col] = chr(BLANK_BRAILLE | code_buffer[row][col])
+
+
+def empty_code_buffer() -> t.List:
+    code_buffer = []
     for _ in range(curses.LINES):
-        buffer.append([BLANK_VALUE] * (curses.COLS - 1))
+        code_buffer.append([BLANK_VALUE] * (curses.COLS - 1))
 
-    return buffer
+    return code_buffer
 
 
-def refresh_screen(scr: t.Any, buffer: t.List) -> None:
+def empty_screen_buffer() -> t.List:
+    screen_buffer = []
+    for _ in range(curses.LINES):
+        screen_buffer.append([" "] * (curses.COLS - 1))
+
+    return screen_buffer
+
+
+def refresh_screen(scr: t.Any, screen_buffer: t.List) -> None:
     # https://stackoverflow.com/questions/24964940/python-curses-tty-screen-blink
     scr.erase()
 
-    for num, line in enumerate(buffer):
-        line_with_chars = [chr(BLANK_BRAILLE | code) for code in line]
-        scr.addstr(num, 0, "".join(line_with_chars).encode("utf-8"))
+    for num, line in enumerate(screen_buffer):
+        scr.addstr(num, 0, "".join(line).encode("utf-8"))
 
     scr.refresh()
 
