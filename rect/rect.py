@@ -52,7 +52,7 @@ def main(scr: t.Any) -> None:
         rect2_points = rotate_points(angle, rect2_center, rect2_points)
         draw_figure(rect1_points, code_buffer, screen_buffer, code_to_braille)
         draw_figure(rect2_points, code_buffer, screen_buffer, code_to_ascii)
-        draw_figure(rect2_points, code_buffer, screen_buffer, code_to_unicode_subset)
+        # draw_figure(rect2_points, code_buffer, screen_buffer, code_to_unicode_subset)
 
         refresh_screen(scr, screen_buffer)
         time.sleep(0.02)
