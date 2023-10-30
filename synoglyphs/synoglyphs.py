@@ -13,7 +13,8 @@ import copy
 import typing as t
 
 
-THRESHOLD_CHANGE_CHAR = 0.5
+THRESHOLD_CHANGE_CHAR = 0.8
+THRESHOLD_RESTORE_CHAR = 0.5
 
 # Extracted from:
 # https://github.com/MateuszJanda/textmode-playground/tools/alphanum_to_unicode_subset.csv
@@ -92,8 +93,9 @@ def main(scr: t.Any) -> None:
         list(),
         list(),
         list(
-            "When you have eliminated the impossible, whatever remains, however improbable, must be the truth."
+            "When you have eliminated the impossible, whatever remains, however improbable,"
         ),
+        list("must be the truth."),
         list("   ~ Sherlock Holmes"),
     ]
     screen_buffer = copy.deepcopy(quote)
@@ -123,7 +125,7 @@ def replace_by_homoglyphs(quote: t.List[str], screen_buffer: t.List[str]) -> Non
         for col_idx, ch in enumerate(line):
             if ch in CHAR_REPLACEMENTS and random.random() > THRESHOLD_CHANGE_CHAR:
                 screen_buffer[row_idx][col_idx] = random.choice(CHAR_REPLACEMENTS[ch])
-            else:
+            elif random.random() > THRESHOLD_RESTORE_CHAR:
                 screen_buffer[row_idx][col_idx] = ch
 
 
@@ -140,7 +142,7 @@ def replace_by_synoglyphs(quote: t.List[str], screen_buffer: t.List[str]) -> Non
                 screen_buffer[row_idx][col_idx] = random.choice(
                     CHAR_REPLACEMENTS[ch.upper()]
                 )
-            else:
+            elif random.random() > THRESHOLD_RESTORE_CHAR:
                 screen_buffer[row_idx][col_idx] = ch
 
 
