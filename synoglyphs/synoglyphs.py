@@ -129,8 +129,7 @@ def replace_by_synoglyphs(quote: t.List[str], screen_buffer: t.List[str]) -> Non
     """
     Replace random chars by synoglyphs.
 
-    `Synoglyphs are glyphs that look different but mean the same thing. Synoglyphs
-    are also known informally as display variants`
+    `Synoglyphs are glyphs that look different but mean the same thing.`
     - https://en.wikipedia.org/wiki/Homoglyph
     """
     for row_idx, line in enumerate(quote):
