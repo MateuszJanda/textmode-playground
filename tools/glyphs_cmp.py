@@ -69,6 +69,7 @@ def main() -> None:
     #     unicode_standardized_subset(),
     #     "braille_to_unicode_subset.csv",
     # )
+    calc_distances(ascii_alphanumeric(), unicode_standardized_subset(), "alphanum_to_unicode_subset.csv")
 
 
 def unicode_standardized_subset() -> t.List:
@@ -146,6 +147,14 @@ def ascii_all() -> t.List:
     https://en.wikipedia.org/wiki/ASCII
     """
     return list(string.digits + string.ascii_letters + string.punctuation)
+
+
+def ascii_alphanumeric() -> t.List:
+    """
+    https://en.wikipedia.org/wiki/ASCII
+    """
+    return list(string.digits + string.ascii_letters)
+
 
 
 def is_wide_char(ch: str, font_name: str, font_path: str) -> bool:
