@@ -23,6 +23,7 @@ Point = co.namedtuple("Point", ["x", "y"])
 
 
 def main(scr: t.Any) -> None:
+    """Rotate rectangles in loop."""
     setup_curses()
     scr.erase()
 
@@ -50,6 +51,7 @@ def main(scr: t.Any) -> None:
 
         rect1_points = rotate_points(angle, rect1_center, rect1_points)
         rect2_points = rotate_points(angle, rect2_center, rect2_points)
+
         draw_figure(rect1_points, code_buffer, screen_buffer, code_to_braille)
         # draw_figure(rect2_points, code_buffer, screen_buffer, code_to_ascii)
         draw_figure(rect2_points, code_buffer, screen_buffer, code_to_unicode_subset)
@@ -61,6 +63,7 @@ def main(scr: t.Any) -> None:
 
 
 def setup_curses() -> None:
+    """Setup curses options."""
     curses.start_color()
     curses.use_default_colors()
     curses.halfdelay(1)
@@ -68,6 +71,7 @@ def setup_curses() -> None:
 
 
 def rotate_points(angle: float, center_pt: Point, points: t.List) -> t.List:
+    """Rotate points by given angle."""
     result = []
     for pt in points:
         vec = Point(pt.x - center_pt.x, pt.y - center_pt.y)
@@ -82,6 +86,7 @@ def rotate_points(angle: float, center_pt: Point, points: t.List) -> t.List:
 def draw_figure(
     points: t.List, code_buffer: t.List, screen_buffer: t.List, draw_code: t.Callable
 ) -> None:
+    """Draw lines between points."""
     for start, end in zip(points, points[1:] + [points[0]]):
         start = Point(int(start.x), int(start.y))
         end = Point(int(end.x), int(end.y))
@@ -95,8 +100,10 @@ def draw_line(
     screen_buffer: t.List,
     draw_code: t.Callable,
 ) -> None:
-    """Bresenham's line algorithm
-    https://pl.wikipedia.org/wiki/Algorytm_Bresenhama"""
+    """
+    Draw line - Bresenham's line algorithm
+    - https://pl.wikipedia.org/wiki/Algorytm_Bresenhama
+    """
     x, y = pt1.x, pt1.y
 
     # Drawing direction
@@ -152,6 +159,7 @@ def draw_line(
 
 
 def set_point(pt: Point, code_buffer: t.List) -> None:
+    """Set code as bit (unicode braille dot numbering) in cell."""
     row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
     if row < 0:
         return
@@ -161,7 +169,7 @@ def set_point(pt: Point, code_buffer: t.List) -> None:
 
 
 def point_to_code(y: int, x: int) -> int:
-    """Braille dot numbering only."""
+    """Calculate braille dot number from point position."""
     bx = x % CELL_WIDTH
     by = y % CELL_HEIGHT
 
@@ -178,6 +186,7 @@ def point_to_code(y: int, x: int) -> int:
 
 
 def code_to_braille(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+    """Translate cell code (braille dot number) to proper Braille code."""
     row = curses.LINES - 1 - int(pt.y / CELL_HEIGHT)
     if row < 0:
         return
@@ -187,6 +196,12 @@ def code_to_braille(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> No
 
 
 def code_to_ascii(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None:
+    """
+    Translate cell code (braille dot number) to ASCII character.
+
+    Extracted from:
+    https://github.com/MateuszJanda/textmode-playground/tools/braille_to_ascii.csv
+    """
     code_replacement = (
         "!....;..._.r:rrr..-L.\".+.-'=.F,\"....-,>L;-c=--sP..-,'`=`.,,',,,a"
         ".::'..l..-.f...l:7?\".iI\".-'P..ir.,.l_r\"l..cFs_Fr,.F_s,\"F.',',F.S"
@@ -205,6 +220,12 @@ def code_to_ascii(pt: Point, code_buffer: t.List, screen_buffer: t.List) -> None
 def code_to_unicode_subset(
     pt: Point, code_buffer: t.List, screen_buffer: t.List
 ) -> None:
+    """
+    Translate cell code (braille dot number) to Unicode character.
+
+    Extracted from:
+    https://github.com/MateuszJanda/textmode-playground/tools/braille_to_unicode_subset.csv
+    """
     code_replacement = (
         " ‧‧‧‧:‧⁝‧‥˙ͱ:┎‧г‧˙‥↳·ͱ↱ʺ.⁖͵=˓ℴⅎ∍‧ˑ˙╰‥∴ʱ└:˦⁖דּ˨‥ⅎ϶:·⁖⁘⁖ₕʰͱ⁝͵‵דּ’ʻⅎ⁼"
         "‧;;⁝.‧⁝·⁚′′┌․˗᾽˙∶Ͱ∵Ͱ˙Γ┌⋅⁝´ˈ⊧᾽P᾽⊦‧′ͱ╵↱ˑʺ∙⋅ƨʽF˙ͱ·פּ˩`ℐͱ⁘ͱ┈ʱ‘ʻ·,,ͺ◜ͱ"
@@ -221,6 +242,7 @@ def code_to_unicode_subset(
 
 
 def empty_code_buffer() -> t.List:
+    """Create empty code buffer."""
     code_buffer = []
     for _ in range(curses.LINES):
         code_buffer.append([BLANK_VALUE] * (curses.COLS - 1))
@@ -229,6 +251,7 @@ def empty_code_buffer() -> t.List:
 
 
 def empty_screen_buffer() -> t.List:
+    """Create empty screen buffer."""
     screen_buffer = []
     for _ in range(curses.LINES):
         screen_buffer.append([" "] * (curses.COLS - 1))
@@ -237,6 +260,7 @@ def empty_screen_buffer() -> t.List:
 
 
 def refresh_screen(scr: t.Any, screen_buffer: t.List) -> None:
+    """Clear screen and print screen buffer content."""
     # https://stackoverflow.com/questions/24964940/python-curses-tty-screen-blink
     scr.erase()
 
@@ -252,7 +276,7 @@ def setup_stderr() -> None:
 
 
 def eprint(*args: t.Tuple, **kwargs: t.Dict) -> None:
-    """Print on stderr"""
+    """Print on stderr."""
     print(*args, file=sys.stderr)
 
 
