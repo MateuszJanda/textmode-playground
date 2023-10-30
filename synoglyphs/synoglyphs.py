@@ -15,6 +15,8 @@ import typing as t
 
 THRESHOLD_CHANGE_CHAR = 0.5
 
+# Extracted from:
+# https://github.com/MateuszJanda/textmode-playground/tools/alphanum_to_unicode_subset.csv
 CHAR_REPLACEMENTS = {
     "0": ["0", "ο", "о", "o", "θ", "O", "ɵ", "∁", "û", "ũ"],
     "1": ["1", "ɿ", "⁒", "ɪ", "⇣", "ℷ", "↓", "Ḭ", "₁", "˥"],
