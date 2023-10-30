@@ -9,11 +9,11 @@ import random
 import time
 import curses
 import locale
-import string
+import copy
 import typing as t
 
 
-THRESHOLD_CHANGE_CHAR = 0.7
+THRESHOLD_CHANGE_CHAR = 0.5
 
 CHAR_REPLACEMENTS = {
     "0": ["0", "ο", "о", "o", "θ", "O", "ɵ", "∁", "û", "ũ"],
@@ -87,19 +87,21 @@ def main(scr: t.Any) -> None:
     scr.erase()
 
     quote = [
-        "",
-        "",
-        "When you have eliminated the impossible, whatever remains, however improbable, must be the truth.",
-        "   ~ Sherlock Holmes",
+        list(),
+        list(),
+        list(
+            "When you have eliminated the impossible, whatever remains, however improbable, must be the truth."
+        ),
+        list("   ~ Sherlock Holmes"),
     ]
-    screen_buffer = empty_screen_buffer(quote)
+    screen_buffer = copy.deepcopy(quote)
 
     while True:
         # replace_by_homoglyphs(quote, screen_buffer)
         replace_by_synoglyphs(quote, screen_buffer)
 
         refresh_screen(scr, screen_buffer)
-        time.sleep(0.1)
+        time.sleep(0.15)
 
 
 def setup_curses() -> None:
@@ -108,15 +110,6 @@ def setup_curses() -> None:
     curses.use_default_colors()
     curses.halfdelay(1)
     curses.curs_set(False)
-
-
-def empty_screen_buffer(quote: t.List[str]) -> t.List[str]:
-    """Create empty screen_buffer based on quote."""
-    screen_buffer = []
-    for line in quote:
-        screen_buffer.append([" "] * len(line))
-
-    return screen_buffer
 
 
 def replace_by_homoglyphs(quote: t.List[str], screen_buffer: t.List[str]) -> None:
@@ -143,14 +136,9 @@ def replace_by_synoglyphs(quote: t.List[str], screen_buffer: t.List[str]) -> Non
     for row_idx, line in enumerate(quote):
         for col_idx, ch in enumerate(line):
             if ch in CHAR_REPLACEMENTS and random.random() > THRESHOLD_CHANGE_CHAR:
-                if ch in string.ascii_letters:
-                    screen_buffer[row_idx][col_idx] = random.choice(
-                        CHAR_REPLACEMENTS[ch.lower()] + CHAR_REPLACEMENTS[ch.upper()]
-                    )
-                else:
-                    screen_buffer[row_idx][col_idx] = random.choice(
-                        CHAR_REPLACEMENTS[ch]
-                    )
+                screen_buffer[row_idx][col_idx] = random.choice(
+                    CHAR_REPLACEMENTS[ch.upper()]
+                )
             else:
                 screen_buffer[row_idx][col_idx] = ch
 
