@@ -4,7 +4,7 @@ VIDEO_FILE="captured_screen.mp4"
 
 if [[ $1 == "-c" || $1 == "--capture" ]]; then
     # ffmpeg -video_size 800x450 -framerate 30 -f x11grab -i :0.0+2,50 $VIDEO_FILE
-    ffmpeg -video_size 640x480 -framerate 30 -f x11grab -i :0.0+2,50 $VIDEO_FILE
+    ffmpeg -video_size 640x480 -framerate 30 -f x11grab -i :1.0+2,50 $VIDEO_FILE
 elif [[ $1 == "-g" || $1 == "--video-to-gif" ]]; then
     PALETTE_FILE="tmp_pallete.png"
     OUTPUT_GIF="output.gif"
